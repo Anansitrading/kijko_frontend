@@ -18,7 +18,32 @@ import {
 } from "lucide-react";
 import { cn } from "../../utils/cn";
 import { ContextItem, IngestionConfig } from "../../types";
+import { ContextItem as InspectorContextItem } from "../../types/contextInspector";
 import { IngestionWizard } from "./IngestionWizard";
+import { useContextInspector } from "../../contexts/ContextInspectorContext";
+
+// Convert HypervisaView ContextItem to ContextInspector ContextItem format
+function toInspectorContextItem(item: ContextItem): InspectorContextItem {
+  // Parse size string to bytes (e.g., "2.4 MB" -> 2516582)
+  const parseSize = (sizeStr: string): number => {
+    const match = sizeStr.match(/^([\d.]+)\s*(B|KB|MB|GB)$/i);
+    if (!match) return 0;
+    const value = parseFloat(match[1]);
+    const unit = match[2].toUpperCase();
+    const multipliers: Record<string, number> = { B: 1, KB: 1024, MB: 1024 * 1024, GB: 1024 * 1024 * 1024 };
+    return Math.round(value * (multipliers[unit] || 1));
+  };
+
+  return {
+    id: item.id,
+    name: item.name,
+    type: item.type === 'file' ? 'files' : item.type,
+    size: parseSize(item.size),
+    fileCount: item.type === 'repo' ? 42 : 1, // Mock file count
+    lastUpdated: new Date(),
+    status: item.status,
+  };
+}
 
 // Mock context data
 const MOCK_CONTEXT: ContextItem[] = [
@@ -183,12 +208,13 @@ function ItemIcon({ type }: { type: ContextItem["type"] }) {
   }
 }
 
-function ListView({ items }: { items: ContextItem[] }) {
+function ListView({ items, onItemClick }: { items: ContextItem[]; onItemClick: (item: ContextItem) => void }) {
   return (
     <div className="space-y-1">
       {items.map((item) => (
         <div
           key={item.id}
+          onClick={() => onItemClick(item)}
           className="group flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-slate-700 hover:bg-slate-800/50 transition-all cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -229,12 +255,13 @@ function ListView({ items }: { items: ContextItem[] }) {
   );
 }
 
-function GridView({ items }: { items: ContextItem[] }) {
+function GridView({ items, onItemClick }: { items: ContextItem[]; onItemClick: (item: ContextItem) => void }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {items.map((item) => (
         <div
           key={item.id}
+          onClick={() => onItemClick(item)}
           className="group flex flex-col items-center p-4 rounded-xl border border-slate-700 bg-slate-800/30 hover:bg-slate-800/60 hover:border-slate-600 transition-all cursor-pointer"
         >
           <div className="p-3 bg-slate-900/50 rounded-xl border border-slate-700 mb-3 group-hover:border-slate-600">
@@ -275,6 +302,12 @@ export function HypervisaView() {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [contextItems, setContextItems] = useState<ContextItem[]>(MOCK_CONTEXT);
+  const { openModal } = useContextInspector();
+
+  // Wrapper to convert item type before opening modal
+  const handleItemClick = (item: ContextItem) => {
+    openModal(toInspectorContextItem(item));
+  };
 
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return contextItems;
@@ -407,9 +440,9 @@ export function HypervisaView() {
             </p>
           </div>
         ) : viewMode === "list" ? (
-          <ListView items={filteredItems} />
+          <ListView items={filteredItems} onItemClick={handleItemClick} />
         ) : (
-          <GridView items={filteredItems} />
+          <GridView items={filteredItems} onItemClick={handleItemClick} />
         )}
       </div>
 

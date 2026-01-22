@@ -1,0 +1,588 @@
+Hier is de volledige Claude prompt voor de Context Detail Inspector:
+________________________________________
+CLAUDE PROMPT - CONTEXT DETAIL INSPECTOR MODAL
+Ik wil een uitgebreide modal/popup bouwen die opent wanneer een gebruiker op een context item klikt in de Hypervisa interface. Deze "Context Detail Inspector" moet gedetailleerde informatie en management mogelijkheden bieden voor elke gecomprimeerde codebase/context.
+Modal Specificaties
+Trigger & Basis Layout
+•	Trigger: Click event op elk context item (in lijst of grid weergave)
+•	Modal Grootte: 900px breed, 700px hoog, gecentreerd op scherm
+•	Styling: Donker theme consistent met KIJKO interface
+•	Header: Toon bestandsnaam/context naam + close button (X rechts boven)
+•	Navigation: 5 tabs direct onder header
+•	Footer: Context-aware action buttons per tab
+•	Close: ESC key of click buiten modal
+Tab Navigatie
+Horizontale tab bar met 5 tabs:
+1.	Overview & Chat
+2.	Compression
+3.	Enrichments
+4.	Users
+5.	Changelog
+________________________________________
+TAB 1: OVERVIEW & CHAT
+Layout: Split View (Links/Rechts)
+Linker Paneel (40% breedte):
+Header: "CONTEXT SUMMARY"
+Content:
+•	Icon + naam van context item (bijv. 📦 panopticon-core)
+•	Metadata kaartjes:
+•	Type (NPM Package / Git Repo / Files / etc.)
+•	Size (2.4 MB)
+•	File count (847 files)
+•	Last Updated (relative time: "2 hours ago")
+•	Divider lijn
+•	Section: "🤖 AI-Generated Summary"
+•	Auto-generated samenvatting van de codebase (3-4 zinnen)
+•	Beschrijft wat de code doet, belangrijkste componenten
+•	Section: "Key Components" (bullet list)
+•	Top 4-5 belangrijkste modules/features
+•	Button: [⟳ Regenerate Summary] (klein, secondary style)
+Rechter Paneel (60% breedte):
+Header: "CHAT WITH CONTEXT"
+Content:
+•	Chat interface met message history
+•	Subtitle: "💬 Ask questions about this codebase"
+•	Chat messages met user/AI avatars
+•	Scrollable message container
+•	Input veld onderaan:
+•	Placeholder: "Ask about this context..."
+•	Send button (→)
+Functionaliteit:
+•	Summary wordt automatisch gegenereerd bij eerste open (loading state)
+•	Chat is context-aware (heeft toegang tot de volledige codebase info)
+•	Chat history persistent per context item (opslaan in state/database)
+•	Regenerate button roept LLM opnieuw aan voor fresh summary
+________________________________________
+TAB 2: COMPRESSION
+Layout: Metrics Dashboard
+Top Section: Compression Stats Cards (3 cards naast elkaar)
+Card 1: Original Size
+•	Groot getal: "2,458,624"
+•	Label: "tokens"
+•	Sublabel: "Starting Tokens"
+Card 2: Compressed
+•	Groot getal: "126,847"
+•	Label: "tokens"
+•	Sublabel: "Current Tokens"
+Card 3: Compression Ratio
+•	Groot getal: "19.4x"
+•	Label: "compression"
+•	Sublabel: "Space Saved"
+Progress Bar:
+•	Visual representation van compression
+•	Progress bar: ████████████████████░░░░░░ 94.8% compressed
+•	Label: "Token Savings: 2,331,777 tokens"
+•	Sublabel: "Estimated Cost Savings: $23.32 per 1M queries"
+Ingestion History Section:
+Header: "INGESTION HISTORY"
+•	Total count: "Total Ingestions: 12"
+•	Last ingestion: "Last Ingestion: 2 hours ago"
+•	Average: "Average Interval: 3.2 days"
+Timeline list (scrollable, laatste 10 ingestions):
+text
+┌──────────────────────────────────────────────────┐
+│ #12  Jan 22, 2026 15:23  +127 files  -3 files   │
+│ #11  Jan 19, 2026 09:45  +45 files   -1 file    │
+│ #10  Jan 15, 2026 14:12  +89 files   -12 files  │
+│ ...                                              │
+└──────────────────────────────────────────────────┘
+Each row toont:
+•	Ingestion number (#12)
+•	Timestamp (Jan 22, 2026 15:23)
+•	Files added (+127 files)
+•	Files removed (-3 files)
+Compression Details Section:
+Header: "COMPRESSION ALGORITHM"
+•	Method: "Hypervisa Contextual Compression v2.1"
+•	Preserve: "Structure, Types, Exports, Documentation"
+•	Optimization Level: "High (favor accuracy over compression)"
+Footer Buttons:
+•	[⟳ Re-compress] - Trigger nieuwe compressie
+•	[⚙️ Compression Settings] - Open settings modal
+________________________________________
+TAB 3: ENRICHMENTS
+Layout: Enrichment Status Dashboard
+Overall Progress Bar:
+•	"Overall Enrichment: 67.3%"
+•	Progress bar: ████████████░░░░░░
+Three Enrichment Sections (verticaal gestapeld):
+Section 1: Knowledge Graph (KG)
+Header: "📊 KNOWLEDGE GRAPH (KG)"
+Status badge: ✓ Active (groen) of ⚠️ Partial (geel) of ✗ Inactive (rood)
+Content:
+•	Coverage bar: "Coverage: 84.2%" ████████████████░░░
+•	Stats grid (3 kolommen):
+•	Entities Extracted: 1,247
+•	Relationships Mapped: 3,891
+•	Semantic Clusters: 23
+•	Top Entities list:
+text
+-  PanopticonClient (326 references)
+-  MonitoringService (198 references)
+-  DataProcessor (157 references)
+•	Action buttons: [View Graph] [Rebuild KG]
+Divider
+Section 2: Language Server Protocol (LSP)
+Header: "🔧 LANGUAGE SERVER PROTOCOL (LSP)"
+Status badge: ✓ Active
+Content:
+•	Coverage bar: "Coverage: 91.7%" ██████████████████░
+•	Stats grid:
+•	Indexed Files: 776 / 847
+•	Symbols Indexed: 12,458
+•	Feature checklist:
+•	✓ Go-to-Definition: Enabled
+•	✓ Auto-completion: Enabled
+•	✓ Type Inference: Enabled
+•	Languages Detected (pie chart of percentages):
+text
+-  TypeScript (68%)
+-  JavaScript (24%)
+-  JSON (8%)
+•	Action buttons: [Re-index] [Configure LSP]
+Divider
+Section 3: ChromaCode (CC)
+Header: "🎨 CHROMACODE (CC)"
+Status badge: ⚠️ Partial
+Content:
+•	Coverage bar: "Coverage: 26.1%" █████░░░░░░░░░░░░░
+•	Stats grid:
+•	Embeddings Generated: 221 / 847 files
+•	Vector Dimensions: 1536
+•	Feature checklist:
+•	✓ Similarity Index: Built
+•	✓ Semantic Search: Ready
+•	Configuration:
+•	Embedding Model: text-embedding-3-small
+•	Chunk Strategy: Sliding window (512 tokens)
+•	Action buttons: [Generate Embeddings] [Configure CC]
+Global Footer Buttons:
+•	[⚡ Run All Enrichments] (primary button)
+•	[⚙️ Global Settings]
+Features:
+•	Real-time progress updates tijdens enrichment runs
+•	Warning states voor lage coverage (<50%)
+•	Klikbare "View Graph" opent visual KG in nieuwe modal
+•	Progress bars met animaties tijdens processing
+________________________________________
+TAB 4: USERS & ACCESS CONTROL
+Layout: User Management Dashboard
+Header Toolbar:
+•	Search input: [🔍 Search users...]
+•	Primary button: [+ Invite User]
+Current Users Section:
+Header: "CURRENT USERS (4)"
+User list (scrollable):
+text
+┌──────────────────────────────────────────────────┐
+│ 👤 You                          Owner            │
+│    user@kijko.ai                                 │
+│    Last active: Just now                         │
+│    [Full Access ▼]                         [⚙️]  │
+├──────────────────────────────────────────────────┤
+│ 👤 Sarah Chen                   Admin            │
+│    sarah@kijko.ai                                │
+│    Last active: 2 hours ago                      │
+│    [Admin ▼]                               [⚙️]  │
+├──────────────────────────────────────────────────┤
+│ 👤 Mike Johnson                 Viewer           │
+│    mike@partner.com                              │
+│    Last active: Yesterday                        │
+│    [Read Only ▼]                           [⚙️]  │
+└──────────────────────────────────────────────────┘
+Each user card bevat:
+•	Avatar (👤 of real image)
+•	Naam (bold)
+•	Role badge (Owner/Admin/Editor/Viewer)
+•	Email (smaller text)
+•	Last active timestamp
+•	Permission dropdown (met opties: Full Access, Admin, Editor, Read Only)
+•	Settings icon (⚙️) voor meer opties
+Activity Log Section:
+Header: "ACTIVITY LOG"
+Filters:
+•	Dropdown 1: [All Activity ▼] (filter by type: Views, Chats, Ingestions, Changes)
+•	Dropdown 2: [Last 7 days ▼] (filter by time)
+Activity timeline (scrollable):
+text
+┌──────────────────────────────────────────────────┐
+│ 👁️  You viewed /src/core/client.ts               │
+│     2 minutes ago                                │
+│                                                  │
+│ 💬 Sarah Chen asked about authentication         │
+│     2 hours ago                                  │
+│                                                  │
+│ 👁️  Sarah Chen viewed /auth/providers/oauth.ts   │
+│     2 hours ago                                  │
+│                                                  │
+│ 📥 You ingested new version (#12)                │
+│     2 hours ago                                  │
+│                                                  │
+│ 👁️  Mike Johnson viewed /README.md               │
+│     Yesterday at 14:32                           │
+└──────────────────────────────────────────────────┘
+Activity types met icons:
+•	👁️ = File view
+•	💬 = Chat interaction
+•	📥 = Ingestion
+•	🔐 = Permission change
+•	⚙️ = Configuration change
+Bottom: [Load More...] button
+Permission Levels Info Box (klein, onderaan):
+text
+PERMISSION LEVELS:
+• Owner: Full control, can delete, manage users
+• Admin: Can ingest, configure, view all activity
+• Editor: Can chat, view, suggest changes
+• Viewer: Read-only access, can chat
+Functionaliteit:
+•	Click "+ Invite User" opent invite modal (email input + role selector)
+•	Permission dropdown changes update immediately
+•	Settings icon opent user-specific options (remove access, change email, etc.)
+•	Activity log infinite scroll met lazy loading
+•	Real-time updates wanneer anderen actief zijn
+________________________________________
+TAB 5: CHANGELOG
+Layout: Version History & Diff Viewer
+Header Toolbar:
+•	Filter 1: [All Changes ▼] (Ingestions, Enrichments, Config Changes)
+•	Filter 2: [Last 30 days ▼] (time range)
+•	Button: [Export] (export als CSV/JSON)
+Changelog Timeline (scrollable):
+text
+┌──────────────────────────────────────────────────┐
+│ ⬆️ INGESTION #12                                  │
+│ Jan 22, 2026 15:23  •  by You                    │
+│                                                  │
+│ +127 files added  │  -3 files removed  │  ~45 modified│
+│                                                  │
+│ Added:                                           │
+│ + src/features/real-time/websocket.ts            │
+│ + src/features/real-time/events.ts               │
+│ + tests/real-time/websocket.test.ts              │
+│ + ... and 124 more files                         │
+│                                                  │
+│ Removed:                                         │
+│ - src/legacy/old-client.ts                       │
+│ - src/deprecated/utils.ts                        │
+│ - docs/old-api.md                                │
+│                                                  │
+│ Modified:                                        │
+│ ~ src/core/client.ts (+234, -89 lines)          │
+│ ~ package.json (dependencies updated)            │
+│ ~ ... and 43 more files                          │
+│                                                  │
+│ [View Full Diff]  [Rollback to #11]             │
+├──────────────────────────────────────────────────┤
+│ ⬆️ INGESTION #11                                  │
+│ Jan 19, 2026 09:45  •  by Sarah Chen            │
+│                                                  │
+│ +45 files added  │  -1 file removed  │  ~12 modified│
+│                                                  │
+│ [View Full Diff]  [Rollback to #10]             │
+├──────────────────────────────────────────────────┤
+│ 🔧 ENRICHMENT UPDATE                              │
+│ Jan 18, 2026 14:22  •  System                    │
+│                                                  │
+│ Knowledge Graph rebuilt                          │
+│ +156 new entities  │  +423 new relationships     │
+└──────────────────────────────────────────────────┘
+Entry Types:
+•	⬆️ INGESTION = nieuwe code versie
+•	🔧 ENRICHMENT UPDATE = KG/LSP/CC updates
+•	⚙️ CONFIGURATION = settings changes
+•	🔐 ACCESS CHANGE = permission updates
+Each Ingestion Entry bevat:
+•	Ingestion number (#12)
+•	Timestamp + author
+•	Summary stats (files added/removed/modified)
+•	Expandable file lists:
+•	Added files (+ prefix, groen)
+•	Removed files (- prefix, rood)
+•	Modified files (~ prefix, geel)
+•	Truncated lists met "... and X more files"
+•	Action buttons:
+•	[View Full Diff] - Opens diff viewer modal
+•	[Rollback to #X] - Revert to previous version
+Diff Viewer Modal (triggered by "View Full Diff"):
+New modal overlay:
+text
+┌──────────────────────────────────────────────────┐
+│ DIFF: Ingestion #12 → #11                  [✕]  │
+├──────────────────────────────────────────────────┤
+│ [Unified ▼]  [src/core/client.ts ▼]             │
+├──────────────────────────────────────────────────┤
+│                                                  │
+│ src/core/client.ts                               │
+│                                                  │
+│ 1    import { Config } from './config';          │
+│ 2  + import { WebSocketManager } from '../real-time';│
+│ 3    import { ApiClient } from './api';          │
+│ 4                                                │
+│ 5    export class PanopticonClient {             │
+│ 6  -   constructor(config: Config) {             │
+│ 7  +   constructor(config: Config, wsEnabled = false) {│
+│ 8        this.config = config;                   │
+│ 9  +     if (wsEnabled) {                        │
+│ 10 +       this.ws = new WebSocketManager(config);│
+│ 11 +     }                                       │
+│ 12     }                                         │
+│                                                  │
+├──────────────────────────────────────────────────┤
+│ [< Previous File]  [Next File >]  [Download Diff]│
+└──────────────────────────────────────────────────┘
+Diff viewer features:
+•	View mode toggle: [Unified ▼] of [Split ▼]
+•	File selector dropdown (alle modified files)
+•	Syntax highlighting
+•	Line numbers
+•	Color coding:
+•	Groene achtergrond voor added lines (+)
+•	Rode achtergrond voor removed lines (-)
+•	Grijze achtergrond voor context lines
+•	Navigation: Previous/Next file buttons
+•	Download diff als .patch file
+Rollback Functionaliteit:
+Click [Rollback to #X] opent confirmation modal:
+text
+┌──────────────────────────────────────────────────┐
+│ Confirm Rollback                            [✕]  │
+├──────────────────────────────────────────────────┤
+│                                                  │
+│ ⚠️  Are you sure you want to rollback to        │
+│     Ingestion #11?                               │
+│                                                  │
+│ This will:                                       │
+│ • Restore 847 files to their previous state     │
+│ • Remove 127 recently added files                │
+│ • Re-add 3 previously deleted files              │
+│ • Create backup of current state (#12)          │
+│                                                  │
+│ This action can be undone by rolling forward.   │
+│                                                  │
+│         [Cancel]  [Confirm Rollback]             │
+└──────────────────────────────────────────────────┘
+________________________________________
+MODAL FOOTER (context-aware per tab)
+Tab 1 (Overview & Chat):
+•	[⟳ Regenerate Summary]
+•	[Export Context Info] (downloads JSON met metadata)
+Tab 2 (Compression):
+•	[⟳ Re-compress]
+•	[⬇️ Download Original]
+•	[⚙️ Optimize Settings]
+Tab 3 (Enrichments):
+•	[⚡ Run All Enrichments] (primary)
+•	[⚙️ Configure]
+•	[🔄 Reset Enrichments]
+Tab 4 (Users):
+•	[+ Invite User] (primary)
+•	[⬇️ Export Activity Log]
+Tab 5 (Changelog):
+•	[📥 New Ingestion] (primary - triggers file upload)
+•	[⬇️ Export Changelog]
+•	[🔄 Compare Versions] (select 2 versions to diff)
+________________________________________
+TECHNICAL REQUIREMENTS
+State Management
+TypeScript interfaces:
+typescript
+interface ContextDetailModal {
+  isOpen: boolean;
+  contextItem: ContextItem;
+  activeTab: 'overview' | 'compression' | 'enrichments' | 'users' | 'changelog';
+}
+
+interface ContextItem {
+  id: string;
+  name: string;
+  type: 'package' | 'repo' | 'files';
+  size: number; // bytes
+  fileCount: number;
+  lastUpdated: Date;
+  status: 'cached' | 'expired' | 'pending';
+}
+
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
+interface CompressionMetrics {
+  originalTokens: number;
+  compressedTokens: number;
+  ratio: number;
+  savingsPercent: number;
+  costSavings: number;
+  totalIngestions: number;
+  lastIngestion: Date;
+  avgInterval: number; // days
+}
+
+interface EnrichmentStatus {
+  overall: number; // percentage
+  knowledgeGraph: {
+    active: boolean;
+    coverage: number;
+    entities: number;
+    relationships: number;
+    clusters: number;
+    topEntities: Array<{name: string; references: number}>;
+  };
+  languageServer: {
+    active: boolean;
+    coverage: number;
+    indexedFiles: number;
+    totalFiles: number;
+    symbols: number;
+    languages: Array<{name: string; percentage: number}>;
+  };
+  chromaCode: {
+    active: boolean;
+    coverage: number;
+    embeddings: number;
+    totalFiles: number;
+    dimensions: number;
+    model: string;
+    chunkStrategy: string;
+  };
+}
+
+interface UserAccess {
+  id: string;
+  name: string;
+  email: string;
+  role: 'owner' | 'admin' | 'editor' | 'viewer';
+  lastActive: Date;
+  avatar?: string;
+}
+
+interface ActivityEvent {
+  id: string;
+  type: 'view' | 'chat' | 'ingestion' | 'permission' | 'config';
+  user: UserAccess;
+  description: string;
+  timestamp: Date;
+  metadata?: any;
+}
+
+interface ChangelogEntry {
+  id: string;
+  type: 'ingestion' | 'enrichment' | 'config' | 'access';
+  number?: number; // voor ingestions
+  timestamp: Date;
+  author: UserAccess | 'System';
+  filesAdded?: number;
+  filesRemoved?: number;
+  filesModified?: number;
+  addedFiles?: string[];
+  removedFiles?: string[];
+  modifiedFiles?: Array<{path: string; linesAdded: number; linesRemoved: number}>;
+  description?: string;
+}
+API Endpoints
+Implementeer deze endpoints:
+text
+GET    /api/context/:id                    # Basis context info
+GET    /api/context/:id/summary             # AI summary
+POST   /api/context/:id/summary/regenerate  # Regenerate summary
+GET    /api/context/:id/chat                # Chat history
+POST   /api/context/:id/chat                # Send chat message
+GET    /api/context/:id/compression         # Compression metrics
+POST   /api/context/:id/compress            # Trigger re-compression
+GET    /api/context/:id/enrichments         # Enrichment status
+POST   /api/context/:id/enrichments/run     # Run enrichments
+POST   /api/context/:id/enrichments/kg      # Rebuild KG
+POST   /api/context/:id/enrichments/lsp     # Re-index LSP
+POST   /api/context/:id/enrichments/cc      # Generate embeddings
+GET    /api/context/:id/users               # User access list
+POST   /api/context/:id/users/invite        # Invite user
+PATCH  /api/context/:id/users/:userId       # Update permissions
+DELETE /api/context/:id/users/:userId       # Remove access
+GET    /api/context/:id/activity            # Activity log
+GET    /api/context/:id/changelog           # Changelog entries
+GET    /api/context/:id/changelog/:number/diff # Get diff
+POST   /api/context/:id/rollback/:number    # Rollback to version
+POST   /api/context/:id/ingest              # New ingestion
+Keyboard Shortcuts
+•	Cmd/Ctrl + K - Focus search (binnen modal)
+•	Cmd/Ctrl + W - Close modal
+•	Cmd/Ctrl + 1 - Switch to Overview tab
+•	Cmd/Ctrl + 2 - Switch to Compression tab
+•	Cmd/Ctrl + 3 - Switch to Enrichments tab
+•	Cmd/Ctrl + 4 - Switch to Users tab
+•	Cmd/Ctrl + 5 - Switch to Changelog tab
+•	Esc - Close modal/submenu
+Loading & Error States
+Loading States:
+•	Skeleton loaders voor initial data load
+•	Spinner in buttons tijdens actions
+•	Progress bars voor long-running operations (enrichments, compression)
+•	Shimmer effect voor loading lists
+Error States:
+•	Toast notifications voor errors
+•	Inline error messages onder forms
+•	Retry buttons waar relevant
+•	Graceful degradation (toon partial data if available)
+Empty States:
+•	"No chat history yet" in chat panel
+•	"No users with access" in users tab
+•	"No activity recorded" in activity log
+•	Each met relevant call-to-action
+Animations & Transitions
+•	Smooth tab switching (fade in/out)
+•	Modal open/close animations (scale + fade)
+•	Progress bar animations
+•	Hover states op interactive elements
+•	Loading spinners
+Responsive Behavior
+•	Modal adapts op kleinere schermen
+•	Tabs worden scrollable op mobile
+•	Split views worden stacked op narrow viewports
+•	Touch-friendly targets (min 44px)
+________________________________________
+STYLING GUIDELINES
+Design System
+•	Gebruik KIJKO dark theme (navy blue background: #0f1419)
+•	Primary accent: Blue (#3b82f6)
+•	Success: Green (#10b981)
+•	Warning: Yellow/Orange (#f59e0b)
+•	Error: Red (#ef4444)
+•	Text primary: White (#ffffff)
+•	Text secondary: Gray (#9ca3af)
+Typography
+•	Headers: Bold, 16-20px
+•	Body: Regular, 14px
+•	Small text: 12px
+•	Monospace voor code/files: 'Monaco', 'Courier New'
+Spacing
+•	Consistent padding: 12px, 16px, 24px
+•	Section gaps: 24px
+•	Card padding: 16px
+•	Modal padding: 24px
+Components
+•	Rounded corners: 8px (cards), 6px (buttons), 4px (inputs)
+•	Borders: 1px solid rgba(255,255,255,0.1)
+•	Shadows: 0 4px 6px rgba(0,0,0,0.3) voor modals
+•	Button heights: 36px (normal), 32px (small)
+________________________________________
+PRIORITEIT & IMPLEMENTATIE
+Phase 1 (MVP):
+1.	Modal structure + tab navigation
+2.	Tab 1: Overview & Chat (basic chat, static summary)
+3.	Tab 2: Compression (static metrics)
+4.	Tab 5: Changelog (basic timeline)
+Phase 2:
+5.	Tab 3: Enrichments (static status, run buttons)
+6.	Tab 4: Users (list + basic permissions)
+7.	Diff viewer modal
+8.	Search filtering
+Phase 3:
+9.	Real-time updates
+10.	Advanced enrichment operations
+11.	Rollback functionality
+12.	Activity tracking
+13.	Export features
+

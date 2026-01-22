@@ -1,15 +1,28 @@
-import React from 'react';
 import { Folder, Database, File, HardDrive } from 'lucide-react';
-import { ContextItem } from '../types';
+import { useContextInspector } from '../contexts/ContextInspectorContext';
+import type { ContextItem } from '../types/contextInspector';
 
+// Extended mock data with all required fields for the modal
 const MOCK_CONTEXT: ContextItem[] = [
-    { id: '1', name: 'panopticon-core', type: 'repo', size: '2.4 MB', status: 'cached' },
-    { id: '2', name: 'api-spec-v2.json', type: 'file', size: '450 KB', status: 'cached' },
-    { id: '3', name: 'memory-dump-242.bin', type: 'file', size: '12 MB', status: 'expired' },
-    { id: '4', name: 'hyperglyph-ui', type: 'repo', size: '5.1 MB', status: 'pending' },
+    { id: '1', name: 'panopticon-core', type: 'repo', size: 2400000, status: 'cached', fileCount: 847, lastUpdated: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+    { id: '2', name: 'api-spec-v2.json', type: 'files', size: 450000, status: 'cached', fileCount: 1, lastUpdated: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+    { id: '3', name: 'memory-dump-242.bin', type: 'files', size: 12000000, status: 'expired', fileCount: 1, lastUpdated: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+    { id: '4', name: 'hyperglyph-ui', type: 'repo', size: 5100000, status: 'pending', fileCount: 324, lastUpdated: new Date() },
 ];
 
+function formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function ContextStore() {
+  const { openModal } = useContextInspector();
+
+  const handleItemClick = (item: ContextItem) => {
+    openModal(item);
+  };
+
   return (
     <div className="h-full flex flex-col p-4">
         <div className="flex items-center justify-between mb-6">
@@ -23,10 +36,14 @@ export function ContextStore() {
 
         <div className="space-y-1 overflow-y-auto flex-1 pr-1">
             {MOCK_CONTEXT.map(item => (
-                <div key={item.id} className="group flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-border hover:bg-card transition-all cursor-pointer">
+                <div
+                    key={item.id}
+                    onClick={() => handleItemClick(item)}
+                    className="group flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-border hover:bg-card transition-all cursor-pointer"
+                >
                     <div className="flex items-center gap-3 overflow-hidden">
                         <div className={cn(
-                            "p-2 rounded-md", 
+                            "p-2 rounded-md",
                             item.type === 'repo' ? "bg-chart-1/10 text-chart-1" : "bg-chart-3/10 text-chart-3"
                         )}>
                             {item.type === 'repo' ? <Folder size={16} /> : <File size={16} />}
@@ -34,7 +51,7 @@ export function ContextStore() {
                         <div className="flex flex-col min-w-0">
                             <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
                             <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                {item.size} • 
+                                {formatSize(item.size)} •
                                 <span className={cn(
                                     "w-1.5 h-1.5 rounded-full inline-block ml-1",
                                     item.status === 'cached' ? "bg-accent-green" :

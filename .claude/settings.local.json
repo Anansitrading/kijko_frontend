@@ -4,7 +4,9 @@
       "mcp__acp__Bash",
       "mcp__acp__Edit",
       "mcp__acp__Write",
-      "Bash(git remote add:*)"
+      "Bash(git remote add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Initial Kijko MVP implementation\n\n- Add main App component with view routing\n- Add Panopticon dashboard with telemetry and marketplace\n- Add Hypervisa view with ingestion wizard\n- Add Agents view for agent management\n- Add Chat and Monitor interfaces\n- Add Settings modal with theme support\n- Add Gemini service integration\n- Add MCP registry service\n- Configure Vite build setup\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)"
     ]
   }
 }
