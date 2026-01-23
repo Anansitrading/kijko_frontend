@@ -60,6 +60,12 @@ export const dimensions = {
   // Button sizes
   buttonHeight: '36px',
   buttonHeightSm: '32px',
+
+  // Three-column layout panel widths (Sprint EX1)
+  sourceFilesExpandedWidth: '300px',
+  sourceFilesCollapsedWidth: '180px',
+  chatHistoryExpandedWidth: '280px',
+  chatHistoryCollapsedWidth: '180px',
 } as const;
 
 // Navigation items configuration
@@ -141,11 +147,11 @@ export const tw = {
   rowLabel: 'text-sm font-medium text-foreground',
   rowDescription: 'text-sm text-muted-foreground mt-0.5',
 
-  // Toggle styling
+  // Toggle styling - track is w-11 (44px), knob is w-4 (16px), positioned with 4px margins
   toggle: 'relative inline-flex w-11 h-6 bg-muted rounded-full cursor-pointer transition-colors duration-200 shrink-0',
   toggleActive: 'relative inline-flex w-11 h-6 bg-primary rounded-full cursor-pointer transition-colors duration-200 shrink-0',
-  toggleKnob: 'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200',
-  toggleKnobActive: 'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200 translate-x-5',
+  toggleKnob: 'absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200',
+  toggleKnobActive: 'absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 translate-x-5',
 
   // Input styling
   input: 'w-full bg-secondary border border-border rounded-md px-3 py-2.5 text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors duration-150',

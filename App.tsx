@@ -9,6 +9,7 @@ import { ContextInspectorProvider } from "./contexts/ContextInspectorContext";
 import { RealtimeProvider } from "./contexts/RealtimeContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import { ChatHistoryProvider } from "./contexts/ChatHistoryContext";
 import { WorkspaceMode } from "./types";
 import { Menu } from "lucide-react";
 
@@ -26,7 +27,8 @@ function App() {
     <SettingsProvider>
       <NotificationProvider>
         <ContextInspectorProvider>
-          <RealtimeProvider>
+          <ChatHistoryProvider>
+            <RealtimeProvider>
             <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans selection:bg-primary/30">
               <Sidebar
                 currentMode={mode}
@@ -77,6 +79,7 @@ function App() {
               <ContextDetailInspector />
             </div>
           </RealtimeProvider>
+          </ChatHistoryProvider>
         </ContextInspectorProvider>
       </NotificationProvider>
     </SettingsProvider>

@@ -1,13 +1,24 @@
 import { useCallback, useState, useEffect } from 'react';
 import { SummaryPanel } from './SummaryPanel';
 import { ChatPanel } from './ChatPanel';
+import { ChatHistoryPanel } from './ChatHistoryPanel';
 import { Toast, useToast } from '../../../Toast';
 import { useContextSummary } from '../../../../hooks/useContextSummary';
 import { useContextChat } from '../../../../hooks/useContextChat';
 import { useContextSources } from '../../../../hooks/useContextSources';
 import type { TabProps } from '../../../../types/contextInspector';
 
-const PANEL_COLLAPSED_KEY = 'contextInspector.panelCollapsed';
+// Panel state persistence keys
+const SOURCE_PANEL_COLLAPSED_KEY = 'contextInspector.sourcePanelCollapsed';
+const HISTORY_PANEL_COLLAPSED_KEY = 'contextInspector.historyPanelCollapsed';
+
+// Panel dimensions (consistent with spec)
+const PANEL_WIDTHS = {
+  sourceFilesExpanded: 300,
+  sourceFilesCollapsed: 180,
+  chatHistoryExpanded: 280,
+  chatHistoryCollapsed: 180,
+};
 
 export function OverviewTab({ contextItem }: TabProps) {
   const { summary, isLoading: summaryLoading } = useContextSummary(
@@ -29,31 +40,53 @@ export function OverviewTab({ contextItem }: TabProps) {
 
   const { toast, showToast, hideToast } = useToast();
 
-  // Panel collapsed state with localStorage persistence
-  const [panelCollapsed, setPanelCollapsed] = useState(() => {
+  // Panel collapsed states with localStorage persistence
+  const [sourceFilesCollapsed, setSourceFilesCollapsed] = useState(() => {
     try {
-      const saved = localStorage.getItem(PANEL_COLLAPSED_KEY);
+      const saved = localStorage.getItem(SOURCE_PANEL_COLLAPSED_KEY);
       return saved === 'true';
     } catch {
       return false;
     }
   });
 
-  // Save collapsed state to localStorage
+  const [chatHistoryCollapsed, setChatHistoryCollapsed] = useState(() => {
+    try {
+      const saved = localStorage.getItem(HISTORY_PANEL_COLLAPSED_KEY);
+      return saved === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  // Save collapsed states to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(PANEL_COLLAPSED_KEY, String(panelCollapsed));
+      localStorage.setItem(SOURCE_PANEL_COLLAPSED_KEY, String(sourceFilesCollapsed));
     } catch {
       // Ignore localStorage errors
     }
-  }, [panelCollapsed]);
+  }, [sourceFilesCollapsed]);
 
-  // Keyboard shortcut: Ctrl+B / Cmd+B to toggle panel
+  useEffect(() => {
+    try {
+      localStorage.setItem(HISTORY_PANEL_COLLAPSED_KEY, String(chatHistoryCollapsed));
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [chatHistoryCollapsed]);
+
+  // Keyboard shortcuts: Ctrl+B for source files, Ctrl+H for chat history
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-        e.preventDefault();
-        setPanelCollapsed((prev) => !prev);
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'b') {
+          e.preventDefault();
+          setSourceFilesCollapsed((prev) => !prev);
+        } else if (e.key === 'h') {
+          e.preventDefault();
+          setChatHistoryCollapsed((prev) => !prev);
+        }
       }
     };
 
@@ -61,8 +94,12 @@ export function OverviewTab({ contextItem }: TabProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleToggleCollapse = useCallback(() => {
-    setPanelCollapsed((prev) => !prev);
+  const handleToggleSourceFiles = useCallback(() => {
+    setSourceFilesCollapsed((prev) => !prev);
+  }, []);
+
+  const handleToggleChatHistory = useCallback(() => {
+    setChatHistoryCollapsed((prev) => !prev);
   }, []);
 
   const handleShowToast = useCallback((message: string) => {
@@ -71,18 +108,21 @@ export function OverviewTab({ contextItem }: TabProps) {
 
   return (
     <>
-      <div className="flex flex-col lg:flex-row h-full gap-4 p-4 overflow-hidden">
-        {/* Summary Panel - Collapsible with animation */}
+      {/*
+        THREE-COLUMN LAYOUT (Sprint EX1)
+        ┌─────────────┬──────────────────┬─────────────┐
+        │Source Files │   Chat Window    │Chat History │
+        │   (left)    │     (center)     │   (right)   │
+        └─────────────┴──────────────────┴─────────────┘
+      */}
+      <div className="flex h-full gap-4 p-4 overflow-hidden">
+        {/* LEFT PANEL: Source Files - Collapsible */}
         <div
-          className={`
-            min-h-[300px] lg:min-h-0 lg:h-full flex-shrink-0
-            transition-all duration-300 ease-in-out
-            ${panelCollapsed
-              ? 'w-[50px] lg:w-[50px]'
-              : 'w-full lg:w-[40%]'
-            }
-          `}
-          style={{ willChange: 'width' }}
+          className="flex-shrink-0 h-full transition-all duration-300 ease-in-out"
+          style={{
+            width: sourceFilesCollapsed ? PANEL_WIDTHS.sourceFilesCollapsed : PANEL_WIDTHS.sourceFilesExpanded,
+            minWidth: sourceFilesCollapsed ? PANEL_WIDTHS.sourceFilesCollapsed : PANEL_WIDTHS.sourceFilesExpanded,
+          }}
         >
           <SummaryPanel
             contextItem={contextItem}
@@ -95,13 +135,13 @@ export function OverviewTab({ contextItem }: TabProps) {
             onToggleAll={toggleAll}
             onFilesAdded={handleFilesAdded}
             onShowToast={handleShowToast}
-            collapsed={panelCollapsed}
-            onToggleCollapse={handleToggleCollapse}
+            collapsed={sourceFilesCollapsed}
+            onToggleCollapse={handleToggleSourceFiles}
           />
         </div>
 
-        {/* Chat Panel - Expands to fill available space */}
-        <div className="flex-1 min-h-[400px] lg:min-h-0 lg:h-full transition-all duration-300 ease-in-out">
+        {/* CENTER: Chat Window - Expands to fill available space */}
+        <div className="flex-1 min-w-0 h-full transition-all duration-300 ease-in-out">
           <ChatPanel
             contextId={contextItem.id}
             contextName={contextItem.name}
@@ -110,6 +150,20 @@ export function OverviewTab({ contextItem }: TabProps) {
             summaryLoading={summaryLoading}
             summary={summary}
             onSendMessage={sendMessage}
+          />
+        </div>
+
+        {/* RIGHT PANEL: Chat History - Collapsible */}
+        <div
+          className="flex-shrink-0 h-full transition-all duration-300 ease-in-out"
+          style={{
+            width: chatHistoryCollapsed ? PANEL_WIDTHS.chatHistoryCollapsed : PANEL_WIDTHS.chatHistoryExpanded,
+            minWidth: chatHistoryCollapsed ? PANEL_WIDTHS.chatHistoryCollapsed : PANEL_WIDTHS.chatHistoryExpanded,
+          }}
+        >
+          <ChatHistoryPanel
+            isCollapsed={chatHistoryCollapsed}
+            onToggleCollapse={handleToggleChatHistory}
           />
         </div>
       </div>

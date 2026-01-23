@@ -164,3 +164,88 @@ body {
         transform: rotate(360deg);
     }
 }
+
+/* ========================================
+   Sprint EX5: Visual Feedback & Accessibility
+   ======================================== */
+
+/* Screen Reader Only - Accessibility (Feature 8) */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Respect prefers-reduced-motion (Feature 9) */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Custom scrollbar for panels */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+}
+
+/* Subtle selection animation (Feature 9) */
+.animate-selection {
+    animation: selection-pop 200ms ease-out;
+}
+
+@keyframes selection-pop {
+    0% {
+        transform: scale(0.98);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Button press effect (Feature 9) */
+.active-press:active {
+    transform: scale(0.97);
+    transition: transform 100ms ease-out;
+}
+
+/* Smooth hover glow (Feature 9) */
+.hover-glow:hover {
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.15);
+}
+
+/* Focus visible ring (Feature 8) */
+.focus-ring:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Panel transition animation */
+.panel-transition {
+    transition: width 300ms ease-out, min-width 300ms ease-out, opacity 200ms ease-out;
+}

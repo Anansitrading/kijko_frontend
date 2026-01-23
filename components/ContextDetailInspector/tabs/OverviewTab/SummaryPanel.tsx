@@ -243,22 +243,63 @@ export function SummaryPanel({
       )}>
         {/* Sources Section */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Collapsed View - Centered expand button */}
+          {/* Collapsed View - Informative compact view */}
           {collapsed ? (
-            <div className="flex flex-col items-center justify-center h-full">
-              {onToggleCollapse && (
-                <button
-                  onClick={onToggleCollapse}
-                  className={cn(
-                    'flex items-center justify-center w-8 h-8 rounded',
-                    'text-gray-400 hover:text-white hover:bg-white/10',
-                    'transition-all duration-150'
-                  )}
-                  title="Expand panel"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+            <div
+              className={cn(
+                "flex flex-col h-full cursor-pointer",
+                "hover:bg-white/5 transition-colors"
               )}
+              onClick={onToggleCollapse}
+              role="button"
+              aria-label="Expand Source Files panel"
+            >
+              {/* Collapsed Header */}
+              <div className="px-3 py-3 border-b border-white/10">
+                <div className="flex items-center gap-2 mb-2">
+                  <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 truncate">
+                    Source Files
+                  </span>
+                </div>
+                <div className="text-[11px] text-gray-500 pl-6">
+                  {selectedCount}/{totalCount} • {formatBytes(sources.reduce((acc, s) => acc + (s.selected ? s.size : 0), 0))}
+                </div>
+                {uncompressedCount > 0 && (
+                  <div className="flex items-center gap-1 text-[10px] text-amber-400 pl-6 mt-1">
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{uncompressedCount} uncompressed</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Mini file icons grid */}
+              <div className="flex-1 p-3 overflow-hidden">
+                <div className="grid grid-cols-3 gap-1.5">
+                  {sources.filter(s => s.selected).slice(0, 9).map((source) => {
+                    const { icon: Icon, color } = FILE_TYPE_ICONS[source.fileType];
+                    return (
+                      <div
+                        key={source.id}
+                        className="w-7 h-7 rounded bg-white/10 flex items-center justify-center"
+                        title={`${source.name} (${formatBytes(source.size)})`}
+                      >
+                        <Icon className={cn('w-3 h-3', color)} />
+                      </div>
+                    );
+                  })}
+                  {selectedCount > 9 && (
+                    <div className="w-7 h-7 rounded bg-blue-500/10 flex items-center justify-center text-blue-400 text-[10px] font-semibold">
+                      +{selectedCount - 9}
+                    </div>
+                  )}
+                </div>
+
+                {/* Expand hint */}
+                <div className="text-[10px] text-gray-500 text-center mt-3">
+                  Click to expand
+                </div>
+              </div>
             </div>
           ) : (
             <>
