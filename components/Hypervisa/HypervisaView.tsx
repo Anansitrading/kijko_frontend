@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   List,
@@ -18,32 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../utils/cn";
 import { ContextItem, IngestionConfig } from "../../types";
-import { ContextItem as InspectorContextItem } from "../../types/contextInspector";
 import { IngestionWizard } from "./IngestionWizard";
-import { useContextInspector } from "../../contexts/ContextInspectorContext";
-
-// Convert HypervisaView ContextItem to ContextInspector ContextItem format
-function toInspectorContextItem(item: ContextItem): InspectorContextItem {
-  // Parse size string to bytes (e.g., "2.4 MB" -> 2516582)
-  const parseSize = (sizeStr: string): number => {
-    const match = sizeStr.match(/^([\d.]+)\s*(B|KB|MB|GB)$/i);
-    if (!match) return 0;
-    const value = parseFloat(match[1]);
-    const unit = match[2].toUpperCase();
-    const multipliers: Record<string, number> = { B: 1, KB: 1024, MB: 1024 * 1024, GB: 1024 * 1024 * 1024 };
-    return Math.round(value * (multipliers[unit] || 1));
-  };
-
-  return {
-    id: item.id,
-    name: item.name,
-    type: item.type === 'file' ? 'files' : item.type,
-    size: parseSize(item.size),
-    fileCount: item.type === 'repo' ? 42 : 1, // Mock file count
-    lastUpdated: new Date(),
-    status: item.status,
-  };
-}
 
 // Mock context data
 const MOCK_CONTEXT: ContextItem[] = [
@@ -296,17 +272,17 @@ function GridView({ items, onItemClick }: { items: ContextItem[]; onItemClick: (
 }
 
 export function HypervisaView() {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [contextItems, setContextItems] = useState<ContextItem[]>(MOCK_CONTEXT);
-  const { openModal } = useContextInspector();
 
-  // Wrapper to convert item type before opening modal
+  // Navigate to the full-page Context Detail Inspector
   const handleItemClick = (item: ContextItem) => {
-    openModal(toInspectorContextItem(item));
+    navigate(`/project/${item.id}`);
   };
 
   const filteredItems = useMemo(() => {
@@ -316,13 +292,6 @@ export function HypervisaView() {
       item.name.toLowerCase().includes(query)
     );
   }, [searchQuery, contextItems]);
-
-  // Get existing codebases (repos) for the wizard
-  const existingCodebases = useMemo(() => {
-    return contextItems
-      .filter((item) => item.type === "repo")
-      .map((item) => ({ id: item.id, name: item.name }));
-  }, [contextItems]);
 
   const handleFileSelect = (file: SelectedFile) => {
     setSelectedFile(file);
@@ -462,7 +431,6 @@ export function HypervisaView() {
             setSelectedFile(null);
           }}
           file={selectedFile}
-          existingCodebases={existingCodebases}
           onSubmit={handleIngestionSubmit}
         />
       )}

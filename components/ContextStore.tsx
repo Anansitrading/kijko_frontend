@@ -1,5 +1,5 @@
 import { Folder, Database, File, HardDrive } from 'lucide-react';
-import { useContextInspector } from '../contexts/ContextInspectorContext';
+import { useNavigate } from 'react-router-dom';
 import type { ContextItem } from '../types/contextInspector';
 
 // Extended mock data with all required fields for the modal
@@ -17,10 +17,11 @@ function formatSize(bytes: number): string {
 }
 
 export function ContextStore() {
-  const { openModal } = useContextInspector();
+  const navigate = useNavigate();
 
   const handleItemClick = (item: ContextItem) => {
-    openModal(item);
+    // Navigate to the full-page Context Detail Inspector
+    navigate(`/project/${item.id}`);
   };
 
   return (

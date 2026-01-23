@@ -5,6 +5,11 @@ import { ChatInput } from './ChatInput';
 import { cn } from '../../../../utils/cn';
 import type { ChatMessage as ChatMessageType, AISummary } from '../../../../types/contextInspector';
 
+interface TokenUsage {
+  currentTokens: number;
+  maxTokens: number;
+}
+
 interface ChatPanelProps {
   contextId: string;
   contextName: string;
@@ -13,6 +18,7 @@ interface ChatPanelProps {
   summaryLoading: boolean;
   summary: AISummary | null;
   onSendMessage: (content: string) => void;
+  tokenUsage?: TokenUsage;
 }
 
 // Suggested questions based on context
@@ -30,6 +36,7 @@ export function ChatPanel({
   summaryLoading,
   summary,
   onSendMessage,
+  tokenUsage,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -221,6 +228,7 @@ export function ChatPanel({
           onSend={onSendMessage}
           isLoading={isLoading}
           disabled={false}
+          tokenUsage={tokenUsage}
         />
       </div>
     </>

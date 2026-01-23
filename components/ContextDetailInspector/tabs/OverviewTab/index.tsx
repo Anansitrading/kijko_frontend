@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import { SummaryPanel } from './SummaryPanel';
 import { ChatPanel } from './ChatPanel';
 import { ChatHistoryPanel } from './ChatHistoryPanel';
@@ -7,6 +7,10 @@ import { useContextSummary } from '../../../../hooks/useContextSummary';
 import { useContextChat } from '../../../../hooks/useContextChat';
 import { useContextSources } from '../../../../hooks/useContextSources';
 import type { TabProps } from '../../../../types/contextInspector';
+
+// Token estimation constants
+const BYTES_PER_TOKEN = 4; // Rough estimate: 1 token ≈ 4 bytes
+const MAX_CONTEXT_TOKENS = 128000; // Default max tokens
 
 // Panel state persistence keys
 const SOURCE_PANEL_COLLAPSED_KEY = 'contextInspector.sourcePanelCollapsed';
@@ -39,6 +43,17 @@ export function OverviewTab({ contextItem }: TabProps) {
   } = useContextSources(contextItem.id);
 
   const { toast, showToast, hideToast } = useToast();
+
+  // Calculate token usage based on selected files
+  const tokenUsage = useMemo(() => {
+    const selectedSources = sources.filter((s) => s.selected);
+    const totalBytes = selectedSources.reduce((acc, source) => acc + source.size, 0);
+    const estimatedTokens = Math.round(totalBytes / BYTES_PER_TOKEN);
+    return {
+      currentTokens: estimatedTokens,
+      maxTokens: MAX_CONTEXT_TOKENS,
+    };
+  }, [sources]);
 
   // Panel collapsed states with localStorage persistence
   const [sourceFilesCollapsed, setSourceFilesCollapsed] = useState(() => {
@@ -150,6 +165,7 @@ export function OverviewTab({ contextItem }: TabProps) {
             summaryLoading={summaryLoading}
             summary={summary}
             onSendMessage={sendMessage}
+            tokenUsage={tokenUsage}
           />
         </div>
 

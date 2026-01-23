@@ -25,12 +25,11 @@ interface IngestionWizardProps {
     name: string;
     size: string;
   };
-  existingCodebases: Array<{ id: string; name: string }>;
   onSubmit: (config: IngestionConfig) => Promise<void>;
 }
 
 interface WizardState {
-  currentStep: 1 | 2 | 3 | 4;
+  currentStep: 1 | 2 | 3;
   config: IngestionConfig;
   isProcessing: boolean;
   validationErrors: Record<string, string>;
@@ -38,7 +37,7 @@ interface WizardState {
 }
 
 type WizardAction =
-  | { type: "SET_STEP"; step: 1 | 2 | 3 | 4 }
+  | { type: "SET_STEP"; step: 1 | 2 | 3 }
   | { type: "UPDATE_CONFIG"; payload: Partial<IngestionConfig> }
   | { type: "SET_PROCESSING"; isProcessing: boolean }
   | { type: "SET_VALIDATION_ERROR"; field: string; error: string }
@@ -114,19 +113,11 @@ function canProceed(
       // Step 1 always valid - radio has default selection
       break;
     case 2:
-      if (config.codebase.type === "existing" && !config.codebase.id) {
-        errors.codebase = "Please select a codebase";
-      }
-      if (config.codebase.type === "new" && !config.codebase.name.trim()) {
-        errors.codebase = "Please enter a codebase name";
-      }
-      break;
-    case 3:
       if (!config.displayName.trim()) {
         errors.displayName = "Display name is required";
       }
       break;
-    case 4:
+    case 3:
       // Confirmation step - no validation needed
       break;
   }
@@ -141,9 +132,8 @@ function canProceed(
 function StepIndicator({ currentStep }: { currentStep: number }) {
   const steps = [
     { number: 1, label: "Processing" },
-    { number: 2, label: "Codebase" },
-    { number: 3, label: "Metadata" },
-    { number: 4, label: "Confirm" },
+    { number: 2, label: "Metadata" },
+    { number: 3, label: "Confirm" },
   ];
 
   return (
@@ -357,126 +347,10 @@ function Step1ProcessingMode({
 }
 
 // ============================================================================
-// Step 2: Codebase Assignment
+// Step 2: File Metadata
 // ============================================================================
 
-function Step2CodebaseAssignment({
-  value,
-  onChange,
-  existingCodebases,
-  error,
-}: {
-  value: IngestionConfig["codebase"];
-  onChange: (codebase: IngestionConfig["codebase"]) => void;
-  existingCodebases: Array<{ id: string; name: string }>;
-  error?: string;
-}) {
-  return (
-    <div className="p-6 space-y-4">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-slate-100">Codebase Assignment</h3>
-        <p className="text-sm text-slate-400 mt-1">
-          Organize this file within a codebase for better context management.
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        {/* Add to Existing */}
-        <div
-          onClick={() => onChange({ ...value, type: "existing" })}
-          className={cn(
-            "p-4 rounded-lg border-2 cursor-pointer transition-all",
-            value.type === "existing"
-              ? "border-blue-500 bg-blue-600/10"
-              : "border-slate-700 hover:border-slate-600"
-          )}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <input
-              type="radio"
-              checked={value.type === "existing"}
-              onChange={() => onChange({ ...value, type: "existing" })}
-              className="w-4 h-4 accent-blue-600"
-            />
-            <span className="text-sm font-medium text-slate-200">
-              Add to existing codebase
-            </span>
-          </div>
-
-          {value.type === "existing" && (
-            <select
-              value={value.id || ""}
-              onChange={(e) => {
-                const selected = existingCodebases.find(
-                  (c) => c.id === e.target.value
-                );
-                onChange({
-                  type: "existing",
-                  id: e.target.value,
-                  name: selected?.name || "",
-                });
-              }}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-blue-500 outline-none"
-            >
-              <option value="">Select a codebase...</option>
-              {existingCodebases.map((cb) => (
-                <option key={cb.id} value={cb.id}>
-                  {cb.name}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {/* Create New */}
-        <div
-          onClick={() => onChange({ ...value, type: "new" })}
-          className={cn(
-            "p-4 rounded-lg border-2 cursor-pointer transition-all",
-            value.type === "new"
-              ? "border-emerald-500 bg-emerald-600/10"
-              : "border-slate-700 hover:border-slate-600"
-          )}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <input
-              type="radio"
-              checked={value.type === "new"}
-              onChange={() => onChange({ ...value, type: "new" })}
-              className="w-4 h-4 accent-emerald-600"
-            />
-            <span className="text-sm font-medium text-slate-200">
-              Create new codebase
-            </span>
-          </div>
-
-          {value.type === "new" && (
-            <input
-              type="text"
-              value={value.name}
-              onChange={(e) => onChange({ type: "new", name: e.target.value })}
-              placeholder="Enter codebase name..."
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:border-emerald-500 outline-none"
-            />
-          )}
-        </div>
-
-        {error && (
-          <p className="text-xs text-red-400 flex items-center gap-1">
-            <AlertTriangle size={12} />
-            {error}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// Step 3: File Metadata
-// ============================================================================
-
-function Step3FileMetadata({
+function Step2FileMetadata({
   displayName,
   tags,
   description,
@@ -551,10 +425,10 @@ function Step3FileMetadata({
 }
 
 // ============================================================================
-// Step 4: Confirmation
+// Step 3: Confirmation
 // ============================================================================
 
-function Step4Confirmation({
+function Step3Confirmation({
   config,
   isProcessing,
   onStartIngestion,
@@ -650,7 +524,6 @@ export function IngestionWizard({
   isOpen,
   onClose,
   file,
-  existingCodebases,
   onSubmit,
 }: IngestionWizardProps) {
   const [state, dispatch] = useReducer(
@@ -666,7 +539,7 @@ export function IngestionWizard({
       dispatch({ type: "SET_DIRECTION", direction: "forward" });
       dispatch({
         type: "SET_STEP",
-        step: (state.currentStep + 1) as 1 | 2 | 3 | 4,
+        step: (state.currentStep + 1) as 1 | 2 | 3,
       });
     } else {
       Object.entries(errors).forEach(([field, error]) => {
@@ -679,7 +552,7 @@ export function IngestionWizard({
     dispatch({ type: "SET_DIRECTION", direction: "backward" });
     dispatch({
       type: "SET_STEP",
-      step: (state.currentStep - 1) as 1 | 2 | 3 | 4,
+      step: (state.currentStep - 1) as 1 | 2 | 3,
     });
   };
 
@@ -736,17 +609,7 @@ export function IngestionWizard({
             />
           )}
           {state.currentStep === 2 && (
-            <Step2CodebaseAssignment
-              value={state.config.codebase}
-              onChange={(codebase) =>
-                dispatch({ type: "UPDATE_CONFIG", payload: { codebase } })
-              }
-              existingCodebases={existingCodebases}
-              error={state.validationErrors.codebase}
-            />
-          )}
-          {state.currentStep === 3 && (
-            <Step3FileMetadata
+            <Step2FileMetadata
               displayName={state.config.displayName}
               tags={state.config.tags || []}
               description={state.config.description || ""}
@@ -762,8 +625,8 @@ export function IngestionWizard({
               errors={state.validationErrors}
             />
           )}
-          {state.currentStep === 4 && (
-            <Step4Confirmation
+          {state.currentStep === 3 && (
+            <Step3Confirmation
               config={state.config}
               isProcessing={state.isProcessing}
               onStartIngestion={handleSubmit}
@@ -782,7 +645,7 @@ export function IngestionWizard({
             Back
           </button>
 
-          {state.currentStep < 4 && (
+          {state.currentStep < 3 && (
             <button
               onClick={handleNext}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-blue-600/20"

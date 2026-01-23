@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   LayoutGrid,
@@ -31,6 +32,7 @@ const SORT_OPTIONS: { id: ProjectSort; label: string }[] = [
 ];
 
 export function ProjectOverview({ onProjectSelect }: ProjectOverviewProps) {
+  const navigate = useNavigate();
   const {
     filteredProjects,
     filter,
@@ -53,9 +55,15 @@ export function ProjectOverview({ onProjectSelect }: ProjectOverviewProps) {
     y: number;
   } | null>(null);
 
+  // Navigate to project detail page
+  const handleProjectClick = (project: Project) => {
+    navigate(`/project/${project.id}`);
+  };
+
   const handleCreateProject = (name: string) => {
     const newProject = createProject(name);
-    onProjectSelect(newProject);
+    // Navigate to the new project's detail page
+    navigate(`/project/${newProject.id}`);
   };
 
   const handleMenuClick = (e: React.MouseEvent, project: Project) => {
@@ -259,7 +267,7 @@ export function ProjectOverview({ onProjectSelect }: ProjectOverviewProps) {
                 key={project.id}
                 project={project}
                 viewMode="grid"
-                onClick={() => onProjectSelect(project)}
+                onClick={() => handleProjectClick(project)}
                 onMenuClick={(e) => handleMenuClick(e, project)}
               />
             ))}
@@ -272,7 +280,7 @@ export function ProjectOverview({ onProjectSelect }: ProjectOverviewProps) {
                 key={project.id}
                 project={project}
                 viewMode="list"
-                onClick={() => onProjectSelect(project)}
+                onClick={() => handleProjectClick(project)}
                 onMenuClick={(e) => handleMenuClick(e, project)}
               />
             ))}
@@ -296,7 +304,7 @@ export function ProjectOverview({ onProjectSelect }: ProjectOverviewProps) {
           onClose={() => setContextMenu(null)}
           onDelete={() => handleDeleteProject(contextMenu.project.id)}
           onOpen={() => {
-            onProjectSelect(contextMenu.project);
+            handleProjectClick(contextMenu.project);
             setContextMenu(null);
           }}
         />
