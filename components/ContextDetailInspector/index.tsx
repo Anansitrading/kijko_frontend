@@ -23,7 +23,7 @@ import type { TabType, SearchResult, CompressionSettings, LSPConfig, ChromaCodeC
 import { tabConfig } from '../../styles/contextInspector';
 
 export function ContextDetailInspector() {
-  const { state, closeModal, setTab } = useContextInspector();
+  const { state, closeModal, setTab, updateContextName } = useContextInspector();
   const { connected, connecting, connect, disconnect } = useRealtime();
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -241,6 +241,7 @@ export function ContextDetailInspector() {
               contextName={state.contextItem.name}
               contextType={state.contextItem.type}
               onClose={closeModal}
+              onNameChange={updateContextName}
             />
 
             {/* Tab Navigation */}

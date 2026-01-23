@@ -4,6 +4,7 @@ import type {
   ContextInspectorAction,
   ContextItem,
   TabType,
+  SourceItem,
 } from '../types/contextInspector';
 
 // Initial state
@@ -12,6 +13,8 @@ const initialState: ContextInspectorState = {
   contextItem: null,
   activeTab: 'overview',
   isLoading: false,
+  sources: [],
+  sourcesLoading: false,
 };
 
 // Reducer function
@@ -44,6 +47,40 @@ function contextInspectorReducer(
         ...state,
         isLoading: action.payload,
       };
+    case 'UPDATE_CONTEXT_NAME':
+      return {
+        ...state,
+        contextItem: state.contextItem
+          ? { ...state.contextItem, name: action.payload }
+          : null,
+      };
+    case 'SET_SOURCES':
+      return {
+        ...state,
+        sources: action.payload,
+      };
+    case 'SET_SOURCES_LOADING':
+      return {
+        ...state,
+        sourcesLoading: action.payload,
+      };
+    case 'TOGGLE_SOURCE':
+      return {
+        ...state,
+        sources: state.sources.map((source) =>
+          source.id === action.payload
+            ? { ...source, selected: !source.selected }
+            : source
+        ),
+      };
+    case 'TOGGLE_ALL_SOURCES':
+      return {
+        ...state,
+        sources: state.sources.map((source) => ({
+          ...source,
+          selected: action.payload,
+        })),
+      };
     default:
       return state;
   }
@@ -56,6 +93,11 @@ interface ContextInspectorContextValue {
   closeModal: () => void;
   setTab: (tab: TabType) => void;
   setLoading: (loading: boolean) => void;
+  updateContextName: (name: string) => void;
+  setSources: (sources: SourceItem[]) => void;
+  setSourcesLoading: (loading: boolean) => void;
+  toggleSource: (sourceId: string) => void;
+  toggleAllSources: (selected: boolean) => void;
 }
 
 // Create context
@@ -86,6 +128,26 @@ export function ContextInspectorProvider({ children }: ContextInspectorProviderP
     dispatch({ type: 'SET_LOADING', payload: loading });
   }, []);
 
+  const updateContextName = useCallback((name: string) => {
+    dispatch({ type: 'UPDATE_CONTEXT_NAME', payload: name });
+  }, []);
+
+  const setSources = useCallback((sources: SourceItem[]) => {
+    dispatch({ type: 'SET_SOURCES', payload: sources });
+  }, []);
+
+  const setSourcesLoading = useCallback((loading: boolean) => {
+    dispatch({ type: 'SET_SOURCES_LOADING', payload: loading });
+  }, []);
+
+  const toggleSource = useCallback((sourceId: string) => {
+    dispatch({ type: 'TOGGLE_SOURCE', payload: sourceId });
+  }, []);
+
+  const toggleAllSources = useCallback((selected: boolean) => {
+    dispatch({ type: 'TOGGLE_ALL_SOURCES', payload: selected });
+  }, []);
+
   const value = useMemo(
     () => ({
       state,
@@ -93,8 +155,13 @@ export function ContextInspectorProvider({ children }: ContextInspectorProviderP
       closeModal,
       setTab,
       setLoading,
+      updateContextName,
+      setSources,
+      setSourcesLoading,
+      toggleSource,
+      toggleAllSources,
     }),
-    [state, openModal, closeModal, setTab, setLoading]
+    [state, openModal, closeModal, setTab, setLoading, updateContextName, setSources, setSourcesLoading, toggleSource, toggleAllSources]
   );
 
   return (

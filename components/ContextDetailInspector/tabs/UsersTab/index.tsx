@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Shield, Eye, Edit, Crown, Clock, UserPlus, Loader2, Users } from 'lucide-react';
-import { cn } from '../../../../utils/cn';
+import { Clock, Loader2, Users } from 'lucide-react';
 import type { TabProps, UserAccess, UserRole } from '../../../../types/contextInspector';
 import { useUsers } from './hooks/useUsers';
 import { useActivity } from './hooks/useActivity';
@@ -11,13 +10,6 @@ import { InviteUserModal } from './components/InviteUserModal';
 import { ActivityEventComponent } from './components/ActivityEvent';
 import { ActivityFilter } from './components/ActivityFilter';
 import { PermissionInfo } from './components/PermissionInfo';
-
-const ROLE_CONFIG: Record<UserRole, { icon: typeof Crown; color: string; bgColor: string }> = {
-  owner: { icon: Crown, color: 'text-yellow-400', bgColor: 'bg-yellow-500/10' },
-  admin: { icon: Shield, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
-  editor: { icon: Edit, color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
-  viewer: { icon: Eye, color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
-};
 
 function formatLastActive(date: Date): string {
   const now = new Date();
@@ -105,11 +97,6 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
       <div className="h-10 bg-white/5 rounded-lg w-full" />
-      <div className="grid grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-24 bg-white/5 rounded-lg" />
-        ))}
-      </div>
       <div className="space-y-2">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="h-16 bg-white/5 rounded-lg" />
@@ -146,13 +133,6 @@ export function UsersTab({ contextItem }: TabProps) {
     isLoadingMore,
   } = useActivity(contextItem.id);
 
-  const usersByRole = {
-    owner: filteredUsers.filter((u) => u.role === 'owner'),
-    admin: filteredUsers.filter((u) => u.role === 'admin'),
-    editor: filteredUsers.filter((u) => u.role === 'editor'),
-    viewer: filteredUsers.filter((u) => u.role === 'viewer'),
-  };
-
   // Current user is the first owner (for demo purposes)
   const currentUserId = filteredUsers.find((u) => u.role === 'owner')?.id;
 
@@ -166,44 +146,12 @@ export function UsersTab({ contextItem }: TabProps) {
 
   return (
     <div className="flex flex-col h-full p-6 gap-6 overflow-y-auto">
-      {/* Search & Invite Header */}
-      <div className="flex items-center gap-4">
-        <UserSearch
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Search users..."
-          className="flex-1"
-        />
-        <button
-          onClick={() => setIsInviteModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Invite User</span>
-        </button>
-      </div>
-
-      {/* Summary Stats */}
-      <section>
-        <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">
-          Access Summary
-        </h3>
-        <div className="grid grid-cols-4 gap-4">
-          {(Object.entries(ROLE_CONFIG) as [UserRole, typeof ROLE_CONFIG.owner][]).map(([role, config]) => {
-            const Icon = config.icon;
-            const count = usersByRole[role].length;
-            return (
-              <div key={role} className="bg-white/5 border border-white/10 rounded-lg p-4 text-center">
-                <div className={cn('inline-flex p-2 rounded-lg mb-2', config.bgColor)}>
-                  <Icon className={cn('w-5 h-5', config.color)} />
-                </div>
-                <p className="text-2xl font-bold text-white">{count}</p>
-                <p className="text-xs text-gray-500 capitalize">{role}s</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      {/* Search Header */}
+      <UserSearch
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Search users..."
+      />
 
       {/* User List */}
       <section className="flex-1">

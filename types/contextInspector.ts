@@ -25,6 +25,19 @@ export type TimeRange = '7d' | '30d' | '90d' | 'all';
 // Chat message roles
 export type MessageRole = 'user' | 'assistant';
 
+// Source file types
+export type SourceFileType = 'typescript' | 'javascript' | 'json' | 'markdown' | 'css' | 'html' | 'python' | 'yaml' | 'other';
+
+// Source/File item for the sources list
+export interface SourceItem {
+  id: string;
+  name: string;
+  path: string;
+  fileType: SourceFileType;
+  size: number;
+  selected: boolean;
+}
+
 // Core modal state
 export interface ContextDetailModal {
   isOpen: boolean;
@@ -185,6 +198,8 @@ export interface ContextInspectorState {
   contextItem: ContextItem | null;
   activeTab: TabType;
   isLoading: boolean;
+  sources: SourceItem[];
+  sourcesLoading: boolean;
 }
 
 // Context Inspector Actions
@@ -192,7 +207,12 @@ export type ContextInspectorAction =
   | { type: 'OPEN_MODAL'; payload: ContextItem }
   | { type: 'CLOSE_MODAL' }
   | { type: 'SET_TAB'; payload: TabType }
-  | { type: 'SET_LOADING'; payload: boolean };
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'UPDATE_CONTEXT_NAME'; payload: string }
+  | { type: 'SET_SOURCES'; payload: SourceItem[] }
+  | { type: 'SET_SOURCES_LOADING'; payload: boolean }
+  | { type: 'TOGGLE_SOURCE'; payload: string }
+  | { type: 'TOGGLE_ALL_SOURCES'; payload: boolean };
 
 // Footer button configuration
 export interface FooterButton {
@@ -214,6 +234,7 @@ export interface TabConfig {
 export interface ModalHeaderProps {
   contextName: string;
   onClose: () => void;
+  onNameChange?: (newName: string) => void;
 }
 
 export interface TabNavigationProps {

@@ -1,22 +1,29 @@
 import {
   FileCode,
-  Package,
-  FolderGit2,
-  Files,
   Clock,
   HardDrive,
-  Bot,
-  RefreshCw,
-  Loader2,
+  Files as FilesIcon,
+  FileJson,
+  FileText,
+  FileType,
+  Code,
+  Palette,
+  Globe,
+  Check,
+  Minus,
 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
-import type { ContextItem, AISummary } from '../../../../types/contextInspector';
+import type { ContextItem, SourceItem, SourceFileType } from '../../../../types/contextInspector';
 
 interface SummaryPanelProps {
   contextItem: ContextItem;
-  summary: AISummary | null;
+  sources: SourceItem[];
   isLoading: boolean;
-  onRegenerate: () => void;
+  selectedCount: number;
+  totalCount: number;
+  allSelected: boolean;
+  onToggleSource: (sourceId: string) => void;
+  onToggleAll: (selected: boolean) => void;
 }
 
 function formatBytes(bytes: number): string {
@@ -44,24 +51,84 @@ function formatRelativeTime(date: Date): string {
   }
 }
 
-function getContextIcon(type: string) {
-  switch (type) {
-    case 'package':
-      return Package;
-    case 'repo':
-      return FolderGit2;
-    default:
-      return Files;
-  }
+// File type icon mapping
+const FILE_TYPE_ICONS: Record<SourceFileType, { icon: typeof FileCode; color: string }> = {
+  typescript: { icon: Code, color: 'text-blue-400' },
+  javascript: { icon: FileCode, color: 'text-yellow-400' },
+  json: { icon: FileJson, color: 'text-green-400' },
+  markdown: { icon: FileText, color: 'text-gray-400' },
+  css: { icon: Palette, color: 'text-pink-400' },
+  html: { icon: Globe, color: 'text-orange-400' },
+  python: { icon: Code, color: 'text-blue-300' },
+  yaml: { icon: FileType, color: 'text-purple-400' },
+  other: { icon: FilesIcon, color: 'text-gray-500' },
+};
+
+function SourceItemRow({
+  source,
+  onToggle,
+}: {
+  source: SourceItem;
+  onToggle: () => void;
+}) {
+  const { icon: Icon, color } = FILE_TYPE_ICONS[source.fileType];
+
+  return (
+    <button
+      onClick={onToggle}
+      className={cn(
+        'w-full flex items-center gap-3 px-3 py-2 rounded-lg',
+        'transition-all duration-150',
+        'hover:bg-white/5',
+        source.selected ? 'bg-white/5' : 'bg-transparent'
+      )}
+    >
+      {/* Checkbox */}
+      <div
+        className={cn(
+          'flex items-center justify-center w-5 h-5 rounded border',
+          'transition-all duration-150',
+          source.selected
+            ? 'bg-blue-500 border-blue-500'
+            : 'bg-transparent border-white/30 hover:border-white/50'
+        )}
+      >
+        {source.selected && <Check className="w-3 h-3 text-white" />}
+      </div>
+
+      {/* File icon */}
+      <Icon className={cn('w-4 h-4 flex-shrink-0', color)} />
+
+      {/* File name */}
+      <span
+        className={cn(
+          'flex-1 text-left text-sm truncate',
+          source.selected ? 'text-white' : 'text-gray-400'
+        )}
+        title={source.path}
+      >
+        {source.name}
+      </span>
+
+      {/* File size */}
+      <span className="text-xs text-gray-500 flex-shrink-0">
+        {formatBytes(source.size)}
+      </span>
+    </button>
+  );
 }
 
 export function SummaryPanel({
   contextItem,
-  summary,
+  sources,
   isLoading,
-  onRegenerate,
+  selectedCount,
+  totalCount,
+  allSelected,
+  onToggleSource,
+  onToggleAll,
 }: SummaryPanelProps) {
-  const ContextIcon = getContextIcon(contextItem.type);
+  const someSelected = selectedCount > 0 && selectedCount < totalCount;
 
   return (
     <div className="flex flex-col h-full bg-white/5 border border-white/10 rounded-lg overflow-hidden">
@@ -72,20 +139,9 @@ export function SummaryPanel({
         </h4>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* Context name with icon */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-            <ContextIcon className="w-5 h-5 text-blue-400" />
-          </div>
-          <div>
-            <h5 className="text-white font-semibold">{contextItem.name}</h5>
-            <p className="text-xs text-gray-400 capitalize">{contextItem.type}</p>
-          </div>
-        </div>
-
+      <div className="flex-1 overflow-hidden flex flex-col p-4">
         {/* Metadata cards */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-2 gap-3 mb-4 flex-shrink-0">
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
             <div className="flex items-center gap-2 text-gray-400 mb-1">
               <FileCode className="w-3.5 h-3.5" />
@@ -106,7 +162,7 @@ export function SummaryPanel({
           </div>
           <div className="bg-white/5 border border-white/10 rounded-lg p-3">
             <div className="flex items-center gap-2 text-gray-400 mb-1">
-              <Files className="w-3.5 h-3.5" />
+              <FilesIcon className="w-3.5 h-3.5" />
               <span className="text-xs font-medium">Files</span>
             </div>
             <p className="text-white font-semibold text-sm">
@@ -125,86 +181,87 @@ export function SummaryPanel({
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-white/10 my-4" />
+        <div className="h-px bg-white/10 my-4 flex-shrink-0" />
 
-        {/* AI Summary Section */}
-        {isLoading ? (
-          <div className="space-y-3 animate-pulse">
+        {/* Sources Section */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Sources Header with Select All */}
+          <div className="flex items-center justify-between mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-gray-700 rounded" />
-              <div className="h-4 bg-gray-700 rounded w-32" />
-            </div>
-            <div className="space-y-2">
-              <div className="h-3 bg-gray-700 rounded w-full" />
-              <div className="h-3 bg-gray-700 rounded w-5/6" />
-              <div className="h-3 bg-gray-700 rounded w-4/6" />
-            </div>
-            <div className="space-y-2 mt-4">
-              <div className="h-3 bg-gray-700 rounded w-24" />
-              <div className="h-3 bg-gray-700 rounded w-48" />
-              <div className="h-3 bg-gray-700 rounded w-44" />
-              <div className="h-3 bg-gray-700 rounded w-40" />
-            </div>
-          </div>
-        ) : summary ? (
-          <>
-            <div className="flex items-center gap-2 mb-3">
-              <Bot className="w-4 h-4 text-purple-400" />
+              <FilesIcon className="w-4 h-4 text-blue-400" />
               <span className="text-sm font-medium text-white">
-                AI-Generated Summary
+                Bronnen
+              </span>
+              <span className="text-xs text-gray-500">
+                ({selectedCount}/{totalCount} geselecteerd)
               </span>
             </div>
-            <p className="text-sm text-gray-300 leading-relaxed mb-4">
-              {summary.description}
-            </p>
-
-            {summary.keyComponents.length > 0 && (
-              <>
-                <h6 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-                  Key Components
-                </h6>
-                <ul className="space-y-1.5">
-                  {summary.keyComponents.map((component, index) => (
-                    <li
-                      key={index}
-                      className="flex items-start gap-2 text-sm text-gray-300"
-                    >
-                      <span className="text-blue-400 mt-1">•</span>
-                      <span>{component}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-4">
-            <p className="text-gray-400 text-sm">No summary available</p>
           </div>
-        )}
-      </div>
 
-      {/* Regenerate button */}
-      <div className="px-4 py-3 border-t border-white/10">
-        <button
-          onClick={onRegenerate}
-          disabled={isLoading}
-          className={cn(
-            'w-full flex items-center justify-center gap-2 px-4 py-2',
-            'bg-white/5 border border-white/10 rounded-lg',
-            'text-sm text-gray-300 font-medium',
-            'hover:bg-white/10 hover:text-white',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            'transition-all duration-200'
-          )}
-        >
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4" />
-          )}
-          Regenerate Summary
-        </button>
+          {/* Select All Row */}
+          <button
+            onClick={() => onToggleAll(!allSelected)}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2 rounded-lg mb-2 flex-shrink-0',
+              'transition-all duration-150',
+              'hover:bg-white/5 border border-white/10'
+            )}
+          >
+            {/* Checkbox */}
+            <div
+              className={cn(
+                'flex items-center justify-center w-5 h-5 rounded border',
+                'transition-all duration-150',
+                allSelected
+                  ? 'bg-blue-500 border-blue-500'
+                  : someSelected
+                  ? 'bg-blue-500/50 border-blue-500'
+                  : 'bg-transparent border-white/30 hover:border-white/50'
+              )}
+            >
+              {allSelected ? (
+                <Check className="w-3 h-3 text-white" />
+              ) : someSelected ? (
+                <Minus className="w-3 h-3 text-white" />
+              ) : null}
+            </div>
+
+            <span className="text-sm text-white font-medium">
+              Alle bronnen selecteren
+            </span>
+          </button>
+
+          {/* Sources List - Scrollable */}
+          <div className="flex-1 overflow-y-auto -mx-1 px-1">
+            {isLoading ? (
+              <div className="space-y-2 animate-pulse">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2">
+                    <div className="w-5 h-5 bg-gray-700 rounded" />
+                    <div className="w-4 h-4 bg-gray-700 rounded" />
+                    <div className="flex-1 h-4 bg-gray-700 rounded" />
+                    <div className="w-12 h-3 bg-gray-700 rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : sources.length === 0 ? (
+              <div className="text-center py-8">
+                <FilesIcon className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                <p className="text-gray-400 text-sm">Geen bronnen gevonden</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {sources.map((source) => (
+                  <SourceItemRow
+                    key={source.id}
+                    source={source}
+                    onToggle={() => onToggleSource(source.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
