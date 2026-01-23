@@ -1,0 +1,10 @@
+services:
+  kijko-app:
+    build:
+      context: .
+      args:
+        GEMINI_API_KEY: ${GEMINI_API_KEY}
+    container_name: kijko-mvp
+    restart: unless-stopped
+    ports:
+      - "3000:80"
