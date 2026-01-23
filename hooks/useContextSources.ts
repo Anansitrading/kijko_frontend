@@ -2,6 +2,18 @@ import { useEffect, useCallback } from 'react';
 import { useContextInspector } from '../contexts/ContextInspectorContext';
 import type { SourceItem, SourceFileType } from '../types/contextInspector';
 
+// Allowed file extensions for drag & drop
+const ALLOWED_EXTENSIONS = new Set([
+  'ts', 'tsx', 'js', 'jsx', 'json', 'md', 'mdx',
+  'css', 'scss', 'sass', 'html', 'yml', 'yaml', 'py'
+]);
+
+// Check if a file has an allowed extension
+function isAllowedFile(filename: string): boolean {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  return ext ? ALLOWED_EXTENSIONS.has(ext) : false;
+}
+
 // Helper to determine file type from extension
 function getFileType(filename: string): SourceFileType {
   const ext = filename.split('.').pop()?.toLowerCase();
@@ -42,6 +54,7 @@ const mockSources: SourceItem[] = [
     fileType: 'typescript',
     size: 4520,
     selected: true,
+    compressed: true,
   },
   {
     id: 'src-2',
@@ -50,6 +63,7 @@ const mockSources: SourceItem[] = [
     fileType: 'typescript',
     size: 3280,
     selected: true,
+    compressed: true,
   },
   {
     id: 'src-3',
@@ -58,6 +72,7 @@ const mockSources: SourceItem[] = [
     fileType: 'typescript',
     size: 1890,
     selected: true,
+    compressed: true,
   },
   {
     id: 'src-4',
@@ -66,6 +81,7 @@ const mockSources: SourceItem[] = [
     fileType: 'typescript',
     size: 5120,
     selected: true,
+    compressed: true,
   },
   {
     id: 'src-5',
@@ -74,6 +90,7 @@ const mockSources: SourceItem[] = [
     fileType: 'typescript',
     size: 4350,
     selected: true,
+    compressed: true,
   },
   {
     id: 'src-6',
@@ -82,6 +99,7 @@ const mockSources: SourceItem[] = [
     fileType: 'json',
     size: 1240,
     selected: true,
+    compressed: true,
   },
   {
     id: 'src-7',
@@ -90,6 +108,7 @@ const mockSources: SourceItem[] = [
     fileType: 'markdown',
     size: 2890,
     selected: false,
+    compressed: true,
   },
   {
     id: 'src-8',
@@ -98,6 +117,7 @@ const mockSources: SourceItem[] = [
     fileType: 'javascript',
     size: 890,
     selected: true,
+    compressed: true,
   },
   {
     id: 'src-9',
@@ -106,6 +126,7 @@ const mockSources: SourceItem[] = [
     fileType: 'typescript',
     size: 6780,
     selected: true,
+    compressed: true,
   },
   {
     id: 'src-10',
@@ -114,6 +135,7 @@ const mockSources: SourceItem[] = [
     fileType: 'css',
     size: 1560,
     selected: false,
+    compressed: true,
   },
   {
     id: 'src-11',
@@ -122,6 +144,7 @@ const mockSources: SourceItem[] = [
     fileType: 'typescript',
     size: 2340,
     selected: true,
+    compressed: true,
   },
   {
     id: 'src-12',
@@ -130,8 +153,15 @@ const mockSources: SourceItem[] = [
     fileType: 'typescript',
     size: 2890,
     selected: true,
+    compressed: true,
   },
 ];
+
+interface FilesAddedResult {
+  added: number;
+  rejected: number;
+  rejectedFiles: string[];
+}
 
 interface UseContextSourcesReturn {
   sources: SourceItem[];
@@ -141,10 +171,11 @@ interface UseContextSourcesReturn {
   allSelected: boolean;
   toggleSource: (sourceId: string) => void;
   toggleAll: (selected: boolean) => void;
+  handleFilesAdded: (files: FileList) => FilesAddedResult;
 }
 
 export function useContextSources(contextId: string): UseContextSourcesReturn {
-  const { state, setSources, setSourcesLoading, toggleSource, toggleAllSources } = useContextInspector();
+  const { state, setSources, setSourcesLoading, toggleSource, toggleAllSources, addSources } = useContextInspector();
   const { sources, sourcesLoading } = state;
 
   const fetchSources = useCallback(async () => {
@@ -178,6 +209,37 @@ export function useContextSources(contextId: string): UseContextSourcesReturn {
     toggleAllSources(selected);
   }, [toggleAllSources]);
 
+  const handleFilesAdded = useCallback((files: FileList): FilesAddedResult => {
+    const newSources: SourceItem[] = [];
+    const rejectedFiles: string[] = [];
+
+    Array.from(files).forEach((file) => {
+      if (isAllowedFile(file.name)) {
+        newSources.push({
+          id: `src-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+          name: file.name,
+          path: file.name,
+          fileType: getFileType(file.name),
+          size: file.size,
+          selected: true,
+          compressed: false,
+        });
+      } else {
+        rejectedFiles.push(file.name);
+      }
+    });
+
+    if (newSources.length > 0) {
+      addSources(newSources);
+    }
+
+    return {
+      added: newSources.length,
+      rejected: rejectedFiles.length,
+      rejectedFiles,
+    };
+  }, [addSources]);
+
   return {
     sources,
     isLoading: sourcesLoading,
@@ -186,6 +248,7 @@ export function useContextSources(contextId: string): UseContextSourcesReturn {
     allSelected,
     toggleSource,
     toggleAll: handleToggleAll,
+    handleFilesAdded,
   };
 }
 

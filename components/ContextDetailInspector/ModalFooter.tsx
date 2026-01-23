@@ -8,7 +8,8 @@ import {
   Users,
   Download,
   Filter,
-  Loader2
+  Loader2,
+  Clock
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import type { ModalFooterProps, TabType } from '../../types/contextInspector';
@@ -72,25 +73,56 @@ function FooterButton({ config, onClick, isLoading, disabled }: ButtonProps) {
   );
 }
 
+function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffHours < 1) {
+    return 'Just now';
+  } else if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  } else if (diffDays < 7) {
+    return `${diffDays}d ago`;
+  } else {
+    return date.toLocaleDateString();
+  }
+}
+
 export function ModalFooter({
   activeTab,
   onPrimaryAction,
   onSecondaryAction,
-  isLoading
+  isLoading,
+  lastUpdated
 }: ModalFooterProps) {
   const buttons = FOOTER_BUTTONS[activeTab];
 
   return (
-    <div className="flex items-center justify-end gap-3 px-6 h-16 border-t border-white/10 shrink-0">
-      <FooterButton
-        config={buttons.secondary}
-        onClick={onSecondaryAction}
-      />
-      <FooterButton
-        config={buttons.primary}
-        onClick={onPrimaryAction}
-        isLoading={isLoading}
-      />
+    <div className="flex items-center justify-between px-6 h-16 border-t border-white/10 shrink-0">
+      {/* Updated timestamp - left side */}
+      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+        {lastUpdated && (
+          <>
+            <Clock className="w-3 h-3" />
+            <span>Updated: {formatRelativeTime(lastUpdated)}</span>
+          </>
+        )}
+      </div>
+
+      {/* Action buttons - right side */}
+      <div className="flex items-center gap-3">
+        <FooterButton
+          config={buttons.secondary}
+          onClick={onSecondaryAction}
+        />
+        <FooterButton
+          config={buttons.primary}
+          onClick={onPrimaryAction}
+          isLoading={isLoading}
+        />
+      </div>
     </div>
   );
 }

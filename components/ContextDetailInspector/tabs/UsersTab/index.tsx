@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Clock, Loader2, Users } from 'lucide-react';
 import type { TabProps, UserAccess, UserRole } from '../../../../types/contextInspector';
-import { useUsers } from './hooks/useUsers';
-import { useActivity } from './hooks/useActivity';
+import { useContextUsers as useUsers } from '../../../../hooks/useContextUsers';
+import { useContextActivity as useActivity } from '../../../../hooks/useContextActivity';
 import { UserSearch } from './components/UserSearch';
 import { PermissionDropdown } from './components/PermissionDropdown';
 import { UserSettingsMenu } from './components/UserSettingsMenu';
@@ -248,5 +248,5 @@ export function UsersTab({ contextItem }: TabProps) {
 }
 
 // Re-export hooks for external use
-export { useUsers } from './hooks/useUsers';
-export { useActivity } from './hooks/useActivity';
+export { useContextUsers as useUsers, type UseContextUsersReturn as UseUsersReturn } from '../../../../hooks/useContextUsers';
+export { useContextActivity as useActivity, type UseContextActivityReturn as UseActivityReturn } from '../../../../hooks/useContextActivity';

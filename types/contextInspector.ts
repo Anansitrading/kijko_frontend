@@ -1,6 +1,13 @@
 // Context Detail Inspector TypeScript Interfaces
 // Sprint 1: Foundation - Modal Structure & Core Infrastructure
 
+// Import unified role system
+import { type Role, type UserRole, ROLE_CONFIG, getRoleLabel, getRoleColor } from './roles';
+
+// Re-export role types for backwards compatibility
+export type { Role, UserRole };
+export { ROLE_CONFIG, getRoleLabel, getRoleColor };
+
 // Tab types for the modal
 export type TabType = 'overview' | 'compression' | 'enrichments' | 'users' | 'changelog';
 
@@ -9,9 +16,6 @@ export type ContextItemType = 'package' | 'repo' | 'files';
 
 // Context item status
 export type ContextStatus = 'cached' | 'expired' | 'pending';
-
-// User roles
-export type UserRole = 'owner' | 'admin' | 'editor' | 'viewer';
 
 // Activity event types
 export type ActivityEventType = 'view' | 'chat' | 'ingestion' | 'permission' | 'config';
@@ -36,6 +40,7 @@ export interface SourceItem {
   fileType: SourceFileType;
   size: number;
   selected: boolean;
+  compressed: boolean; // Whether the file has been compressed/ingested
 }
 
 // Core modal state
@@ -212,7 +217,8 @@ export type ContextInspectorAction =
   | { type: 'SET_SOURCES'; payload: SourceItem[] }
   | { type: 'SET_SOURCES_LOADING'; payload: boolean }
   | { type: 'TOGGLE_SOURCE'; payload: string }
-  | { type: 'TOGGLE_ALL_SOURCES'; payload: boolean };
+  | { type: 'TOGGLE_ALL_SOURCES'; payload: boolean }
+  | { type: 'ADD_SOURCES'; payload: SourceItem[] };
 
 // Footer button configuration
 export interface FooterButton {
@@ -247,6 +253,7 @@ export interface ModalFooterProps {
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
   isLoading?: boolean;
+  lastUpdated?: Date;
 }
 
 // Tab component props

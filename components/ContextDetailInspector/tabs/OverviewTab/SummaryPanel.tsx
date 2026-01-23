@@ -1,7 +1,6 @@
+import { useState, useCallback, useRef } from 'react';
 import {
   FileCode,
-  Clock,
-  HardDrive,
   Files as FilesIcon,
   FileJson,
   FileText,
@@ -11,9 +10,20 @@ import {
   Globe,
   Check,
   Minus,
+  Plus,
+  Upload,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import type { ContextItem, SourceItem, SourceFileType } from '../../../../types/contextInspector';
+
+interface FilesAddedResult {
+  added: number;
+  rejected: number;
+  rejectedFiles: string[];
+}
 
 interface SummaryPanelProps {
   contextItem: ContextItem;
@@ -24,6 +34,10 @@ interface SummaryPanelProps {
   allSelected: boolean;
   onToggleSource: (sourceId: string) => void;
   onToggleAll: (selected: boolean) => void;
+  onFilesAdded?: (files: FileList) => FilesAddedResult;
+  onShowToast?: (message: string) => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 function formatBytes(bytes: number): string {
@@ -32,23 +46,6 @@ function formatBytes(bytes: number): string {
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-}
-
-function formatRelativeTime(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffHours < 1) {
-    return 'Just now';
-  } else if (diffHours < 24) {
-    return `${diffHours}h ago`;
-  } else if (diffDays < 7) {
-    return `${diffDays}d ago`;
-  } else {
-    return date.toLocaleDateString();
-  }
 }
 
 // File type icon mapping
@@ -110,6 +107,16 @@ function SourceItemRow({
         {source.name}
       </span>
 
+      {/* Uncompressed indicator */}
+      {!source.compressed && (
+        <span
+          className="flex items-center gap-1 text-xs text-amber-400 flex-shrink-0"
+          title="Not yet compressed"
+        >
+          <AlertCircle className="w-3 h-3" />
+        </span>
+      )}
+
       {/* File size */}
       <span className="text-xs text-gray-500 flex-shrink-0">
         {formatBytes(source.size)}
@@ -127,140 +134,241 @@ export function SummaryPanel({
   allSelected,
   onToggleSource,
   onToggleAll,
+  onFilesAdded,
+  onShowToast,
+  collapsed = false,
+  onToggleCollapse,
 }: SummaryPanelProps) {
   const someSelected = selectedCount > 0 && selectedCount < totalCount;
+  const [isDragOver, setIsDragOver] = useState(false);
+  const dragCounterRef = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle drag events
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragOver(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragOver(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    dragCounterRef.current = 0;
+
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0 && onFilesAdded) {
+      const result = onFilesAdded(files);
+      if (result.added > 0 && onShowToast) {
+        onShowToast('Deze bestanden zijn nog niet gecomprimeerd');
+      }
+    }
+  }, [onFilesAdded, onShowToast]);
+
+  // Handle Add Files button click
+  const handleAddFilesClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0 && onFilesAdded) {
+      const result = onFilesAdded(files);
+      if (result.added > 0 && onShowToast) {
+        onShowToast('Deze bestanden zijn nog niet gecomprimeerd');
+      }
+    }
+    // Reset input so same files can be selected again
+    e.target.value = '';
+  }, [onFilesAdded, onShowToast]);
+
+  // Count uncompressed files
+  const uncompressedCount = sources.filter(s => !s.compressed).length;
 
   return (
-    <div className="flex flex-col h-full bg-white/5 border border-white/10 rounded-lg overflow-hidden">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-white/10">
-        <h4 className="text-sm font-medium text-white uppercase tracking-wider">
-          Context Summary
-        </h4>
-      </div>
+    <div
+      className={cn(
+        'flex flex-col h-full bg-white/5 rounded-lg overflow-hidden',
+        'border-2 transition-all duration-200',
+        isDragOver
+          ? 'border-blue-500 border-dashed bg-blue-500/5'
+          : 'border-white/10 border-solid'
+      )}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        accept=".ts,.tsx,.js,.jsx,.json,.md,.mdx,.css,.scss,.sass,.html,.yml,.yaml,.py"
+        onChange={handleFileInputChange}
+      />
 
-      <div className="flex-1 overflow-hidden flex flex-col p-4">
-        {/* Metadata cards */}
-        <div className="grid grid-cols-2 gap-3 mb-4 flex-shrink-0">
-          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-gray-400 mb-1">
-              <FileCode className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">Type</span>
-            </div>
-            <p className="text-white font-semibold text-sm capitalize">
-              {contextItem.type}
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-gray-400 mb-1">
-              <HardDrive className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">Size</span>
-            </div>
-            <p className="text-white font-semibold text-sm">
-              {formatBytes(contextItem.size)}
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-gray-400 mb-1">
-              <FilesIcon className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">Files</span>
-            </div>
-            <p className="text-white font-semibold text-sm">
-              {contextItem.fileCount.toLocaleString()}
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-gray-400 mb-1">
-              <Clock className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">Updated</span>
-            </div>
-            <p className="text-white font-semibold text-sm">
-              {formatRelativeTime(contextItem.lastUpdated)}
-            </p>
+      {/* Drag overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-blue-500/10 backdrop-blur-[1px] rounded-lg pointer-events-none">
+          <div className="flex flex-col items-center gap-2 text-blue-400">
+            <Upload className="w-8 h-8" />
+            <span className="text-sm font-medium">Drop files here</span>
           </div>
         </div>
+      )}
 
-        {/* Divider */}
-        <div className="h-px bg-white/10 my-4 flex-shrink-0" />
-
+      <div className={cn(
+        'flex-1 overflow-hidden flex flex-col relative',
+        collapsed ? 'p-2' : 'p-4'
+      )}>
         {/* Sources Section */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Sources Header with Select All */}
-          <div className="flex items-center justify-between mb-3 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <FilesIcon className="w-4 h-4 text-blue-400" />
-              <span className="text-sm font-medium text-white">
-                Bronnen
-              </span>
-              <span className="text-xs text-gray-500">
-                ({selectedCount}/{totalCount} geselecteerd)
-              </span>
-            </div>
-          </div>
-
-          {/* Select All Row */}
-          <button
-            onClick={() => onToggleAll(!allSelected)}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2 rounded-lg mb-2 flex-shrink-0',
-              'transition-all duration-150',
-              'hover:bg-white/5 border border-white/10'
-            )}
-          >
-            {/* Checkbox */}
-            <div
-              className={cn(
-                'flex items-center justify-center w-5 h-5 rounded border',
-                'transition-all duration-150',
-                allSelected
-                  ? 'bg-blue-500 border-blue-500'
-                  : someSelected
-                  ? 'bg-blue-500/50 border-blue-500'
-                  : 'bg-transparent border-white/30 hover:border-white/50'
+          {/* Collapsed View - Centered expand button */}
+          {collapsed ? (
+            <div className="flex flex-col items-center justify-center h-full">
+              {onToggleCollapse && (
+                <button
+                  onClick={onToggleCollapse}
+                  className={cn(
+                    'flex items-center justify-center w-8 h-8 rounded',
+                    'text-gray-400 hover:text-white hover:bg-white/10',
+                    'transition-all duration-150'
+                  )}
+                  title="Expand panel"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
               )}
-            >
-              {allSelected ? (
-                <Check className="w-3 h-3 text-white" />
-              ) : someSelected ? (
-                <Minus className="w-3 h-3 text-white" />
-              ) : null}
             </div>
+          ) : (
+            <>
+              {/* Sources Header */}
+              <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                <div className="flex items-center gap-2">
+                  {/* Select All Checkbox */}
+                  <button
+                    onClick={() => onToggleAll(!allSelected)}
+                    className={cn(
+                      'flex items-center justify-center w-5 h-5 rounded border',
+                      'transition-all duration-150',
+                      allSelected
+                        ? 'bg-blue-500 border-blue-500'
+                        : someSelected
+                        ? 'bg-blue-500/50 border-blue-500'
+                        : 'bg-transparent border-white/30 hover:border-white/50'
+                    )}
+                    title={allSelected ? 'Deselect all' : 'Select all'}
+                  >
+                    {allSelected ? (
+                      <Check className="w-3 h-3 text-white" />
+                    ) : someSelected ? (
+                      <Minus className="w-3 h-3 text-white" />
+                    ) : null}
+                  </button>
+                  <span className="text-sm font-medium text-white">
+                    Source Files
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    ({selectedCount}/{totalCount} selected)
+                  </span>
+                  {uncompressedCount > 0 && (
+                    <span className="text-xs text-amber-400 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {uncompressedCount} uncompressed
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">
+                    {formatBytes(contextItem.size)}
+                  </span>
+                  {/* Collapse Button */}
+                  {onToggleCollapse && (
+                    <button
+                      onClick={onToggleCollapse}
+                      className={cn(
+                        'flex items-center justify-center w-6 h-6 rounded',
+                        'text-gray-400 hover:text-white hover:bg-white/10',
+                        'transition-all duration-150'
+                      )}
+                      title="Collapse panel"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
 
-            <span className="text-sm text-white font-medium">
-              Alle bronnen selecteren
-            </span>
-          </button>
-
-          {/* Sources List - Scrollable */}
-          <div className="flex-1 overflow-y-auto -mx-1 px-1">
-            {isLoading ? (
-              <div className="space-y-2 animate-pulse">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 px-3 py-2">
-                    <div className="w-5 h-5 bg-gray-700 rounded" />
-                    <div className="w-4 h-4 bg-gray-700 rounded" />
-                    <div className="flex-1 h-4 bg-gray-700 rounded" />
-                    <div className="w-12 h-3 bg-gray-700 rounded" />
+              {/* Sources List - Scrollable */}
+              <div className="flex-1 overflow-y-auto -mx-1 px-1">
+                {isLoading ? (
+                  <div className="space-y-2 animate-pulse">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-3 px-3 py-2">
+                        <div className="w-5 h-5 bg-gray-700 rounded" />
+                        <div className="w-4 h-4 bg-gray-700 rounded" />
+                        <div className="flex-1 h-4 bg-gray-700 rounded" />
+                        <div className="w-12 h-3 bg-gray-700 rounded" />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : sources.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FilesIcon className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                    <p className="text-gray-400 text-sm">No source files found</p>
+                    <p className="text-gray-500 text-xs mt-1">Drop files here or click Add Files</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {sources.map((source) => (
+                      <SourceItemRow
+                        key={source.id}
+                        source={source}
+                        onToggle={() => onToggleSource(source.id)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : sources.length === 0 ? (
-              <div className="text-center py-8">
-                <FilesIcon className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm">Geen bronnen gevonden</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {sources.map((source) => (
-                  <SourceItemRow
-                    key={source.id}
-                    source={source}
-                    onToggle={() => onToggleSource(source.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+
+              {/* Add Files Button */}
+              {onFilesAdded && (
+                <button
+                  onClick={handleAddFilesClick}
+                  className={cn(
+                    'mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg',
+                    'bg-blue-500/10 border border-blue-500/30',
+                    'text-blue-400 text-sm font-medium',
+                    'hover:bg-blue-500/20 hover:border-blue-500/50',
+                    'transition-all duration-150'
+                  )}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Files
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

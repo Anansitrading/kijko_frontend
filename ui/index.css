@@ -93,8 +93,8 @@ body {
 /* Nessfab Grid Background Pattern */
 .grid-pattern {
     background-image:
-        linear-gradient(to right, #1e293b 1px, transparent 1px),
-        linear-gradient(to bottom, #1e293b 1px, transparent 1px);
+        linear-gradient(to right, var(--border) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--border) 1px, transparent 1px);
     background-size: 4rem 4rem;
     mask-image: radial-gradient(
         ellipse 60% 50% at 50% 0%,
@@ -104,23 +104,23 @@ body {
     opacity: 0.2;
 }
 
-/* Custom Scrollbar - Cyberpunk Style */
+/* Custom Scrollbar - Theme-aware */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #0f172a;
+    background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: var(--border);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+    background: var(--muted-foreground);
 }
 
 /* Glow Effects */

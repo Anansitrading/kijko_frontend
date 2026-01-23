@@ -1,7 +1,9 @@
 import React from "react";
-import { TerminalSquare, Settings, Cpu, ServerCog, Bot, X } from "lucide-react";
+import { TerminalSquare, Settings, ServerCog, Bot, X, Sun, Moon } from "lucide-react";
 import { WorkspaceMode } from "../types";
 import { cn } from "../utils/cn";
+import { useTheme } from "../hooks/useTheme";
+import { useAutoSave } from "../hooks/useAutoSave";
 
 interface SidebarProps {
   currentMode: WorkspaceMode;
@@ -18,6 +20,15 @@ export function Sidebar({
   isOpen = false,
   onClose,
 }: SidebarProps) {
+  const { isDark, toggleTheme } = useTheme();
+  const { save } = useAutoSave();
+
+  const handleThemeToggle = () => {
+    const newTheme = isDark ? 'light' : 'dark';
+    toggleTheme();
+    save('theme', newTheme, true);
+  };
+
   const menuItems = [
     {
       id: "agents" as WorkspaceMode,
@@ -40,7 +51,7 @@ export function Sidebar({
   ];
 
   const sidebarClasses = `
-    bg-slate-900 border-r border-slate-800 flex flex-col h-full flex-shrink-0
+    bg-sidebar border-r border-sidebar-border flex flex-col h-full flex-shrink-0
     fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static
     ${isOpen ? "translate-x-0" : "-translate-x-full"}
   `;
@@ -49,7 +60,7 @@ export function Sidebar({
     <>
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
         onClick={onClose}
       />
 
@@ -58,19 +69,19 @@ export function Sidebar({
         {/* Header / Brand */}
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
-              <span className="font-bold text-white text-lg">K</span>
+            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+              <span className="font-bold text-primary-foreground text-lg">K</span>
             </div>
             <div>
-              <h1 className="font-bold text-slate-100 tracking-tight">KIJKO</h1>
-              <p className="text-xs text-slate-500 font-mono">
+              <h1 className="font-bold text-sidebar-foreground tracking-tight">KIJKO</h1>
+              <p className="text-xs text-muted-foreground font-mono">
                 CMD_CENTER_v2.1
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="md:hidden text-slate-500 hover:text-slate-300"
+            className="md:hidden text-muted-foreground hover:text-sidebar-foreground"
           >
             <X size={20} />
           </button>
@@ -88,16 +99,16 @@ export function Sidebar({
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
                   isActive
-                    ? "bg-blue-600/10 text-blue-400 border border-blue-600/20"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200",
+                    ? "bg-sidebar-primary/10 text-sidebar-primary border border-sidebar-primary/20"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               >
                 <Icon
                   size={18}
                   className={
                     isActive
-                      ? "text-blue-400"
-                      : "text-slate-500 group-hover:text-slate-300"
+                      ? "text-sidebar-primary"
+                      : "text-muted-foreground group-hover:text-sidebar-accent-foreground"
                   }
                 />
                 <div className="text-left">
@@ -112,23 +123,34 @@ export function Sidebar({
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-2 mb-4 px-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-            <span className="text-xs text-emerald-500 font-mono">
+            <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+            <span className="text-xs text-accent font-mono">
               SYSTEM OPTIMAL
             </span>
           </div>
-          <button
-            onClick={onOpenSettings}
-            className="w-full flex items-center gap-2 text-xs text-slate-500 hover:text-slate-300 px-2 py-1 transition-colors group"
-          >
-            <Settings
-              size={14}
-              className="transition-transform duration-500 group-hover:rotate-90"
-            />
-            System Settings
-          </button>
+          <div className="flex items-center justify-between">
+            <button
+              onClick={onOpenSettings}
+              className="flex items-center gap-2 text-xs text-muted-foreground hover:text-sidebar-foreground px-2 py-1 transition-colors group"
+            >
+              <Settings
+                size={14}
+                className="transition-transform duration-500 group-hover:rotate-90"
+              />
+              System Settings
+            </button>
+            {/* Quick Theme Toggle */}
+            <button
+              onClick={handleThemeToggle}
+              className="p-2 text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-colors"
+              aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+              title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+            >
+              {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          </div>
         </div>
       </aside>
     </>

@@ -217,7 +217,7 @@ export function ContextDetailInspector() {
       <div
         className={cn(
           'fixed inset-0 z-50 flex items-center justify-center',
-          'bg-slate-950/80 backdrop-blur-sm',
+          'bg-background/80 backdrop-blur-sm',
           'animate-in fade-in duration-200'
         )}
       >
@@ -229,7 +229,7 @@ export function ContextDetailInspector() {
           aria-labelledby="modal-title"
           className={cn(
             'relative w-[900px] max-w-[95vw] h-[700px] max-h-[90vh]',
-            'bg-[#0f1419] border border-white/10 rounded-xl',
+            'bg-card border border-border rounded-xl',
             'shadow-2xl overflow-hidden',
             'flex flex-col',
             'animate-in fade-in zoom-in-95 duration-200'
@@ -264,6 +264,7 @@ export function ContextDetailInspector() {
               onPrimaryAction={handlePrimaryAction}
               onSecondaryAction={handleSecondaryAction}
               isLoading={isActionLoading}
+              lastUpdated={state.contextItem.lastUpdated}
             />
           </ModalErrorBoundary>
         </div>

@@ -81,6 +81,14 @@ function contextInspectorReducer(
           selected: action.payload,
         })),
       };
+    case 'ADD_SOURCES': {
+      const existingPaths = new Set(state.sources.map((s) => s.path));
+      const newSources = action.payload.filter((s) => !existingPaths.has(s.path));
+      return {
+        ...state,
+        sources: [...state.sources, ...newSources],
+      };
+    }
     default:
       return state;
   }
@@ -98,6 +106,7 @@ interface ContextInspectorContextValue {
   setSourcesLoading: (loading: boolean) => void;
   toggleSource: (sourceId: string) => void;
   toggleAllSources: (selected: boolean) => void;
+  addSources: (sources: SourceItem[]) => void;
 }
 
 // Create context
@@ -148,6 +157,10 @@ export function ContextInspectorProvider({ children }: ContextInspectorProviderP
     dispatch({ type: 'TOGGLE_ALL_SOURCES', payload: selected });
   }, []);
 
+  const addSources = useCallback((sources: SourceItem[]) => {
+    dispatch({ type: 'ADD_SOURCES', payload: sources });
+  }, []);
+
   const value = useMemo(
     () => ({
       state,
@@ -160,8 +173,9 @@ export function ContextInspectorProvider({ children }: ContextInspectorProviderP
       setSourcesLoading,
       toggleSource,
       toggleAllSources,
+      addSources,
     }),
-    [state, openModal, closeModal, setTab, setLoading, updateContextName, setSources, setSourcesLoading, toggleSource, toggleAllSources]
+    [state, openModal, closeModal, setTab, setLoading, updateContextName, setSources, setSourcesLoading, toggleSource, toggleAllSources, addSources]
   );
 
   return (
