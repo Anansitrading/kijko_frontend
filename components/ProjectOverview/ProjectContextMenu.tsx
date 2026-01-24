@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { FolderOpen, Pencil, Share2, Trash2 } from 'lucide-react';
+import { FolderOpen, Pencil, Share2, Users, Trash2 } from 'lucide-react';
 import { Project } from '../../types';
 
 interface ProjectContextMenuProps {
@@ -52,12 +52,12 @@ export function ProjectContextMenu({
   const menuItems = [
     {
       icon: FolderOpen,
-      label: 'Openen',
+      label: 'Open',
       onClick: onOpen,
     },
     {
       icon: Pencil,
-      label: 'Hernoemen',
+      label: 'Rename',
       onClick: () => {
         // TODO: Implement rename functionality
         onClose();
@@ -65,15 +65,23 @@ export function ProjectContextMenu({
     },
     {
       icon: Share2,
-      label: 'Delen',
+      label: 'Share',
       onClick: () => {
         // TODO: Implement share functionality
         onClose();
       },
     },
     {
+      icon: Users,
+      label: 'Users',
+      onClick: () => {
+        // TODO: Implement users functionality
+        onClose();
+      },
+    },
+    {
       icon: Trash2,
-      label: 'Verwijderen',
+      label: 'Delete',
       onClick: onDelete,
       destructive: true,
     },

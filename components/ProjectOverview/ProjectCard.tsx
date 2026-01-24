@@ -51,10 +51,16 @@ function formatDate(date: Date): string {
 }
 
 export function ProjectCard({ project, viewMode, onClick, onMenuClick }: ProjectCardProps) {
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onMenuClick(e);
+  };
+
   if (viewMode === 'list') {
     return (
       <div
         onClick={onClick}
+        onContextMenu={handleContextMenu}
         className="group flex items-center gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all cursor-pointer"
       >
         <ProjectIcon icon={project.icon} />
@@ -78,7 +84,7 @@ export function ProjectCard({ project, viewMode, onClick, onMenuClick }: Project
 
           <div className="flex items-center gap-1.5">
             <FileText size={14} />
-            <span>{project.sourceCount} bronnen</span>
+            <span>{project.sourceCount} sources</span>
           </div>
 
           {project.isShared && (
@@ -102,6 +108,7 @@ export function ProjectCard({ project, viewMode, onClick, onMenuClick }: Project
   return (
     <div
       onClick={onClick}
+      onContextMenu={handleContextMenu}
       className="group relative flex flex-col p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all cursor-pointer min-h-[160px]"
     >
       {/* Menu Button */}
@@ -127,7 +134,7 @@ export function ProjectCard({ project, viewMode, onClick, onMenuClick }: Project
       {/* Footer */}
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
         <div className="text-xs text-muted-foreground">
-          {formatDate(project.updatedAt)} · {project.sourceCount} bronnen
+          {formatDate(project.updatedAt)} · {project.sourceCount} sources
         </div>
 
         {project.isShared && (
