@@ -177,6 +177,8 @@ export interface IngestionProgressContainerProps {
   onComplete: (result: IngestionResult) => void;
   onError: (error: IngestionError) => void;
   onMinimize?: () => void;
+  /** When true, renders only the content without modal wrapper (for embedding in other modals) */
+  embedded?: boolean;
 }
 
 // =============================================================================

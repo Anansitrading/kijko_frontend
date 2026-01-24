@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { X, FolderPlus, ChevronRight, ChevronLeft, Check, AlertCircle, Loader2, GitBranch, FileUp, PenLine } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import type { ProjectType, ProjectPrivacy } from '../../types';
+import type { ProjectType } from '../../types';
 import type {
   ChunkingStrategy,
   OutputFormat,
@@ -24,6 +24,12 @@ import { Step2 } from '../ProjectCreation/Step2';
 import { Step3AdvancedSettings } from './WizardSteps/Step3AdvancedSettings';
 import { Step4TeamAccess } from './WizardSteps/Step4TeamAccess';
 import { Step5ReviewConfirmation } from './WizardSteps/Step5ReviewConfirmation';
+import {
+  IngestionProgressContainer,
+  IngestionCompletionScreen,
+  createMockCompletionData,
+} from '../IngestionProgress';
+import type { IngestionCompletionData, IngestionError } from '../../types/ingestionProgress';
 
 // =============================================================================
 // Types
@@ -42,7 +48,7 @@ type ValidationState = 'idle' | 'validating' | 'valid' | 'error';
 // Constants
 // =============================================================================
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 const NAME_MIN_LENGTH = 3;
 const NAME_MAX_LENGTH = 50;
 const DESCRIPTION_MAX_LENGTH = 200;
@@ -502,6 +508,11 @@ export function ProjectCreationModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Ingestion state (step 6)
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const [isIngestionComplete, setIsIngestionComplete] = useState(false);
+  const [completionData, setCompletionData] = useState<IngestionCompletionData | null>(null);
+
   // Refs
   const inputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -521,6 +532,9 @@ export function ProjectCreationModal({
       setIsDirty(false);
       setIsSubmitting(false);
       setSubmitError(null);
+      setCreatedProjectId(null);
+      setIsIngestionComplete(false);
+      setCompletionData(null);
 
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -565,20 +579,6 @@ export function ProjectCreationModal({
 
     validate();
   }, [debouncedName, existingProjectNames, hasInteracted]);
-
-  // Handle keyboard events
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (!isOpen) return;
-
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isDirty]);
 
   // Form update handlers
   const handleNameChange = useCallback((name: string) => {
@@ -673,14 +673,19 @@ export function ProjectCreationModal({
 
   // Navigation handlers
   const handleClose = useCallback(() => {
-    if (isDirty) {
+    // During ingestion, don't allow closing (the IngestionProgressContainer handles this)
+    if (currentStep === 6 && !isIngestionComplete) {
+      return;
+    }
+
+    if (isDirty && currentStep < 6) {
       const confirmed = window.confirm(
         'Je hebt onopgeslagen wijzigingen. Weet je zeker dat je wilt sluiten?'
       );
       if (!confirmed) return;
     }
     onClose();
-  }, [isDirty, onClose]);
+  }, [isDirty, onClose, currentStep, isIngestionComplete]);
 
   const handleNext = useCallback(() => {
     if (currentStep < TOTAL_STEPS) {
@@ -711,14 +716,94 @@ export function ProjectCreationModal({
     setSubmitError(null);
 
     try {
+      // Create project and get the ID
       onCreate(formData);
-      onClose();
+
+      // Generate a project ID for the ingestion phase
+      const projectId = crypto.randomUUID();
+      setCreatedProjectId(projectId);
+
+      // Move to step 6 (ingestion progress)
+      setCurrentStep(6);
+      setIsSubmitting(false);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Failed to create project');
-    } finally {
       setIsSubmitting(false);
     }
-  }, [formData, onCreate, onClose]);
+  }, [formData, onCreate]);
+
+  // Ingestion completion handlers
+  const handleIngestionComplete = useCallback(() => {
+    // Generate mock completion data (in real app, this would come from the backend)
+    const mockData = createMockCompletionData();
+    const completionDataWithProject: IngestionCompletionData = {
+      ...mockData,
+      projectId: createdProjectId || 'unknown',
+      projectName: formData.name,
+    };
+    setCompletionData(completionDataWithProject);
+    setIsIngestionComplete(true);
+  }, [createdProjectId, formData.name]);
+
+  const handleIngestionError = useCallback((error: IngestionError) => {
+    setSubmitError(error.message);
+    // Optionally go back to review step
+    if (error.recoverable) {
+      setCurrentStep(5);
+    }
+  }, []);
+
+  // Completion screen action handlers
+  const handleQueryCode = useCallback(() => {
+    onClose();
+    // Navigate to project query page would happen here
+  }, [onClose]);
+
+  const handleExport = useCallback(() => {
+    // Export functionality would go here
+    console.log('Export clicked');
+  }, []);
+
+  const handleInviteTeam = useCallback(() => {
+    // Navigate to team settings or open invite modal
+    console.log('Invite team clicked');
+  }, []);
+
+  const handleEnableAutoRefresh = useCallback(() => {
+    // Enable auto-refresh functionality
+    console.log('Auto-refresh enabled');
+  }, []);
+
+  // Handle keyboard events (must be after handleClose is defined)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!isOpen) return;
+
+      // Don't allow escape during ingestion
+      if (currentStep === 6 && !isIngestionComplete) {
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, currentStep, isIngestionComplete, handleClose]);
+
+  // Simulate ingestion progress (in production, this would be replaced by real WebSocket events)
+  useEffect(() => {
+    if (currentStep === 6 && !isIngestionComplete && createdProjectId) {
+      // Simulate ingestion completing after 15 seconds to show progress animation
+      const timer = setTimeout(() => {
+        handleIngestionComplete();
+      }, 15000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, isIngestionComplete, createdProjectId, handleIngestionComplete]);
 
   // Validation for each step
   const isStep1Valid = useMemo(() => {
@@ -755,9 +840,10 @@ export function ProjectCreationModal({
       case 3: return isStep3Valid;
       case 4: return isStep4Valid;
       case 5: return true;
+      case 6: return isIngestionComplete;
       default: return false;
     }
-  }, [currentStep, isStep1Valid, isStep2Valid]);
+  }, [currentStep, isStep1Valid, isStep2Valid, isIngestionComplete]);
 
   // Get step title
   const getStepTitle = () => {
@@ -767,6 +853,7 @@ export function ProjectCreationModal({
       case 3: return 'Geavanceerde instellingen';
       case 4: return 'Team toegang';
       case 5: return 'Bevestigen';
+      case 6: return isIngestionComplete ? 'Voltooid' : 'Verwerking';
       default: return 'Nieuw project';
     }
   };
@@ -792,7 +879,9 @@ export function ProjectCreationModal({
         ref={modalRef}
         className={cn(
           'relative bg-card border border-border rounded-xl shadow-2xl mx-4 overflow-hidden flex flex-col',
-          currentStep === 1 ? 'w-full max-w-lg max-h-[90vh]' : 'w-full max-w-2xl max-h-[90vh]'
+          currentStep === 1 ? 'w-full max-w-lg max-h-[90vh]' :
+          currentStep === 6 ? 'w-full max-w-4xl max-h-[90vh]' :
+          'w-full max-w-2xl max-h-[90vh]'
         )}
       >
         {/* Header */}
@@ -808,14 +897,17 @@ export function ProjectCreationModal({
               <StepIndicator currentStep={currentStep} totalSteps={TOTAL_STEPS} />
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-            aria-label="Close modal"
-          >
-            <X size={20} />
-          </button>
+          {/* Hide close button during ingestion */}
+          {!(currentStep === 6 && !isIngestionComplete) && (
+            <button
+              type="button"
+              onClick={handleClose}
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+              aria-label="Close modal"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
 
         {/* Content */}
@@ -886,10 +978,30 @@ export function ProjectCreationModal({
               submitError={submitError}
             />
           )}
+
+          {currentStep === 6 && !isIngestionComplete && createdProjectId && (
+            <IngestionProgressContainer
+              projectId={createdProjectId}
+              projectName={formData.name}
+              onComplete={handleIngestionComplete}
+              onError={handleIngestionError}
+              embedded={true}
+            />
+          )}
+
+          {currentStep === 6 && isIngestionComplete && completionData && (
+            <IngestionCompletionScreen
+              data={completionData}
+              onQueryCode={handleQueryCode}
+              onExport={handleExport}
+              onInviteTeam={handleInviteTeam}
+              onEnableAutoRefresh={handleEnableAutoRefresh}
+            />
+          )}
         </div>
 
         {/* Footer - Only show for steps that don't have their own footer */}
-        {currentStep !== 2 && currentStep !== 5 && (
+        {currentStep !== 2 && currentStep !== 5 && currentStep !== 6 && (
           <div className="flex items-center justify-between p-4 border-t border-border shrink-0">
             {currentStep > 1 ? (
               <button

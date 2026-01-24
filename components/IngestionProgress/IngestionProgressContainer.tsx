@@ -211,6 +211,7 @@ export function IngestionProgressContainer({
   onComplete,
   onError,
   onMinimize,
+  embedded = false,
 }: IngestionProgressContainerProps) {
   const [state, dispatch] = useReducer(progressReducer, projectName, createInitialState);
   const [showCloseWarning, setShowCloseWarning] = useState(false);
@@ -267,8 +268,8 @@ export function IngestionProgressContainer({
     }
   };
 
-  // Minimized state
-  if (state.isMinimized) {
+  // Minimized state (only for non-embedded mode)
+  if (state.isMinimized && !embedded) {
     return (
       <button
         onClick={() => dispatch({ type: 'SET_MINIMIZED', minimized: false })}
@@ -285,6 +286,35 @@ export function IngestionProgressContainer({
     );
   }
 
+  // Embedded mode: render only the content without modal wrapper
+  if (embedded) {
+    return (
+      <div className="space-y-6">
+        {/* Phase Indicator */}
+        <PhaseIndicator
+          phases={state.phases}
+          currentPhaseIndex={currentPhaseIndex}
+        />
+
+        {/* Main Content Area */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Phase Content */}
+          <div className="flex-1">
+            {renderPhaseContent()}
+          </div>
+
+          {/* Metrics Sidebar */}
+          <MetricsSidebar
+            metrics={state.sidebarMetrics}
+            layout="sidebar"
+            className="lg:w-64 shrink-0"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Full modal mode
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center">
