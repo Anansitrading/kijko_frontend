@@ -13,27 +13,28 @@ import { useProjects } from '../../contexts/ProjectsContext';
 import { Project, ProjectFilter, ProjectSort } from '../../types';
 import { cn } from '../../utils/cn';
 import { ProjectCard } from './ProjectCard';
-import { NewProjectModal } from './NewProjectModal';
+import { ProjectCreationModal } from './ProjectCreationModal';
 import { ProjectContextMenu } from './ProjectContextMenu';
+import type { ProjectCreationForm } from '../../types/project';
 
-interface ProjectOverviewProps {
+interface ProjectsDashboardProps {
   onProjectSelect: (project: Project) => void;
   onOpenSettings?: () => void;
 }
 
 const FILTER_TABS: { id: ProjectFilter; label: string }[] = [
-  { id: 'all', label: 'Alle' },
-  { id: 'mine', label: 'Mijn projecten' },
-  { id: 'shared', label: 'Gedeeld met mij' },
+  { id: 'all', label: 'All' },
+  { id: 'mine', label: 'My projects' },
+  { id: 'shared', label: 'Shared with me' },
 ];
 
 const SORT_OPTIONS: { id: ProjectSort; label: string }[] = [
-  { id: 'recent', label: 'Meest recent' },
-  { id: 'name', label: 'Naam' },
-  { id: 'sources', label: 'Aantal bronnen' },
+  { id: 'recent', label: 'Most recent' },
+  { id: 'name', label: 'Name' },
+  { id: 'sources', label: 'Number of sources' },
 ];
 
-export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOverviewProps) {
+export function ProjectsDashboard({ onProjectSelect, onOpenSettings }: ProjectsDashboardProps) {
   const navigate = useNavigate();
   const {
     filteredProjects,
@@ -62,11 +63,15 @@ export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOver
     navigate(`/project/${project.id}`);
   };
 
-  const handleCreateProject = (name: string) => {
-    const newProject = createProject(name);
+  const handleCreateProject = (data: ProjectCreationForm) => {
+    const newProject = createProject(data.name);
+    // TODO: In future, pass full form data (description, type, repositories, etc.) to createProject
     // Navigate to the new project's detail page
     navigate(`/project/${newProject.id}`);
   };
+
+  // Get existing project names for duplicate checking
+  const existingProjectNames = filteredProjects.map(p => p.name);
 
   const handleMenuClick = (e: React.MouseEvent, project: Project) => {
     e.stopPropagation();
@@ -82,7 +87,7 @@ export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOver
     setContextMenu(null);
   };
 
-  const currentSortLabel = SORT_OPTIONS.find((o) => o.id === sort)?.label || 'Sorteren';
+  const currentSortLabel = SORT_OPTIONS.find((o) => o.id === sort)?.label || 'Sort';
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -112,7 +117,7 @@ export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOver
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Zoek projecten..."
+                placeholder="Search projects..."
                 className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
               />
             </div>
@@ -123,7 +128,7 @@ export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOver
               className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
             >
               <Plus size={18} />
-              <span>Nieuw maken</span>
+              <span>Create new</span>
             </button>
           </div>
         </div>
@@ -160,7 +165,7 @@ export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOver
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
-                title="Grid weergave"
+                title="Grid view"
               >
                 <LayoutGrid size={18} />
               </button>
@@ -172,7 +177,7 @@ export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOver
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
-                title="Lijst weergave"
+                title="List view"
               >
                 <List size={18} />
               </button>
@@ -231,10 +236,10 @@ export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOver
         {/* Section Title */}
         <h2 className="text-lg font-semibold text-muted-foreground mb-4">
           {filter === 'all'
-            ? 'Alle projecten'
+            ? 'All projects'
             : filter === 'mine'
-            ? 'Mijn projecten'
-            : 'Gedeeld met mij'}
+            ? 'My projects'
+            : 'Shared with me'}
         </h2>
 
         {filteredProjects.length === 0 ? (
@@ -244,12 +249,12 @@ export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOver
               <FolderOpen size={40} className="text-muted-foreground" />
             </div>
             <h3 className="text-lg font-medium text-foreground mb-2">
-              Geen projecten gevonden
+              No projects found
             </h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
               {searchQuery
-                ? 'Probeer een andere zoekopdracht'
-                : 'Begin met het maken van je eerste project om je bronnen te organiseren'}
+                ? 'Try a different search query'
+                : 'Start by creating your first project to organize your sources'}
             </p>
             {!searchQuery && (
               <button
@@ -257,7 +262,7 @@ export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOver
                 className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-colors"
               >
                 <Plus size={18} />
-                <span>Nieuw project maken</span>
+                <span>Create new project</span>
               </button>
             )}
           </div>
@@ -290,11 +295,12 @@ export function ProjectOverview({ onProjectSelect, onOpenSettings }: ProjectOver
         )}
       </main>
 
-      {/* New Project Modal */}
-      <NewProjectModal
+      {/* Project Creation Modal */}
+      <ProjectCreationModal
         isOpen={isNewProjectModalOpen}
         onClose={() => setIsNewProjectModalOpen(false)}
         onCreate={handleCreateProject}
+        existingProjectNames={existingProjectNames}
       />
 
       {/* Context Menu */}

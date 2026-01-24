@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar";
 import { HypervisaView } from "./components/Hypervisa/HypervisaView";
-import { ProjectOverview } from "./components/ProjectOverview";
+import { ProjectsDashboard } from "./components/ProjectOverview";
 import { SettingsModal } from "./components/SettingsModal";
-import { ContextDetailInspectorPage } from "./pages/ContextDetailInspectorPage";
+import { ProjectDetailPage } from "./pages/ContextDetailInspectorPage";
 import { RealtimeProvider } from "./contexts/RealtimeContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
@@ -42,7 +42,7 @@ function WorkspaceView() {
   if (!selectedProject) {
     return (
       <div className="h-screen w-screen overflow-hidden bg-background text-foreground font-sans selection:bg-primary/30">
-        <ProjectOverview
+        <ProjectsDashboard
           onProjectSelect={handleProjectSelect}
           onOpenSettings={() => setIsSettingsOpen(true)}
         />
@@ -149,7 +149,7 @@ function App() {
                   <IngestionProvider>
                     <ChatHistoryProvider>
                       <RealtimeProvider>
-                        <ContextDetailInspectorPage />
+                        <ProjectDetailPage />
                       </RealtimeProvider>
                     </ChatHistoryProvider>
                   </IngestionProvider>

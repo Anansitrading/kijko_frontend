@@ -64,3 +64,34 @@ export interface ProjectIcon {
 export type ProjectFilter = 'all' | 'mine' | 'shared';
 export type ProjectSort = 'recent' | 'name' | 'sources';
 export type ProjectViewMode = 'grid' | 'list';
+
+// Project Creation Wizard Types
+export type ProjectType = 'repository' | 'files' | 'manual';
+export type ProjectStatus = 'draft' | 'processing' | 'active' | 'error';
+export type ChunkingStrategy = 'semantic' | 'fixed' | 'recursive' | 'custom';
+export type PersonaType = 'alex' | 'maya' | 'sam';
+
+export interface ProjectCreationStep1 {
+    name: string;
+    description: string;
+    type: ProjectType;
+}
+
+export interface ProjectCreationFormData {
+    // Step 1
+    name: string;
+    description: string;
+    type: ProjectType;
+    // Future steps will add more fields
+}
+
+export interface NameValidationResult {
+    valid: boolean;
+    error?: string;
+    suggestion?: string;
+}
+
+export interface CheckNameResponse {
+    exists: boolean;
+    suggestion?: string;
+}
