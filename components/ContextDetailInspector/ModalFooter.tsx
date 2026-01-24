@@ -1,11 +1,8 @@
 import {
-  MessageSquare,
   RefreshCw,
   Eye,
   Zap,
   Settings,
-  UserPlus,
-  Users,
   Download,
   Filter,
   Loader2,
@@ -16,7 +13,7 @@ import type { ModalFooterProps, TabType } from '../../types/contextInspector';
 
 interface FooterButtonConfig {
   label: string;
-  icon: typeof MessageSquare;
+  icon: typeof Download;
   variant: 'primary' | 'secondary';
 }
 
@@ -32,10 +29,6 @@ const FOOTER_BUTTONS: Record<TabType, { primary: FooterButtonConfig; secondary: 
   enrichments: {
     primary: { label: 'Run All Enrichments', icon: Zap, variant: 'primary' },
     secondary: { label: 'Configure', icon: Settings, variant: 'secondary' },
-  },
-  users: {
-    primary: { label: 'Invite User', icon: UserPlus, variant: 'primary' },
-    secondary: { label: 'Manage Roles', icon: Users, variant: 'secondary' },
   },
   changelog: {
     primary: { label: 'Export Log', icon: Download, variant: 'primary' },

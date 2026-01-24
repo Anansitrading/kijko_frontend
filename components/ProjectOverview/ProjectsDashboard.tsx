@@ -319,7 +319,7 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings }: ProjectsD
             handleProjectClick(contextMenu.project);
             setContextMenu(null);
           }}
-          onUsers={() => {
+          onShare={() => {
             setUserManagementProject(contextMenu.project);
             setContextMenu(null);
           }}

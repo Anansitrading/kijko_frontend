@@ -215,14 +215,14 @@ export function RightSidebar({ className, onWidthChange }: RightSidebarProps) {
       {isCollapsed ? (
         // Collapsed state
         <div
-          className="flex-1 flex flex-col items-center py-4 cursor-pointer hover:bg-white/5 transition-colors"
+          className="flex-1 flex flex-col items-center justify-center py-4 cursor-pointer hover:bg-white/5 transition-colors"
           onClick={handleToggleCollapse}
           role="button"
           aria-label="Expand chat history sidebar"
         >
           <ChevronLeft size={16} className="text-gray-400 mb-3" />
           <div
-            className="text-[10px] font-semibold uppercase tracking-wider text-gray-500"
+            className="text-[10px] font-bold uppercase tracking-wider text-gray-500"
             style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
           >
             History

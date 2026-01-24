@@ -18,16 +18,16 @@ interface IngestionHistoryProps {
 
 function IngestionEntryRow({ entry }: { entry: IngestionEntry }) {
   return (
-    <div className="flex items-center justify-between py-2.5 px-3 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors">
-      <div className="flex items-center gap-3">
-        <span className="text-gray-500 font-mono text-sm">
+    <div className="py-2 px-2.5 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-gray-500 font-mono text-xs">
           #{entry.number}
         </span>
-        <span className="text-gray-300 text-sm">
+        <span className="text-gray-400 text-xs">
           {formatDateTime(entry.timestamp)}
         </span>
       </div>
-      <div className="flex items-center gap-4 text-sm">
+      <div className="flex items-center gap-3 text-xs">
         {entry.filesAdded > 0 && (
           <span className="text-emerald-400">
             {formatFileChange(entry.filesAdded, true)}
@@ -37,6 +37,9 @@ function IngestionEntryRow({ entry }: { entry: IngestionEntry }) {
           <span className="text-red-400">
             {formatFileChange(entry.filesRemoved, false)}
           </span>
+        )}
+        {entry.filesAdded === 0 && entry.filesRemoved === 0 && (
+          <span className="text-gray-500">No changes</span>
         )}
       </div>
     </div>
@@ -50,7 +53,7 @@ export function IngestionHistory({
   history,
 }: IngestionHistoryProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Clock size={14} className="text-gray-500" />
         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -58,24 +61,22 @@ export function IngestionHistory({
         </h3>
       </div>
 
-      <div className="flex items-center gap-6 text-sm pb-2 border-b border-white/5">
+      <div className="grid grid-cols-3 gap-2 text-center pb-3 border-b border-white/5">
         <div>
-          <span className="text-gray-400">Total Ingestions: </span>
-          <span className="text-white font-medium">{totalIngestions}</span>
+          <div className="text-white font-semibold text-lg">{totalIngestions}</div>
+          <div className="text-gray-500 text-[10px] uppercase">Total</div>
         </div>
-        <div className="text-gray-600">|</div>
         <div>
-          <span className="text-gray-400">Last: </span>
-          <span className="text-white font-medium">{formatRelativeTime(lastIngestion)}</span>
+          <div className="text-white font-medium text-sm">{formatRelativeTime(lastIngestion)}</div>
+          <div className="text-gray-500 text-[10px] uppercase">Last</div>
         </div>
-        <div className="text-gray-600">|</div>
         <div>
-          <span className="text-gray-400">Avg: </span>
-          <span className="text-white font-medium">{formatInterval(avgInterval)}</span>
+          <div className="text-white font-medium text-sm">{formatInterval(avgInterval)}</div>
+          <div className="text-gray-500 text-[10px] uppercase">Avg</div>
         </div>
       </div>
 
-      <div className="space-y-1.5 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+      <div className="space-y-1.5 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
         {history.map((entry) => (
           <IngestionEntryRow key={entry.number} entry={entry} />
         ))}

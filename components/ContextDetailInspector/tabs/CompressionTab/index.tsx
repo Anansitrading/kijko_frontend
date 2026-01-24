@@ -8,17 +8,20 @@ import { CompressionDetails } from './CompressionDetails';
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
-      <div className="flex gap-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="flex-1 h-24 bg-slate-800/50 rounded-lg" />
-        ))}
+    <div className="flex gap-6 animate-pulse">
+      <div className="flex-1 space-y-4 max-w-md">
+        <div className="h-14 bg-slate-800/50 rounded-lg" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-11 bg-slate-800/50 rounded-lg" />
+          ))}
+        </div>
+        <div className="h-28 bg-slate-800/50 rounded-lg" />
       </div>
-      <div className="h-16 bg-slate-800/50 rounded-lg" />
-      <div className="h-8 w-48 bg-slate-800/50 rounded" />
-      <div className="space-y-2">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-12 bg-slate-800/30 rounded-lg" />
+      <div className="w-80 space-y-2">
+        <div className="h-8 w-48 bg-slate-800/50 rounded" />
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="h-10 bg-slate-800/30 rounded-lg" />
         ))}
       </div>
     </div>
@@ -73,26 +76,32 @@ export function CompressionTab({ contextItem }: TabProps) {
   const tokensSaved = metrics.originalTokens - metrics.compressedTokens;
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
-      <CompressionStats metrics={metrics} />
+    <div className="p-6 overflow-y-auto custom-scrollbar">
+      <div className="flex gap-6">
+        {/* Left column: Progress bar, token stats, algorithm details */}
+        <div className="flex-1 space-y-5 min-w-0 max-w-md">
+          <CompressionProgress
+            savingsPercent={metrics.savingsPercent}
+            ratio={metrics.ratio}
+            costSavings={metrics.costSavings}
+          />
 
-      <CompressionProgress
-        savingsPercent={metrics.savingsPercent}
-        tokensSaved={tokensSaved}
-        costSavings={metrics.costSavings}
-      />
+          <CompressionStats metrics={metrics} tokensSaved={tokensSaved} />
 
-      <div className="border-t border-white/5 pt-6">
-        <IngestionHistory
-          totalIngestions={metrics.totalIngestions}
-          lastIngestion={metrics.lastIngestion}
-          avgInterval={metrics.avgInterval}
-          history={history}
-        />
-      </div>
+          <div className="border-t border-white/5 pt-5">
+            <CompressionDetails algorithmInfo={algorithmInfo} />
+          </div>
+        </div>
 
-      <div className="border-t border-white/5 pt-6">
-        <CompressionDetails algorithmInfo={algorithmInfo} />
+        {/* Right column: Ingestion history */}
+        <div className="w-80 flex-shrink-0 border-l border-white/5 pl-6">
+          <IngestionHistory
+            totalIngestions={metrics.totalIngestions}
+            lastIngestion={metrics.lastIngestion}
+            avgInterval={metrics.avgInterval}
+            history={history}
+          />
+        </div>
       </div>
     </div>
   );

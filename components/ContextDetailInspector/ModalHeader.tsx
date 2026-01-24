@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, FileCode, GitBranch, Package, Pencil, Check } from 'lucide-react';
+import { X, FileCode, GitBranch, Package, Pencil, Check, Share2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import type { ModalHeaderProps, ContextItemType } from '../../types/contextInspector';
 
 interface ExtendedModalHeaderProps extends ModalHeaderProps {
   contextType?: ContextItemType;
   onNameChange?: (newName: string) => void;
+  onShare?: () => void;
 }
 
 const TYPE_ICONS: Record<ContextItemType, typeof FileCode> = {
@@ -14,7 +15,7 @@ const TYPE_ICONS: Record<ContextItemType, typeof FileCode> = {
   package: Package,
 };
 
-export function ModalHeader({ contextName, contextType = 'files', onClose, onNameChange }: ExtendedModalHeaderProps) {
+export function ModalHeader({ contextName, contextType = 'files', onClose, onNameChange, onShare }: ExtendedModalHeaderProps) {
   const Icon = TYPE_ICONS[contextType];
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(contextName);
@@ -109,20 +110,39 @@ export function ModalHeader({ contextName, contextType = 'files', onClose, onNam
         )}
       </div>
 
-      {/* Right side: Close button */}
-      <button
-        onClick={onClose}
-        className={cn(
-          'flex items-center justify-center w-8 h-8 rounded-lg',
-          'text-gray-400 hover:text-white hover:bg-white/10',
-          'transition-colors duration-150',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500/50'
+      {/* Right side: Share button + Close button */}
+      <div className="flex items-center gap-2">
+        {onShare && (
+          <button
+            onClick={onShare}
+            className={cn(
+              'flex items-center gap-2 px-3 h-8 rounded-lg',
+              'text-gray-300 hover:text-white',
+              'bg-white/5 hover:bg-white/10 border border-white/10',
+              'transition-colors duration-150',
+              'focus:outline-none focus:ring-2 focus:ring-blue-500/50'
+            )}
+            title="Share project"
+            aria-label="Share project"
+          >
+            <Share2 className="w-4 h-4" />
+            <span className="text-sm font-medium">Share</span>
+          </button>
         )}
-        title="Close (ESC)"
-        aria-label="Close modal"
-      >
-        <X className="w-5 h-5" />
-      </button>
+        <button
+          onClick={onClose}
+          className={cn(
+            'flex items-center justify-center w-8 h-8 rounded-lg',
+            'text-gray-400 hover:text-white hover:bg-white/10',
+            'transition-colors duration-150',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500/50'
+          )}
+          title="Close (ESC)"
+          aria-label="Close modal"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
     </div>
   );
 }

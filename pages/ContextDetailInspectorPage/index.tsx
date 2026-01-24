@@ -9,7 +9,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import type { TabType } from '../../types/contextInspector';
 
 // Valid tab values
-const VALID_TABS: TabType[] = ['overview', 'compression', 'enrichments', 'users', 'changelog'];
+const VALID_TABS: TabType[] = ['overview', 'compression', 'enrichments', 'changelog'];
 
 export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();

@@ -8,8 +8,8 @@ import { type Role, type UserRole, ROLE_CONFIG, getRoleLabel, getRoleColor } fro
 export type { Role, UserRole };
 export { ROLE_CONFIG, getRoleLabel, getRoleColor };
 
-// Tab types for the modal
-export type TabType = 'overview' | 'compression' | 'enrichments' | 'users' | 'changelog';
+// Tab types for the modal (users removed - sharing via header Share button)
+export type TabType = 'overview' | 'compression' | 'enrichments' | 'changelog';
 
 // Context item types
 export type ContextItemType = 'package' | 'repo' | 'files';

@@ -16,8 +16,8 @@ import { ConnectionStatus } from './common';
 import { OverviewTab } from './tabs/OverviewTab';
 import { CompressionTab } from './tabs/CompressionTab';
 import { EnrichmentsTab } from './tabs/EnrichmentsTab';
-import { UsersTab } from './tabs/UsersTab';
 import { ChangelogTab } from './tabs/ChangelogTab';
+import { ShareModal } from './modals/ShareModal';
 import { exportContextInfo, exportActivityLog, exportChangelog, downloadOriginalFiles } from '../../services/export';
 import type { TabType, SearchResult, CompressionSettings, LSPConfig, ChromaCodeConfig } from '../../types/contextInspector';
 import { tabConfig } from '../../styles/contextInspector';
@@ -33,6 +33,7 @@ export function ContextDetailInspector() {
   const [isCompressionSettingsOpen, setIsCompressionSettingsOpen] = useState(false);
   const [isLSPConfigOpen, setIsLSPConfigOpen] = useState(false);
   const [isChromaCodeConfigOpen, setIsChromaCodeConfigOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Loading state for footer actions
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -69,6 +70,8 @@ export function ContextDetailInspector() {
           setIsLSPConfigOpen(false);
         } else if (isChromaCodeConfigOpen) {
           setIsChromaCodeConfigOpen(false);
+        } else if (isShareModalOpen) {
+          setIsShareModalOpen(false);
         } else {
           closeModal();
         }
@@ -123,10 +126,6 @@ export function ContextDetailInspector() {
           await new Promise((resolve) => setTimeout(resolve, 1000));
           console.log('Enrichments started');
           break;
-        case 'users':
-          // Invite user (mock - would open invite modal)
-          console.log('Open invite user modal');
-          break;
         case 'changelog':
           // Export changelog
           exportChangelog([], 'json');
@@ -157,10 +156,6 @@ export function ContextDetailInspector() {
       case 'enrichments':
         // Configure - open settings modal
         setIsCompressionSettingsOpen(true);
-        break;
-      case 'users':
-        // Manage roles (mock)
-        console.log('Open manage roles modal');
         break;
       case 'changelog':
         // Filter (mock)
@@ -197,8 +192,6 @@ export function ContextDetailInspector() {
         return <CompressionTab contextItem={state.contextItem!} />;
       case 'enrichments':
         return <EnrichmentsTab contextId={state.contextItem!.id} />;
-      case 'users':
-        return <UsersTab contextItem={state.contextItem!} />;
       case 'changelog':
         return (
           <ChangelogTab
@@ -242,6 +235,7 @@ export function ContextDetailInspector() {
               contextType={state.contextItem.type}
               onClose={closeModal}
               onNameChange={updateContextName}
+              onShare={() => setIsShareModalOpen(true)}
             />
 
             {/* Tab Navigation */}
@@ -324,6 +318,14 @@ export function ContextDetailInspector() {
           overlap: 50,
           excludePatterns: ['*.min.js', '*.bundle.js'],
         }}
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        projectId={state.contextItem.id}
+        projectName={state.contextItem.name}
       />
     </>
   );

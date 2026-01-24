@@ -1,24 +1,43 @@
 import { cn } from '../../../../utils/cn';
-import { formatNumber, formatRatio } from '../../../../utils/formatting';
+import { formatNumber } from '../../../../utils/formatting';
 import type { CompressionMetrics } from '../../../../types/contextInspector';
+
+type StatCardVariant = 'primary' | 'secondary' | 'tertiary';
 
 interface StatCardProps {
   value: string;
-  unit: string;
   label: string;
+  variant: StatCardVariant;
 }
 
-function StatCard({ value, unit, label }: StatCardProps) {
+function StatCard({ value, label, variant }: StatCardProps) {
+  const variantStyles = {
+    primary: {
+      container: 'bg-slate-800/60 border-cyan-500/20',
+      label: 'text-xs text-cyan-400 font-medium',
+      value: 'text-2xl font-bold text-white tracking-tight',
+    },
+    secondary: {
+      container: 'bg-slate-800/40 border-white/5',
+      label: 'text-xs text-gray-400',
+      value: 'text-lg font-semibold text-gray-300 tracking-tight',
+    },
+    tertiary: {
+      container: 'bg-slate-800/30 border-white/5',
+      label: 'text-xs text-gray-500',
+      value: 'text-base font-medium text-gray-400 tracking-tight',
+    },
+  };
+
+  const styles = variantStyles[variant];
+
   return (
-    <div className="flex-1 bg-slate-800/50 border border-white/5 rounded-lg p-4 text-center">
-      <div className="text-2xl font-bold text-white tracking-tight">
-        {value}
-      </div>
-      <div className="text-sm text-gray-400 mt-0.5">
-        {unit}
-      </div>
-      <div className="text-xs text-gray-500 mt-1">
+    <div className={cn('border rounded-lg py-2.5 px-4 flex items-center justify-between', styles.container)}>
+      <div className={styles.label}>
         {label}
+      </div>
+      <div className={styles.value}>
+        {value}
       </div>
     </div>
   );
@@ -26,25 +45,26 @@ function StatCard({ value, unit, label }: StatCardProps) {
 
 interface CompressionStatsProps {
   metrics: CompressionMetrics;
+  tokensSaved: number;
 }
 
-export function CompressionStats({ metrics }: CompressionStatsProps) {
+export function CompressionStats({ metrics, tokensSaved }: CompressionStatsProps) {
   return (
-    <div className="flex gap-3">
-      <StatCard
-        value={formatNumber(metrics.originalTokens)}
-        unit="tokens"
-        label="Starting Tokens"
-      />
+    <div className="flex flex-col gap-2">
       <StatCard
         value={formatNumber(metrics.compressedTokens)}
-        unit="tokens"
         label="Current Tokens"
+        variant="primary"
       />
       <StatCard
-        value={formatRatio(metrics.ratio)}
-        unit="compression"
-        label="Space Saved"
+        value={formatNumber(metrics.originalTokens)}
+        label="Starting Tokens"
+        variant="secondary"
+      />
+      <StatCard
+        value={formatNumber(tokensSaved)}
+        label="Saved Tokens"
+        variant="tertiary"
       />
     </div>
   );

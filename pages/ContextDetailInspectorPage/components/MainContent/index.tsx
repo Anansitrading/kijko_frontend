@@ -5,7 +5,6 @@ import { TabNavigation } from '../../../../components/ContextDetailInspector/Tab
 import { PageOverviewTab } from './PageOverviewTab';
 import { CompressionTab } from '../../../../components/ContextDetailInspector/tabs/CompressionTab';
 import { EnrichmentsTab } from '../../../../components/ContextDetailInspector/tabs/EnrichmentsTab';
-import { UsersTab } from '../../../../components/ContextDetailInspector/tabs/UsersTab';
 import { ChangelogTab } from '../../../../components/ContextDetailInspector/tabs/ChangelogTab';
 import type { TabType, ContextItem } from '../../../../types/contextInspector';
 
@@ -54,7 +53,7 @@ export function MainContent({
     setCurrentProjectName(projectName);
   }, [projectName]);
 
-  // Keyboard shortcuts for tab switching (Cmd/Ctrl + 1-5)
+  // Keyboard shortcuts for tab switching (Cmd/Ctrl + 1-4)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey) {
@@ -62,8 +61,7 @@ export function MainContent({
           '1': 'overview',
           '2': 'compression',
           '3': 'enrichments',
-          '4': 'users',
-          '5': 'changelog',
+          '4': 'changelog',
         };
 
         const tab = tabMap[e.key];
@@ -102,8 +100,6 @@ export function MainContent({
         return <CompressionTab contextItem={contextItem} />;
       case 'enrichments':
         return <EnrichmentsTab contextId={contextItem.id} />;
-      case 'users':
-        return <UsersTab contextItem={contextItem} />;
       case 'changelog':
         return <ChangelogTab contextId={contextItem.id} contextName={contextItem.name} />;
       default:

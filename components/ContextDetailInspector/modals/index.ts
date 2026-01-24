@@ -7,3 +7,4 @@ export { KnowledgeGraphModal } from './KnowledgeGraphModal';
 export { DiffViewerModal } from './DiffViewerModal';
 export { RollbackConfirmModal } from './RollbackConfirmModal';
 export { VersionSelectorModal } from './VersionSelectorModal';
+export { ShareModal } from './ShareModal';

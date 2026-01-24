@@ -1,15 +1,14 @@
-import { cn } from '../../../../utils/cn';
-import { formatNumber, formatPercent, formatCurrency } from '../../../../utils/formatting';
+import { formatPercent, formatCurrency, formatRatio } from '../../../../utils/formatting';
 
 interface CompressionProgressProps {
   savingsPercent: number;
-  tokensSaved: number;
+  ratio: number;
   costSavings: number;
 }
 
 export function CompressionProgress({
   savingsPercent,
-  tokensSaved,
+  ratio,
   costSavings,
 }: CompressionProgressProps) {
   return (
@@ -30,9 +29,9 @@ export function CompressionProgress({
       </div>
       <div className="flex items-center gap-6 text-sm">
         <div>
-          <span className="text-gray-400">Token Savings: </span>
-          <span className="text-emerald-400 font-medium">
-            {formatNumber(tokensSaved)} tokens
+          <span className="text-gray-400">Compression Ratio: </span>
+          <span className="text-white font-medium">
+            {formatRatio(ratio)}
           </span>
         </div>
         <div>

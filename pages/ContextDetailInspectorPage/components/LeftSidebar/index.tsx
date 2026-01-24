@@ -5,7 +5,6 @@ import {
   FileJson,
   FileText,
   File,
-  Check,
   Search,
   X,
   Upload,
@@ -179,24 +178,6 @@ const FileListItem = memo(function FileListItem({
         />
       )}
 
-      {/* Checkbox (not for folders) */}
-      {!file.isFolder && (
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggle(file.id);
-          }}
-          className={cn(
-            'w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors flex-shrink-0',
-            isSelected
-              ? 'bg-blue-600 border-blue-600'
-              : 'border-slate-600 group-hover:border-slate-500'
-          )}
-        >
-          {isSelected && <Check size={8} className="text-white" />}
-        </div>
-      )}
-
       {/* File Icon */}
       <Icon size={14} className={cn('flex-shrink-0', colorClass)} />
 
@@ -259,10 +240,7 @@ export function LeftSidebar({ className }: LeftSidebarProps) {
     selectedCount,
     totalCount,
     selectedSize,
-    isAllSelected,
     toggleFileSelection,
-    selectAll,
-    deselectAll,
     removeFile,
     renameFile,
     createFolder,
@@ -319,15 +297,6 @@ export function LeftSidebar({ className }: LeftSidebarProps) {
   const handleNewIngestion = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
-
-  // Toggle all selection
-  const handleToggleAll = useCallback(() => {
-    if (isAllSelected) {
-      deselectAll();
-    } else {
-      selectAll();
-    }
-  }, [isAllSelected, deselectAll, selectAll]);
 
   // Close search
   const handleCloseSearch = useCallback(() => {
@@ -596,26 +565,7 @@ export function LeftSidebar({ className }: LeftSidebarProps) {
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleToggleAll}
-                className={cn(
-                  'w-4 h-4 rounded border flex items-center justify-center transition-colors',
-                  isAllSelected
-                    ? 'bg-blue-600 border-blue-600'
-                    : selectedCount > 0
-                    ? 'bg-blue-600/50 border-blue-500'
-                    : 'border-slate-600 hover:border-slate-500'
-                )}
-              >
-                {(isAllSelected || selectedCount > 0) && (
-                  <Check size={10} className="text-white" />
-                )}
-              </button>
-              <span className="text-xs text-slate-400">
-                {selectedCount}/{totalCount} selected
-              </span>
-            </div>
+            <span className="text-xs text-slate-400 font-medium">Explorer</span>
             <button
               onClick={handleOpenSearch}
               className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
