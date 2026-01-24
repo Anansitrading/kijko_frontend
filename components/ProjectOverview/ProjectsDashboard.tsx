@@ -15,6 +15,7 @@ import { cn } from '../../utils/cn';
 import { ProjectCard } from './ProjectCard';
 import { ProjectCreationModal } from './ProjectCreationModal';
 import { ProjectContextMenu } from './ProjectContextMenu';
+import { UserManagementModal } from './UserManagementModal';
 import type { ProjectCreationForm } from '../../types/project';
 
 interface ProjectsDashboardProps {
@@ -57,6 +58,7 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings }: ProjectsD
     x: number;
     y: number;
   } | null>(null);
+  const [userManagementProject, setUserManagementProject] = useState<Project | null>(null);
 
   // Navigate to project detail page
   const handleProjectClick = (project: Project) => {
@@ -315,6 +317,19 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings }: ProjectsD
             handleProjectClick(contextMenu.project);
             setContextMenu(null);
           }}
+          onUsers={() => {
+            setUserManagementProject(contextMenu.project);
+            setContextMenu(null);
+          }}
+        />
+      )}
+
+      {/* User Management Modal */}
+      {userManagementProject && (
+        <UserManagementModal
+          isOpen={!!userManagementProject}
+          onClose={() => setUserManagementProject(null)}
+          project={userManagementProject}
         />
       )}
 

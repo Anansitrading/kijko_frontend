@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { FolderOpen, Pencil, Share2, Users, Trash2 } from 'lucide-react';
 import { Project } from '../../types';
 
@@ -9,6 +9,9 @@ interface ProjectContextMenuProps {
   onClose: () => void;
   onOpen: () => void;
   onDelete: () => void;
+  onUsers?: () => void;
+  onRename?: () => void;
+  onShare?: () => void;
 }
 
 export function ProjectContextMenu({
@@ -18,6 +21,9 @@ export function ProjectContextMenu({
   onClose,
   onOpen,
   onDelete,
+  onUsers,
+  onRename,
+  onShare,
 }: ProjectContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +65,7 @@ export function ProjectContextMenu({
       icon: Pencil,
       label: 'Rename',
       onClick: () => {
-        // TODO: Implement rename functionality
+        onRename?.();
         onClose();
       },
     },
@@ -67,7 +73,7 @@ export function ProjectContextMenu({
       icon: Share2,
       label: 'Share',
       onClick: () => {
-        // TODO: Implement share functionality
+        onShare?.();
         onClose();
       },
     },
@@ -75,7 +81,7 @@ export function ProjectContextMenu({
       icon: Users,
       label: 'Users',
       onClick: () => {
-        // TODO: Implement users functionality
+        onUsers?.();
         onClose();
       },
     },
