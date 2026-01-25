@@ -351,3 +351,105 @@ export interface PermissionsModalProps {
   onRevokePermission: (permission: string) => Promise<void>;
   onDisconnect: () => void;
 }
+
+// ============================================
+// Custom Connector Types (Integrations Redesign)
+// ============================================
+
+export type CustomConnectorAuthType = 'none' | 'api_key' | 'oauth' | 'basic';
+
+export interface CustomConnector {
+  id: string;
+  name: string;
+  description?: string;
+  remoteMcpServerUrl: string;
+  category: IntegrationCategory | 'custom';
+  iconUrl?: string;
+  authType: CustomConnectorAuthType;
+  config?: {
+    webhookUrl?: string;
+    timeout?: number;
+    retryPolicy?: {
+      maxRetries: number;
+      backoffMs: number;
+    };
+    customHeaders?: Record<string, string>;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+  lastUsedAt?: Date;
+  status: 'active' | 'inactive' | 'error';
+}
+
+export interface CreateCustomConnectorData {
+  name: string;
+  description?: string;
+  remoteMcpServerUrl: string;
+  category: IntegrationCategory | 'custom';
+  iconUrl?: string;
+  authType: CustomConnectorAuthType;
+  config?: CustomConnector['config'];
+}
+
+// Unified Integration Card interface
+export interface IntegrationCardData {
+  id: string;
+  name: string;
+  description: string;
+  category: IntegrationCategory | 'custom';
+  icon: string;
+  iconUrl?: string;
+  isPopular?: boolean;
+  isConnected?: boolean;
+  connectionStatus?: 'connected' | 'warning' | 'disconnected';
+  lastSynced?: Date;
+  permissions?: string[];
+  isCustom?: boolean;
+}
+
+// Integration connection (for My Integrations)
+export interface IntegrationConnection {
+  id: string;
+  integrationId: string; // 'salesforce', 'slack', or custom_connector_id
+  integrationType: 'pre_built' | 'custom';
+  status: 'connected' | 'warning' | 'disconnected';
+  lastSyncedAt?: Date;
+  config?: Record<string, unknown>;
+  createdAt: Date;
+}
+
+// Integrations Tab sub-tab types
+export type IntegrationsSubTab = 'all' | 'my-integrations' | 'custom-connectors';
+
+// Filter options
+export interface IntegrationsFilterState {
+  search: string;
+  category: IntegrationCategory | 'custom' | 'all';
+  statusFilter: 'all' | 'connected' | 'issues';
+  sortBy: 'popular' | 'name' | 'recent';
+  showConnectedOnly: boolean;
+}
+
+// Component Props
+export interface CustomConnectorFormProps {
+  isOpen: boolean;
+  connector?: CustomConnector;
+  onClose: () => void;
+  onSubmit: (data: CreateCustomConnectorData) => Promise<void>;
+}
+
+export interface IntegrationCardProps {
+  integration: IntegrationCardData;
+  onConnect?: (id: string) => void;
+  onDisconnect?: (id: string) => void;
+  onManage?: (id: string) => void;
+  onViewLogs?: (id: string) => void;
+  onReconnect?: (id: string) => void;
+}
+
+export interface FilterBarProps {
+  filters: IntegrationsFilterState;
+  onFiltersChange: (filters: IntegrationsFilterState) => void;
+  showStatusFilter?: boolean;
+  showConnectedToggle?: boolean;
+}
