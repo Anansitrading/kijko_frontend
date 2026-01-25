@@ -77,8 +77,9 @@ export { navigationItems, sectionConfig, tw as settingsTw } from '../../styles/s
 export { ProfileSection } from './Profile';
 export { AvatarUpload, GravatarToggle, PasswordChange, TimezoneSelect, RoleSelect, EmailVerification } from './Profile';
 
-// General Section (Sprint 3)
-export { GeneralSection, ThemeToggle, ModelSelect } from './General';
+// Note: General Section (Sprint 3) removed - functionality moved to My Profile modal
+// ThemeToggle and ModelSelect can still be used in Profile modal if needed
+export { ThemeToggle, ModelSelect } from './General';
 
 // Re-export theme and model types
 export type { Theme, AIModel, AIModelOption } from '../../types/settings';

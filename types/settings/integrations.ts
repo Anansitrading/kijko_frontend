@@ -440,6 +440,7 @@ export interface CustomConnectorFormProps {
 
 export interface IntegrationCardProps {
   integration: IntegrationCardData;
+  viewMode?: 'grid' | 'list';
   onConnect?: (id: string) => void;
   onDisconnect?: (id: string) => void;
   onManage?: (id: string) => void;

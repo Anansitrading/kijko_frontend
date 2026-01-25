@@ -91,6 +91,7 @@ function StatusBadge({ status }: { status: 'connected' | 'warning' | 'disconnect
 
 export function IntegrationCard({
   integration,
+  viewMode = 'grid',
   onConnect,
   onDisconnect,
   onManage,
@@ -115,6 +116,159 @@ export function IntegrationCard({
     return INTEGRATION_CATEGORIES[category] || category;
   };
 
+  // List View Layout
+  if (viewMode === 'list') {
+    return (
+      <div
+        className={cn(
+          'bg-secondary border border-border rounded-lg p-4 flex items-center gap-4 transition-all duration-200',
+          'hover:border-border/80 hover:shadow-lg hover:shadow-primary/5'
+        )}
+      >
+        {/* App Icon */}
+        <div
+          className={cn(
+            'flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center',
+            integration.isCustom
+              ? 'bg-gradient-to-br from-primary/20 to-primary/5 text-primary'
+              : 'bg-muted text-muted-foreground'
+          )}
+        >
+          {integration.iconUrl ? (
+            <img
+              src={integration.iconUrl}
+              alt={integration.name}
+              className="w-8 h-8 rounded object-cover"
+            />
+          ) : (
+            getIntegrationIcon(integration.icon)
+          )}
+        </div>
+
+        {/* App Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h4 className="text-sm font-medium text-foreground">{integration.name}</h4>
+            {integration.isPopular && (
+              <span className="text-xs px-1.5 py-0.5 bg-primary/20 text-primary rounded">
+                Popular
+              </span>
+            )}
+            {integration.isCustom && (
+              <span className="text-xs px-1.5 py-0.5 bg-amber-500/20 text-amber-500 rounded">
+                Custom
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground truncate">{integration.description}</p>
+        </div>
+
+        {/* Category */}
+        <div className="hidden md:block flex-shrink-0 w-28">
+          <span className="text-xs text-muted-foreground">
+            {getCategoryLabel(integration.category)}
+          </span>
+        </div>
+
+        {/* Connection Status */}
+        <div className="flex-shrink-0 w-28">
+          {integration.isConnected && integration.connectionStatus && (
+            <StatusBadge status={integration.connectionStatus} />
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {integration.isConnected ? (
+            <>
+              <button
+                onClick={() => onManage?.(integration.id)}
+                className="flex items-center gap-1.5 text-sm bg-secondary hover:bg-muted text-secondary-foreground font-medium rounded-md h-8 px-3 border border-border transition-colors"
+              >
+                <Settings2 className="w-3.5 h-3.5" />
+                Manage
+              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+                >
+                  <MoreVertical size={16} />
+                </button>
+
+                {isMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
+                    <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-lg shadow-xl z-50 py-1">
+                      {onReconnect && (
+                        <button
+                          onClick={() => {
+                            onReconnect(integration.id);
+                            setIsMenuOpen(false);
+                          }}
+                          className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2"
+                        >
+                          <RefreshCw size={14} />
+                          Reconnect
+                        </button>
+                      )}
+                      {onViewLogs && (
+                        <button
+                          onClick={() => {
+                            onViewLogs(integration.id);
+                            setIsMenuOpen(false);
+                          }}
+                          className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2"
+                        >
+                          <FileText size={14} />
+                          View Logs
+                        </button>
+                      )}
+                      {onDisconnect && (
+                        <>
+                          <div className="border-t border-border my-1" />
+                          <button
+                            onClick={() => {
+                              onDisconnect(integration.id);
+                              setIsMenuOpen(false);
+                            }}
+                            className="w-full px-3 py-2 text-sm text-left text-red-500 hover:bg-red-500/10 flex items-center gap-2"
+                          >
+                            <Unlink size={14} />
+                            Disconnect
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <button
+              onClick={handleConnect}
+              disabled={isConnecting}
+              className="flex items-center gap-1.5 text-sm bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-md h-8 px-3 transition-colors disabled:opacity-50"
+            >
+              {isConnecting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <Link2 className="w-3.5 h-3.5" />
+                  Connect
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Grid View Layout (default)
   return (
     <div
       className={cn(

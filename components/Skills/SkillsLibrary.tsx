@@ -15,6 +15,7 @@ import { SkillDetailModal } from './SkillDetailModal';
 import type { Skill } from '../../types/skills';
 
 type SortOption = 'most-used' | 'recent' | 'alphabetical';
+type ViewMode = 'grid' | 'list';
 
 interface SkillsLibraryProps {
   onCreateSkill?: () => void;
@@ -22,6 +23,7 @@ interface SkillsLibraryProps {
   onRunSkill?: (skill: Skill) => void;
   search?: string;
   sortBy?: SortOption;
+  viewMode?: ViewMode;
 }
 
 export function SkillsLibrary({
@@ -30,6 +32,7 @@ export function SkillsLibrary({
   onRunSkill,
   search = '',
   sortBy = 'most-used',
+  viewMode = 'grid',
 }: SkillsLibraryProps) {
   const { deleteSkill, refetch } = useSkills();
   const { activeSubTab, setActiveSubTab } = useSkillsSubNavigation();
@@ -125,6 +128,7 @@ export function SkillsLibrary({
             onViewSkill={handleViewSkill}
             search={search}
             sortBy={sortBy}
+            viewMode={viewMode}
           />
         );
       case 'all-skills':
@@ -138,6 +142,7 @@ export function SkillsLibrary({
             onActivateSkill={handleActivateSkill}
             search={search}
             sortBy={sortBy}
+            viewMode={viewMode}
           />
         );
       case 'community-skills':

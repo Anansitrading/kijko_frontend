@@ -4,7 +4,6 @@
 import { X } from "lucide-react";
 import { SettingsLayout } from "./Settings/SettingsLayout";
 import { ProfileSection } from "./Settings/Profile";
-import { GeneralSection } from "./Settings/General";
 import { NotificationsSection } from "./Settings/Notifications";
 import { SecuritySection, AdvancedSecuritySection } from "./Settings/Security";
 import { IntegrationsSection } from "./Settings/Integrations";
@@ -41,7 +40,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         <div className="flex-1 overflow-hidden">
           <SettingsLayout>
             <ProfileSection />
-            <GeneralSection />
             <NotificationsSection />
             <SecuritySection />
             <IntegrationsSection />

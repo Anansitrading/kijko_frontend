@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Settings,
   Bell,
   Shield,
   CreditCard,
@@ -14,8 +13,8 @@ import { navigationItems, tw } from '../../styles/settings';
 // Icon mapping
 // Note: Puzzle icon removed - integrations moved to Dashboard tab (task_1_4)
 // Note: User icon removed - profile moved to user dropdown modal (task_1_5)
+// Note: Settings icon removed - general settings moved to My Profile modal
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Settings,
   Bell,
   Shield,
   CreditCard,

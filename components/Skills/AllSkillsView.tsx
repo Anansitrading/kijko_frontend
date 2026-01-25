@@ -5,6 +5,7 @@ import { EmptyState } from './EmptyState';
 import type { Skill } from '../../types/skills';
 
 type SortOption = 'most-used' | 'recent' | 'alphabetical';
+type ViewMode = 'grid' | 'list';
 
 interface AllSkillsViewProps {
   onCreateSkill: () => void;
@@ -15,6 +16,7 @@ interface AllSkillsViewProps {
   onActivateSkill?: (skill: Skill) => void;
   search?: string;
   sortBy?: SortOption;
+  viewMode?: ViewMode;
 }
 
 export function AllSkillsView({
@@ -26,6 +28,7 @@ export function AllSkillsView({
   onActivateSkill,
   search = '',
   sortBy = 'most-used',
+  viewMode = 'grid',
 }: AllSkillsViewProps) {
   const {
     skills,
@@ -94,6 +97,7 @@ export function AllSkillsView({
           onEditSkill={onEditSkill}
           onDeleteSkill={onDeleteSkill}
           onViewSkill={onViewSkill}
+          viewMode={viewMode}
         />
       )}
     </div>

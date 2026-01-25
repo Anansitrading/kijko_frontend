@@ -13,8 +13,9 @@ const SETTINGS_STORAGE_KEY = 'user_settings';
 
 // Initial state
 // Note: 'profile' section moved to user dropdown modal (task_1_5)
+// Note: 'general' section removed - functionality moved to My Profile modal
 const initialState: SettingsState = {
-  activeSection: 'general',
+  activeSection: 'notifications',
   settings: {},
   isLoading: true,
   saveStatus: 'idle',

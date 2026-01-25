@@ -39,10 +39,6 @@ export function SkillsTab() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('most-used');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
-
-  // Current sort label
-  const currentSortLabel = SORT_OPTIONS.find((o) => o.id === sortBy)?.label || 'Sort';
 
   const handleCreateSkill = useCallback(() => {
     setIsWizardOpen(true);
@@ -110,10 +106,9 @@ export function SkillsTab() {
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="relative w-64 hidden md:block">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <Search size={16} className="text-muted-foreground" />
+              </div>
               <input
                 type="text"
                 value={search}
@@ -151,49 +146,23 @@ export function SkillsTab() {
               </button>
             </div>
 
-            {/* Sort Dropdown */}
+            {/* Sort Dropdown - Native select for reliability */}
             <div className="relative">
-              <button
-                onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground transition-colors"
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="appearance-none px-3 py-2 pr-8 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
               >
-                <span>{currentSortLabel}</span>
-                <ChevronDown
-                  size={16}
-                  className={cn(
-                    'transition-transform',
-                    isSortDropdownOpen && 'rotate-180'
-                  )}
-                />
-              </button>
-
-              {isSortDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setIsSortDropdownOpen(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1">
-                    {SORT_OPTIONS.map((option) => (
-                      <button
-                        key={option.id}
-                        onClick={() => {
-                          setSortBy(option.id);
-                          setIsSortDropdownOpen(false);
-                        }}
-                        className={cn(
-                          'w-full px-4 py-2 text-sm text-left transition-colors',
-                          sortBy === option.id
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id} className="bg-card text-foreground">
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={16}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+              />
             </div>
 
             {/* Action Button */}
@@ -217,6 +186,7 @@ export function SkillsTab() {
             onRunSkill={handleRunSkill}
             search={search}
             sortBy={sortBy}
+            viewMode={viewMode}
           />
         </div>
       </main>

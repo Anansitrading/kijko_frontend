@@ -30,6 +30,8 @@ export function useTabNavigation() {
           } else {
             newParams.set(TAB_PARAM, tab);
           }
+          // Clear subtab when switching main tabs so each tab starts fresh
+          newParams.delete('subtab');
           return newParams;
         },
         { replace: true }

@@ -14,9 +14,10 @@ interface SkillCardProps {
   onEdit: (skill: Skill) => void;
   onDelete: (skill: Skill) => void;
   onView?: (skill: Skill) => void;
+  compact?: boolean;
 }
 
-export function SkillCard({ skill, onRun, onEdit, onDelete, onView }: SkillCardProps) {
+export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = false }: SkillCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -52,6 +53,129 @@ export function SkillCard({ skill, onRun, onEdit, onDelete, onView }: SkillCardP
     onView?.(skill);
   };
 
+  // Compact/List view
+  if (compact) {
+    return (
+      <div
+        onClick={handleCardClick}
+        className={cn(
+          'group relative bg-card border border-border rounded-xl p-4',
+          'hover:border-border/80 hover:shadow-lg hover:shadow-black/5',
+          'transition-all duration-200',
+          !skill.isActive && 'opacity-60',
+          onView && 'cursor-pointer'
+        )}
+      >
+        <div className="flex items-center gap-4">
+          {/* Icon */}
+          <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg shrink-0">
+            <Zap size={20} className="text-primary" />
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-foreground truncate">{skill.name}</h3>
+              {!skill.isActive && (
+                <span className="text-xs text-muted-foreground">(Inactive)</span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground truncate">
+              {skill.description || 'No description provided'}
+            </p>
+          </div>
+
+          {/* Category Badge */}
+          <span
+            className={cn(
+              'px-2 py-1 text-xs font-medium rounded-md capitalize shrink-0',
+              categoryColors.bg,
+              categoryColors.text
+            )}
+          >
+            {skill.category}
+          </span>
+
+          {/* Execution Count */}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+            <Play size={12} />
+            <span>{formatExecutionCount(skill.executionCount)} runs</span>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRun(skill);
+              }}
+              className="p-2 rounded-md text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+              title="Run skill"
+            >
+              <Play size={16} />
+            </button>
+            <div ref={menuRef} className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(!isMenuOpen);
+                }}
+                className={cn(
+                  'p-2 rounded-md text-muted-foreground',
+                  'hover:bg-muted hover:text-foreground',
+                  'transition-all',
+                  isMenuOpen && 'bg-muted text-foreground'
+                )}
+                aria-label="Skill actions"
+              >
+                <MoreVertical size={16} />
+              </button>
+
+              {isMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-36 bg-card border border-border rounded-lg shadow-xl z-10 py-1">
+                  {onView && (
+                    <button
+                      onClick={() => {
+                        onView(skill);
+                        setIsMenuOpen(false);
+                      }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                      <Eye size={14} />
+                      View Details
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      onEdit(skill);
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Pencil size={14} />
+                    Edit
+                  </button>
+                  <div className="border-t border-border my-1" />
+                  <button
+                    onClick={() => {
+                      onDelete(skill);
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Grid view (default)
   return (
     <div
       onClick={handleCardClick}

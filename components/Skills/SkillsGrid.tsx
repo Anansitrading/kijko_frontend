@@ -7,6 +7,8 @@ import { cn } from '../../utils/cn';
 import { SkillCard } from './SkillCard';
 import type { Skill } from '../../types/skills';
 
+type ViewMode = 'grid' | 'list';
+
 interface SkillsGridProps {
   skills: Skill[];
   loading: boolean;
@@ -16,6 +18,7 @@ interface SkillsGridProps {
   onEditSkill: (skill: Skill) => void;
   onDeleteSkill: (skill: Skill) => void;
   onViewSkill?: (skill: Skill) => void;
+  viewMode?: ViewMode;
 }
 
 // Skeleton card for loading state
@@ -70,6 +73,7 @@ export function SkillsGrid({
   onEditSkill,
   onDeleteSkill,
   onViewSkill,
+  viewMode = 'grid',
 }: SkillsGridProps) {
   // Loading state
   if (loading) {
@@ -92,12 +96,14 @@ export function SkillsGrid({
     return <ErrorState message={error} onRetry={onRetry} />;
   }
 
-  // Skills grid
+  // Skills grid/list
   return (
     <div
       className={cn(
         'grid gap-4',
-        'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+        viewMode === 'grid'
+          ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+          : 'grid-cols-1'
       )}
     >
       {skills.map((skill) => (
@@ -108,6 +114,7 @@ export function SkillsGrid({
           onEdit={onEditSkill}
           onDelete={onDeleteSkill}
           onView={onViewSkill}
+          compact={viewMode === 'list'}
         />
       ))}
     </div>

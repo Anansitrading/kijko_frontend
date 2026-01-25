@@ -8,7 +8,6 @@ import { Plus, Search, LayoutGrid, List, ChevronDown } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import {
   IntegrationCard,
-  CreateCustomCard,
   CustomConnectorModal,
   EmptyState,
 } from './integrations';
@@ -419,10 +418,9 @@ export function IntegrationsTab() {
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="relative w-64 hidden md:block">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <Search size={16} className="text-muted-foreground" />
+              </div>
               <input
                 type="text"
                 value={filters.search}
@@ -514,7 +512,7 @@ export function IntegrationsTab() {
               className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
             >
               <Plus size={18} />
-              <span>Add Custom Connector</span>
+              <span>Custom Connector</span>
             </button>
           </div>
         </div>
@@ -564,22 +562,18 @@ export function IntegrationsTab() {
             onAction={() => setFilters(DEFAULT_FILTERS)}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Create Custom Card (only in All Integrations tab) */}
-            {activeTab === 'all' && !filters.search && filters.category === 'all' && (
-              <CreateCustomCard
-                onClick={() => {
-                  setEditingConnector(undefined);
-                  setIsCustomConnectorModalOpen(true);
-                }}
-              />
-            )}
-
+          <div className={cn(
+            'gap-4',
+            viewMode === 'grid'
+              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+              : 'flex flex-col'
+          )}>
             {/* Integration Cards */}
             {filteredIntegrations.map((integration) => (
               <IntegrationCard
                 key={integration.id}
                 integration={integration}
+                viewMode={viewMode}
                 onConnect={handleConnect}
                 onDisconnect={
                   integration.isCustom

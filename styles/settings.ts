@@ -71,8 +71,8 @@ export const dimensions = {
 // Navigation items configuration
 // Note: 'integrations' moved to dedicated Dashboard tab (task_1_4)
 // Note: 'profile' moved to user dropdown modal (task_1_5)
+// Note: 'general' removed - functionality moved to My Profile modal
 export const navigationItems: SettingsNavItem[] = [
-  { id: 'general', label: 'General', icon: 'Settings' },
   { id: 'notifications', label: 'Notifications', icon: 'Bell' },
   { id: 'security', label: 'Security and Data', icon: 'Shield' },
   { id: 'billing', label: 'Billing and Usage', icon: 'CreditCard' },
@@ -84,11 +84,8 @@ export const navigationItems: SettingsNavItem[] = [
 // Section titles and descriptions
 // Note: 'integrations' moved to dedicated Dashboard tab (task_1_4)
 // Note: 'profile' moved to user dropdown modal (task_1_5)
+// Note: 'general' removed - functionality moved to My Profile modal
 export const sectionConfig: Record<SettingsSection, { title: string; description: string }> = {
-  general: {
-    title: 'General Settings',
-    description: 'Configure general application settings',
-  },
   notifications: {
     title: 'Notifications',
     description: 'Configure how and when you receive notifications',

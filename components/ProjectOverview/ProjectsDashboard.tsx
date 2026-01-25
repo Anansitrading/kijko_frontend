@@ -146,10 +146,9 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = 
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="relative w-64 hidden md:block">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <Search size={16} className="text-muted-foreground" />
+              </div>
               <input
                 type="text"
                 value={searchQuery}
