@@ -183,7 +183,7 @@ export interface ProjectCreationForm {
   manualContent?: string;
 
   // Step 4: Team Setup
-  members: MemberInput[];
+  members: TeamMemberInvitation[];
   defaultNotificationLevel: NotificationLevel;
 
   // Step 5: Advanced Settings

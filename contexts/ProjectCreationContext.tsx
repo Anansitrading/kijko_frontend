@@ -27,7 +27,6 @@ import type {
   ProjectCreationForm,
   RepositoryInput,
   FileInput,
-  MemberInput,
   StepValidation,
   ValidationError,
   MetadataOptions,
@@ -115,12 +114,12 @@ type ProjectCreationAction =
   | { type: 'UPDATE_REPOSITORY'; payload: { index: number; data: Partial<RepositoryInput> } }
   | { type: 'SET_FILES'; payload: FileInput[] }
   | { type: 'SET_MANUAL_CONTENT'; payload: string }
-  | { type: 'ADD_MEMBER'; payload: MemberInput }
+  | { type: 'ADD_MEMBER'; payload: TeamMemberInvitation }
   | { type: 'REMOVE_MEMBER'; payload: number }
-  | { type: 'UPDATE_MEMBER'; payload: { index: number; data: Partial<MemberInput> } }
+  | { type: 'UPDATE_MEMBER'; payload: { index: number; data: Partial<TeamMemberInvitation> } }
   | { type: 'SET_SETTINGS'; payload: Partial<Pick<ProjectCreationForm, 'chunkingStrategy' | 'includeMetadata' | 'anonymizeSecrets' | 'customSettings'>> }
   | { type: 'SET_ADVANCED_SETTINGS'; payload: Partial<Pick<ProjectCreationForm, 'chunkingStrategy' | 'webhookUrl' | 'metadataOptions' | 'outputFormat' | 'embeddingModel' | 'patternFilters' | 'processingOptions'>> }
-  | { type: 'SET_TEAM_SETTINGS'; payload: { members?: MemberInput[]; defaultNotificationLevel?: NotificationLevel } }
+  | { type: 'SET_TEAM_SETTINGS'; payload: { members?: TeamMemberInvitation[]; defaultNotificationLevel?: NotificationLevel } }
   | { type: 'SET_VALIDATION'; payload: { step: ProjectCreationStep; validation: StepValidation } }
   | { type: 'MARK_STEP_COMPLETE'; payload: ProjectCreationStep }
   | { type: 'SET_SUBMITTING'; payload: boolean }
@@ -420,12 +419,12 @@ interface ProjectCreationContextValue {
   updateRepository: (index: number, data: Partial<RepositoryInput>) => void;
   setFiles: (files: FileInput[]) => void;
   setManualContent: (content: string) => void;
-  addMember: (member: MemberInput) => void;
+  addMember: (member: TeamMemberInvitation) => void;
   removeMember: (index: number) => void;
-  updateMember: (index: number, data: Partial<MemberInput>) => void;
+  updateMember: (index: number, data: Partial<TeamMemberInvitation>) => void;
   setSettings: (settings: Partial<Pick<ProjectCreationForm, 'chunkingStrategy' | 'includeMetadata' | 'anonymizeSecrets' | 'customSettings'>>) => void;
   setAdvancedSettings: (settings: Partial<Pick<ProjectCreationForm, 'chunkingStrategy' | 'webhookUrl' | 'metadataOptions' | 'outputFormat' | 'embeddingModel' | 'patternFilters' | 'processingOptions'>>) => void;
-  setTeamSettings: (settings: { members?: MemberInput[]; defaultNotificationLevel?: NotificationLevel }) => void;
+  setTeamSettings: (settings: { members?: TeamMemberInvitation[]; defaultNotificationLevel?: NotificationLevel }) => void;
 
   // Validation
   validateStep: (step: ProjectCreationStep) => StepValidation;
@@ -543,7 +542,7 @@ export function ProjectCreationProvider({ children }: ProjectCreationProviderPro
     dispatch({ type: 'SET_MANUAL_CONTENT', payload: content });
   }, []);
 
-  const addMember = useCallback((member: MemberInput) => {
+  const addMember = useCallback((member: TeamMemberInvitation) => {
     dispatch({ type: 'ADD_MEMBER', payload: member });
   }, []);
 
@@ -551,7 +550,7 @@ export function ProjectCreationProvider({ children }: ProjectCreationProviderPro
     dispatch({ type: 'REMOVE_MEMBER', payload: index });
   }, []);
 
-  const updateMember = useCallback((index: number, data: Partial<MemberInput>) => {
+  const updateMember = useCallback((index: number, data: Partial<TeamMemberInvitation>) => {
     dispatch({ type: 'UPDATE_MEMBER', payload: { index, data } });
   }, []);
 
@@ -570,7 +569,7 @@ export function ProjectCreationProvider({ children }: ProjectCreationProviderPro
   );
 
   const setTeamSettings = useCallback(
-    (settings: { members?: MemberInput[]; defaultNotificationLevel?: NotificationLevel }) => {
+    (settings: { members?: TeamMemberInvitation[]; defaultNotificationLevel?: NotificationLevel }) => {
       dispatch({ type: 'SET_TEAM_SETTINGS', payload: settings });
     },
     []

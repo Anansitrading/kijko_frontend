@@ -13,6 +13,9 @@ import type {
 } from '@/types/project';
 import { PERSONA_FLOWS } from '@/types/project';
 
+// Re-export types for consumers
+export type { PersonaSignals };
+
 // Session storage key for caching persona
 const PERSONA_CACHE_KEY = 'kijko_detected_persona';
 const PERSONA_OVERRIDE_KEY = 'kijko_persona_override';
