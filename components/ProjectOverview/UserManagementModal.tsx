@@ -1216,6 +1216,8 @@ function LoadingSkeleton() {
 // Main Component
 // ============================================
 
+type ModalTab = 'users' | 'activity';
+
 export function UserManagementModal({
   isOpen,
   onClose,
@@ -1223,6 +1225,7 @@ export function UserManagementModal({
 }: UserManagementModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ModalTab>('users');
 
   const {
     filteredUsers,
@@ -1327,102 +1330,131 @@ export function UserManagementModal({
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex border-b border-white/10 px-6 shrink-0">
+          <button
+            onClick={() => setActiveTab('users')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px',
+              activeTab === 'users'
+                ? 'text-blue-400 border-blue-400'
+                : 'text-gray-400 border-transparent hover:text-gray-300'
+            )}
+          >
+            <Users className="w-4 h-4" />
+            Users
+          </button>
+          <button
+            onClick={() => setActiveTab('activity')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px',
+              activeTab === 'activity'
+                ? 'text-blue-400 border-blue-400'
+                : 'text-gray-400 border-transparent hover:text-gray-300'
+            )}
+          >
+            <Clock className="w-4 h-4" />
+            Activity Log
+          </button>
+        </div>
+
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {usersLoading ? (
-            <LoadingSkeleton />
-          ) : (
+        <div className="flex-1 overflow-y-auto p-6">
+          {activeTab === 'users' && (
             <>
-              {/* Search */}
-              <UserSearch value={searchQuery} onChange={setSearchQuery} />
+              {usersLoading ? (
+                <LoadingSkeleton />
+              ) : (
+                <div className="space-y-4">
+                  {/* Search */}
+                  <UserSearch value={searchQuery} onChange={setSearchQuery} />
 
-              {/* User List */}
-              <section>
-                <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">
-                  Current Users ({filteredUsers.length})
-                </h3>
-                {filteredUsers.length === 0 ? (
-                  <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
-                    <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400">
-                      {searchQuery
-                        ? 'No users match your search'
-                        : 'No users yet'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredUsers.map((user) => (
-                      <UserCard
-                        key={user.id}
-                        user={user}
-                        isCurrentUser={user.id === currentUserId}
-                        onRoleChange={(role) => updateUserRole(user.id, role)}
-                        onRemove={() => removeUser(user.id)}
-                        onResendInvite={() => {
-                          /* TODO: Implement resend */
-                        }}
-                        disabled={isUpdating}
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* Activity Log */}
-              <section>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                  <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-                    Activity Log
-                  </h3>
-                  <ActivityFilter
-                    typeFilter={typeFilter}
-                    onTypeFilterChange={setTypeFilter}
-                    timeRange={timeRange}
-                    onTimeRangeChange={setTimeRange}
-                  />
-                </div>
-                {activityLoading ? (
-                  <div className="space-y-2 animate-pulse">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="h-16 bg-white/5 rounded-lg" />
-                    ))}
-                  </div>
-                ) : filteredActivities.length === 0 ? (
-                  <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
-                    <p className="text-gray-400">
-                      No activity for the selected filters
-                    </p>
-                  </div>
-                ) : (
-                  <>
+                  {/* User List */}
+                  {filteredUsers.length === 0 ? (
+                    <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
+                      <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                      <p className="text-gray-400">
+                        {searchQuery
+                          ? 'No users match your search'
+                          : 'No users yet'}
+                      </p>
+                    </div>
+                  ) : (
                     <div className="space-y-2">
-                      {filteredActivities.map((event) => (
-                        <ActivityEventComponent key={event.id} event={event} />
+                      {filteredUsers.map((user) => (
+                        <UserCard
+                          key={user.id}
+                          user={user}
+                          isCurrentUser={user.id === currentUserId}
+                          onRoleChange={(role) => updateUserRole(user.id, role)}
+                          onRemove={() => removeUser(user.id)}
+                          onResendInvite={() => {
+                            /* TODO: Implement resend */
+                          }}
+                          disabled={isUpdating}
+                        />
                       ))}
                     </div>
-                    {hasMore && (
-                      <button
-                        onClick={loadMore}
-                        disabled={isLoadingMore}
-                        className="w-full mt-3 py-2 bg-white/5 border border-white/10 rounded-lg text-gray-400 text-sm hover:bg-white/10 hover:text-gray-300 transition-colors flex items-center justify-center gap-2"
-                      >
-                        {isLoadingMore ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Loading...</span>
-                          </>
-                        ) : (
-                          <span>Load More</span>
-                        )}
-                      </button>
-                    )}
-                  </>
-                )}
-              </section>
+                  )}
+                </div>
+              )}
+            </>
+          )}
 
-              {/* Permission Info */}
-              <PermissionInfo />
+          {activeTab === 'activity' && (
+            <>
+              {activityLoading ? (
+                <div className="space-y-2 animate-pulse">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-16 bg-white/5 rounded-lg" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Filters */}
+                  <div className="flex justify-end">
+                    <ActivityFilter
+                      typeFilter={typeFilter}
+                      onTypeFilterChange={setTypeFilter}
+                      timeRange={timeRange}
+                      onTimeRangeChange={setTimeRange}
+                    />
+                  </div>
+
+                  {/* Activity List */}
+                  {filteredActivities.length === 0 ? (
+                    <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
+                      <p className="text-gray-400">
+                        No activity for the selected filters
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        {filteredActivities.map((event) => (
+                          <ActivityEventComponent key={event.id} event={event} />
+                        ))}
+                      </div>
+                      {hasMore && (
+                        <button
+                          onClick={loadMore}
+                          disabled={isLoadingMore}
+                          className="w-full mt-3 py-2 bg-white/5 border border-white/10 rounded-lg text-gray-400 text-sm hover:bg-white/10 hover:text-gray-300 transition-colors flex items-center justify-center gap-2"
+                        >
+                          {isLoadingMore ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Loading...</span>
+                            </>
+                          ) : (
+                            <span>Load More</span>
+                          )}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
