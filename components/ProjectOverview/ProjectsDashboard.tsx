@@ -316,8 +316,8 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings }: ProjectsD
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
           onDelete={() => handleDeleteProject(contextMenu.project.id)}
-          onOpen={() => {
-            handleProjectClick(contextMenu.project);
+          onConfigureIngestion={() => {
+            navigate(`/project/${contextMenu.project.id}?openIngestion=true`);
             setContextMenu(null);
           }}
           onShare={() => {

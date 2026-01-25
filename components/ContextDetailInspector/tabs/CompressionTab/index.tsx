@@ -3,13 +3,12 @@ import type { TabProps } from '../../../../types/contextInspector';
 import { useCompressionData } from './hooks';
 import { CompressionStats } from './CompressionStats';
 import { CompressionProgress } from './CompressionProgress';
-import { IngestionHistory } from './IngestionHistory';
 import { CompressionDetails } from './CompressionDetails';
 
 function LoadingSkeleton() {
   return (
-    <div className="flex gap-6 animate-pulse">
-      <div className="flex-1 space-y-4 max-w-md">
+    <div className="animate-pulse">
+      <div className="space-y-4 max-w-2xl">
         <div className="h-14 bg-slate-800/50 rounded-lg" />
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
@@ -17,12 +16,6 @@ function LoadingSkeleton() {
           ))}
         </div>
         <div className="h-28 bg-slate-800/50 rounded-lg" />
-      </div>
-      <div className="w-80 space-y-2">
-        <div className="h-8 w-48 bg-slate-800/50 rounded" />
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="h-10 bg-slate-800/30 rounded-lg" />
-        ))}
       </div>
     </div>
   );
@@ -47,7 +40,6 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 export function CompressionTab({ contextItem }: TabProps) {
   const {
     metrics,
-    history,
     algorithmInfo,
     isLoading,
     error,
@@ -77,30 +69,17 @@ export function CompressionTab({ contextItem }: TabProps) {
 
   return (
     <div className="p-6 overflow-y-auto custom-scrollbar">
-      <div className="flex gap-6">
-        {/* Left column: Progress bar, token stats, algorithm details */}
-        <div className="flex-1 space-y-5 min-w-0 max-w-md">
-          <CompressionProgress
-            savingsPercent={metrics.savingsPercent}
-            ratio={metrics.ratio}
-            costSavings={metrics.costSavings}
-          />
+      <div className="space-y-5 max-w-2xl">
+        <CompressionProgress
+          savingsPercent={metrics.savingsPercent}
+          ratio={metrics.ratio}
+          costSavings={metrics.costSavings}
+        />
 
-          <CompressionStats metrics={metrics} tokensSaved={tokensSaved} />
+        <CompressionStats metrics={metrics} tokensSaved={tokensSaved} />
 
-          <div className="border-t border-white/5 pt-5">
-            <CompressionDetails algorithmInfo={algorithmInfo} />
-          </div>
-        </div>
-
-        {/* Right column: Ingestion history */}
-        <div className="w-80 flex-shrink-0 border-l border-white/5 pl-6">
-          <IngestionHistory
-            totalIngestions={metrics.totalIngestions}
-            lastIngestion={metrics.lastIngestion}
-            avgInterval={metrics.avgInterval}
-            history={history}
-          />
+        <div className="border-t border-white/5 pt-5">
+          <CompressionDetails algorithmInfo={algorithmInfo} />
         </div>
       </div>
     </div>

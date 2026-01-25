@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { LeftSidebar } from './components/LeftSidebar';
 import { MainContent } from './components/MainContent';
 import { RightSidebar } from './components/RightSidebar';
 import { IngestionModal } from './components/IngestionModal';
 import { useProjectData } from '../../hooks/useProjectData';
+import { useIngestion } from '../../contexts/IngestionContext';
 import { PanelErrorBoundary } from '../../components/ErrorBoundary';
 import { Loader2, AlertCircle } from 'lucide-react';
 import type { TabType } from '../../types/contextInspector';
@@ -15,10 +17,23 @@ export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: project, isLoading, error } = useProjectData(projectId);
+  const { openIngestionModalEmpty } = useIngestion();
 
   // Get tab from URL or default to 'overview'
   const tabParam = searchParams.get('tab') as TabType | null;
   const initialTab: TabType = tabParam && VALID_TABS.includes(tabParam) ? tabParam : 'overview';
+
+  // Check for openIngestion param and trigger modal
+  const shouldOpenIngestion = searchParams.get('openIngestion') === 'true';
+
+  useEffect(() => {
+    if (shouldOpenIngestion && project) {
+      openIngestionModalEmpty();
+      // Remove the param from URL after opening
+      searchParams.delete('openIngestion');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [shouldOpenIngestion, project, openIngestionModalEmpty, searchParams, setSearchParams]);
 
   // Handler to update tab in URL
   const handleTabChange = (tab: TabType) => {
@@ -82,9 +97,9 @@ export function ProjectDetailPage() {
           />
         </PanelErrorBoundary>
 
-        {/* Right Sidebar - Chat History */}
-        <PanelErrorBoundary panelName="Chat History">
-          <RightSidebar className="flex-shrink-0" />
+        {/* Right Sidebar - Chat History & Ingestion History */}
+        <PanelErrorBoundary panelName="History Panel">
+          <RightSidebar className="flex-shrink-0" projectId={project.id} />
         </PanelErrorBoundary>
       </div>
 

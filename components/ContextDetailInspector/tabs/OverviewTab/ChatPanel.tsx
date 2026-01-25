@@ -1,8 +1,9 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { ThumbsUp, ThumbsDown, Copy, Bot, Maximize2, Minimize2 } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Copy, Bot, Maximize2, Minimize2, Plus } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { cn } from '../../../../utils/cn';
+import { useChatHistory } from '../../../../contexts/ChatHistoryContext';
 import type { ChatMessage as ChatMessageType, AISummary } from '../../../../types/contextInspector';
 
 interface TokenUsage {
@@ -40,6 +41,11 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const { createNewChat } = useChatHistory();
+
+  const handleNewChat = useCallback(() => {
+    createNewChat(true); // Retain source files
+  }, [createNewChat]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -99,12 +105,24 @@ export function ChatPanel({
             : 'h-full rounded-lg'
         )}
       >
-        {/* Header - Expand Button */}
-        <div className="px-4 py-3 border-b border-white/10 flex items-center justify-end">
+        {/* Header - New Chat & Expand Buttons */}
+        <div className="px-4 py-3 border-b border-white/10 flex items-center justify-end gap-1">
+          <button
+            onClick={handleNewChat}
+            className={cn(
+              'p-1.5 rounded-md',
+              'text-gray-400 hover:text-white hover:bg-white/10',
+              'transition-colors duration-150'
+            )}
+            title="New chat"
+            aria-label="Start new chat"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
           <button
             onClick={toggleExpand}
             className={cn(
-              'p-1.5 rounded-md ml-2',
+              'p-1.5 rounded-md',
               'text-gray-400 hover:text-white hover:bg-white/10',
               'transition-colors duration-150'
             )}

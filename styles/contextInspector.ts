@@ -121,7 +121,7 @@ export const animations = {
 
 // Tab configuration (Users tab removed - sharing is handled via header Share button)
 export const tabConfig = [
-  { id: 'overview', label: 'Overview & Chat', shortcut: 1 },
+  { id: 'overview', label: 'Chat', shortcut: 1 },
   { id: 'compression', label: 'Compression', shortcut: 2 },
   { id: 'enrichments', label: 'Enrichments', shortcut: 3 },
   { id: 'changelog', label: 'Changelog', shortcut: 4 },

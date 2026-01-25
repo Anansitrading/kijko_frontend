@@ -1,6 +1,5 @@
 import { useRef, useState, useCallback, useMemo, memo } from 'react';
 import {
-  Plus,
   FileCode,
   FileJson,
   FileText,
@@ -522,25 +521,14 @@ export function LeftSidebar({ className, projectName = 'Project' }: LeftSidebarP
       {/* Kijko Header with Logo */}
       <KijkoHeader />
 
-      {/* New Ingestion Button */}
-      <div className="px-3 pb-3 border-b border-[#1e293b]">
-        <button
-          onClick={handleNewIngestion}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-blue-600/20"
-        >
-          <Plus size={16} />
-          New Ingestion
-        </button>
-
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          onChange={handleFileSelect}
-          className="hidden"
-          accept=".ts,.tsx,.js,.jsx,.json,.md,.css,.html,.py,.txt"
-        />
-      </div>
+      {/* Hidden file input for drop zone */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        onChange={handleFileSelect}
+        className="hidden"
+        accept=".ts,.tsx,.js,.jsx,.json,.md,.css,.html,.py,.txt"
+      />
 
       {/* Search & Selection Controls */}
       <div className="px-3 py-2 border-b border-[#1e293b] space-y-2">

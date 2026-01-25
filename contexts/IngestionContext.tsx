@@ -19,6 +19,7 @@ interface IngestionState {
 
 type IngestionAction =
   | { type: 'OPEN_MODAL'; payload: SelectedFile }
+  | { type: 'OPEN_MODAL_EMPTY' }
   | { type: 'CLOSE_MODAL' }
   | { type: 'SET_PROCESSING'; payload: boolean }
   | { type: 'SET_PROGRESS'; payload: number }
@@ -42,6 +43,13 @@ function ingestionReducer(state: IngestionState, action: IngestionAction): Inges
         ...state,
         isModalOpen: true,
         selectedFile: action.payload,
+        error: null,
+      };
+    case 'OPEN_MODAL_EMPTY':
+      return {
+        ...state,
+        isModalOpen: true,
+        selectedFile: null,
         error: null,
       };
     case 'CLOSE_MODAL':
@@ -83,6 +91,7 @@ interface IngestionContextValue {
   processingProgress: number;
   error: string | null;
   openIngestionModal: (file: SelectedFile) => void;
+  openIngestionModalEmpty: () => void;
   closeIngestionModal: () => void;
   startProcessing: () => void;
   setProgress: (progress: number) => void;
@@ -103,6 +112,10 @@ export function IngestionProvider({ children }: IngestionProviderProps) {
 
   const openIngestionModal = useCallback((file: SelectedFile) => {
     dispatch({ type: 'OPEN_MODAL', payload: file });
+  }, []);
+
+  const openIngestionModalEmpty = useCallback(() => {
+    dispatch({ type: 'OPEN_MODAL_EMPTY' });
   }, []);
 
   const closeIngestionModal = useCallback(() => {
@@ -133,6 +146,7 @@ export function IngestionProvider({ children }: IngestionProviderProps) {
       processingProgress: state.processingProgress,
       error: state.error,
       openIngestionModal,
+      openIngestionModalEmpty,
       closeIngestionModal,
       startProcessing,
       setProgress,
@@ -146,6 +160,7 @@ export function IngestionProvider({ children }: IngestionProviderProps) {
       state.processingProgress,
       state.error,
       openIngestionModal,
+      openIngestionModalEmpty,
       closeIngestionModal,
       startProcessing,
       setProgress,
