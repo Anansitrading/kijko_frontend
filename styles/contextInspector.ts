@@ -119,15 +119,14 @@ export const animations = {
   slideOutDown: 'slideOutDown 150ms ease-in',
 } as const;
 
-// Tab configuration (Users tab removed - sharing is handled via header Share button)
+// Tab configuration (Users tab removed - sharing via header; Changelog moved to master-detail in RightSidebar)
 export const tabConfig = [
   { id: 'overview', label: 'Chat', shortcut: 1 },
   { id: 'compression', label: 'Compression', shortcut: 2 },
   { id: 'enrichments', label: 'Enrichments', shortcut: 3 },
-  { id: 'changelog', label: 'Changelog', shortcut: 4 },
 ] as const;
 
-// Footer button configurations per tab (users removed - sharing via header)
+// Footer button configurations per tab (users removed - sharing via header; changelog moved to master-detail)
 export const footerConfig = {
   overview: {
     primary: { label: 'Open Chat', action: 'openChat' },
@@ -140,10 +139,6 @@ export const footerConfig = {
   enrichments: {
     primary: { label: 'Run All Enrichments', action: 'runEnrichments' },
     secondary: { label: 'Configure', action: 'configure' },
-  },
-  changelog: {
-    primary: { label: 'Export Log', action: 'exportLog' },
-    secondary: { label: 'Filter', action: 'filter' },
   },
 } as const;
 

@@ -4,7 +4,6 @@ import {
   Zap,
   Settings,
   Download,
-  Filter,
   Loader2,
   Clock
 } from 'lucide-react';
@@ -29,10 +28,6 @@ const FOOTER_BUTTONS: Record<TabType, { primary: FooterButtonConfig; secondary: 
   enrichments: {
     primary: { label: 'Run All Enrichments', icon: Zap, variant: 'primary' },
     secondary: { label: 'Configure', icon: Settings, variant: 'secondary' },
-  },
-  changelog: {
-    primary: { label: 'Export Log', icon: Download, variant: 'primary' },
-    secondary: { label: 'Filter', icon: Filter, variant: 'secondary' },
   },
 };
 

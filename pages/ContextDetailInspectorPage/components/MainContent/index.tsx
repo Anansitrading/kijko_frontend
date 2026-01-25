@@ -5,7 +5,7 @@ import { TabNavigation } from '../../../../components/ContextDetailInspector/Tab
 import { PageOverviewTab } from './PageOverviewTab';
 import { CompressionTab } from '../../../../components/ContextDetailInspector/tabs/CompressionTab';
 import { EnrichmentsTab } from '../../../../components/ContextDetailInspector/tabs/EnrichmentsTab';
-import { ChangelogTab } from '../../../../components/ContextDetailInspector/tabs/ChangelogTab';
+import { IngestionDetailView } from './IngestionDetailView';
 import { ShareModal } from '../../../../components/ContextDetailInspector/modals/ShareModal';
 import type { TabType, ContextItem } from '../../../../types/contextInspector';
 
@@ -15,6 +15,8 @@ interface MainContentProps {
   projectId?: string;
   initialTab?: TabType;
   onTabChange?: (tab: TabType) => void;
+  selectedIngestionNumber?: number | null;
+  onCloseIngestionDetail?: () => void;
 }
 
 // Create a mock context item from project data
@@ -37,6 +39,8 @@ export function MainContent({
   projectId = 'default',
   initialTab = 'overview',
   onTabChange: onTabChangeProp,
+  selectedIngestionNumber,
+  onCloseIngestionDetail,
 }: MainContentProps) {
   // Active tab state - uses URL-based initialTab
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
@@ -57,7 +61,13 @@ export function MainContent({
     setCurrentProjectName(projectName);
   }, [projectName]);
 
-  // Keyboard shortcuts for tab switching (Cmd/Ctrl + 1-4)
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+    // Notify parent to update URL
+    onTabChangeProp?.(tab);
+  }, [onTabChangeProp]);
+
+  // Keyboard shortcuts for tab switching (Cmd/Ctrl + 1-3)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey) {
@@ -65,7 +75,6 @@ export function MainContent({
           '1': 'overview',
           '2': 'compression',
           '3': 'enrichments',
-          '4': 'changelog',
         };
 
         const tab = tabMap[e.key];
@@ -78,13 +87,7 @@ export function MainContent({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleTabChange = useCallback((tab: TabType) => {
-    setActiveTab(tab);
-    // Notify parent to update URL
-    onTabChangeProp?.(tab);
-  }, [onTabChangeProp]);
+  }, [handleTabChange]);
 
   const handleNameChange = useCallback((newName: string) => {
     setCurrentProjectName(newName);
@@ -95,8 +98,20 @@ export function MainContent({
   // Create context item for tab components
   const contextItem = createContextItem(projectId, currentProjectName);
 
-  // Render the active tab content
-  const renderTabContent = () => {
+  // Render the active tab content or ingestion detail view
+  const renderContent = () => {
+    // If an ingestion is selected, show the detail view
+    if (selectedIngestionNumber != null) {
+      return (
+        <IngestionDetailView
+          ingestionNumber={selectedIngestionNumber}
+          contextId={contextItem.id}
+          onClose={onCloseIngestionDetail || (() => {})}
+        />
+      );
+    }
+
+    // Otherwise, show the active tab content
     switch (activeTab) {
       case 'overview':
         return <PageOverviewTab contextItem={contextItem} />;
@@ -104,8 +119,6 @@ export function MainContent({
         return <CompressionTab contextItem={contextItem} />;
       case 'enrichments':
         return <EnrichmentsTab contextId={contextItem.id} />;
-      case 'changelog':
-        return <ChangelogTab contextId={contextItem.id} contextName={contextItem.name} />;
       default:
         return <PageOverviewTab contextItem={contextItem} />;
     }
@@ -134,7 +147,7 @@ export function MainContent({
 
       {/* Tab Content Area */}
       <div className="flex-1 overflow-hidden">
-        {renderTabContent()}
+        {renderContent()}
       </div>
 
       {/* Share Modal */}

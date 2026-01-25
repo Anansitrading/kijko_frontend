@@ -16,9 +16,8 @@ import { ConnectionStatus } from './common';
 import { OverviewTab } from './tabs/OverviewTab';
 import { CompressionTab } from './tabs/CompressionTab';
 import { EnrichmentsTab } from './tabs/EnrichmentsTab';
-import { ChangelogTab } from './tabs/ChangelogTab';
 import { ShareModal } from './modals/ShareModal';
-import { exportContextInfo, exportActivityLog, exportChangelog, downloadOriginalFiles } from '../../services/export';
+import { exportContextInfo, downloadOriginalFiles } from '../../services/export';
 import type { TabType, SearchResult, CompressionSettings, LSPConfig, ChromaCodeConfig } from '../../types/contextInspector';
 import { tabConfig } from '../../styles/contextInspector';
 
@@ -126,10 +125,6 @@ export function ContextDetailInspector() {
           await new Promise((resolve) => setTimeout(resolve, 1000));
           console.log('Enrichments started');
           break;
-        case 'changelog':
-          // Export changelog
-          exportChangelog([], 'json');
-          break;
       }
     } finally {
       setIsActionLoading(false);
@@ -156,10 +151,6 @@ export function ContextDetailInspector() {
       case 'enrichments':
         // Configure - open settings modal
         setIsCompressionSettingsOpen(true);
-        break;
-      case 'changelog':
-        // Filter (mock)
-        console.log('Open filter options');
         break;
     }
   }, [state.activeTab, state.contextItem]);
@@ -192,13 +183,6 @@ export function ContextDetailInspector() {
         return <CompressionTab contextItem={state.contextItem!} />;
       case 'enrichments':
         return <EnrichmentsTab contextId={state.contextItem!.id} />;
-      case 'changelog':
-        return (
-          <ChangelogTab
-            contextId={state.contextItem!.id}
-            contextName={state.contextItem!.name}
-          />
-        );
       default:
         return null;
     }

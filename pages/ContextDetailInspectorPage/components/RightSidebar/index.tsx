@@ -330,11 +330,37 @@ function ChatHistoryItemComponent({
 // Ingestion Entry Row Component
 // ==========================================
 
-function IngestionEntryRow({ entry }: { entry: IngestionEntry }) {
+interface IngestionEntryRowProps {
+  entry: IngestionEntry;
+  isSelected?: boolean;
+  onSelect?: () => void;
+}
+
+function IngestionEntryRow({ entry, isSelected, onSelect }: IngestionEntryRowProps) {
   return (
-    <div className="py-2 px-2.5 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors">
+    <div
+      onClick={onSelect}
+      className={cn(
+        "py-2 px-2.5 rounded-lg transition-all duration-150 cursor-pointer",
+        "border-l-[3px]",
+        isSelected
+          ? "bg-blue-500/10 border-l-blue-500 hover:bg-blue-500/15"
+          : "bg-slate-800/30 border-l-transparent hover:bg-slate-800/50 hover:border-l-blue-500/30"
+      )}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect?.();
+        }
+      }}
+    >
       <div className="flex items-center justify-between mb-1">
-        <span className="text-gray-500 font-mono text-xs">
+        <span className={cn(
+          "font-mono text-xs font-semibold",
+          isSelected ? "text-blue-400" : "text-gray-500"
+        )}>
           #{entry.number}
         </span>
         <span className="text-gray-400 text-xs">
@@ -459,13 +485,21 @@ interface RightSidebarProps {
   className?: string;
   onWidthChange?: (width: number) => void;
   projectId?: string;
+  selectedIngestionNumber?: number | null;
+  onSelectIngestion?: (ingestionNumber: number | null) => void;
 }
 
 // ==========================================
 // Main Component
 // ==========================================
 
-export function RightSidebar({ className, onWidthChange, projectId = 'default' }: RightSidebarProps) {
+export function RightSidebar({
+  className,
+  onWidthChange,
+  projectId = 'default',
+  selectedIngestionNumber,
+  onSelectIngestion,
+}: RightSidebarProps) {
   const { state: chatState, getCurrentSession, createNewChat, loadChat, deleteChat, renameChat } = useChatHistory();
   const { openIngestionModalEmpty } = useIngestion();
   const { metrics, history: ingestionHistory, isLoading: ingestionLoading } = useCompressionData(projectId);
@@ -876,7 +910,14 @@ export function RightSidebar({ className, onWidthChange, projectId = 'default' }
                 <div className="h-full overflow-y-auto px-2 py-2">
                   <div className="space-y-1.5 pb-4">
                     {filteredIngestions.map((entry) => (
-                      <IngestionEntryRow key={entry.number} entry={entry} />
+                      <IngestionEntryRow
+                        key={entry.number}
+                        entry={entry}
+                        isSelected={selectedIngestionNumber === entry.number}
+                        onSelect={() => onSelectIngestion?.(
+                          selectedIngestionNumber === entry.number ? null : entry.number
+                        )}
+                      />
                     ))}
                   </div>
                 </div>

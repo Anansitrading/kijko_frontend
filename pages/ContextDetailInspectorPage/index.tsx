@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { LeftSidebar } from './components/LeftSidebar';
 import { MainContent } from './components/MainContent';
@@ -10,14 +10,17 @@ import { PanelErrorBoundary } from '../../components/ErrorBoundary';
 import { Loader2, AlertCircle } from 'lucide-react';
 import type { TabType } from '../../types/contextInspector';
 
-// Valid tab values
-const VALID_TABS: TabType[] = ['overview', 'compression', 'enrichments', 'changelog'];
+// Valid tab values (changelog moved to master-detail pattern in RightSidebar)
+const VALID_TABS: TabType[] = ['overview', 'compression', 'enrichments'];
 
 export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: project, isLoading, error } = useProjectData(projectId);
   const { openIngestionModalEmpty } = useIngestion();
+
+  // Selected ingestion for master-detail pattern
+  const [selectedIngestionNumber, setSelectedIngestionNumber] = useState<number | null>(null);
 
   // Get tab from URL or default to 'overview'
   const tabParam = searchParams.get('tab') as TabType | null;
@@ -35,10 +38,21 @@ export function ProjectDetailPage() {
     }
   }, [shouldOpenIngestion, project, openIngestionModalEmpty, searchParams, setSearchParams]);
 
-  // Handler to update tab in URL
-  const handleTabChange = (tab: TabType) => {
+  // Handler to update tab in URL - also clears selected ingestion
+  const handleTabChange = useCallback((tab: TabType) => {
+    setSelectedIngestionNumber(null); // Clear ingestion detail view when switching tabs
     setSearchParams({ tab }, { replace: true });
-  };
+  }, [setSearchParams]);
+
+  // Handler for selecting an ingestion from the right sidebar
+  const handleSelectIngestion = useCallback((ingestionNumber: number | null) => {
+    setSelectedIngestionNumber(ingestionNumber);
+  }, []);
+
+  // Handler for closing ingestion detail view
+  const handleCloseIngestionDetail = useCallback(() => {
+    setSelectedIngestionNumber(null);
+  }, []);
 
   // Loading state
   if (isLoading) {
@@ -94,12 +108,19 @@ export function ProjectDetailPage() {
             projectId={project.id}
             initialTab={initialTab}
             onTabChange={handleTabChange}
+            selectedIngestionNumber={selectedIngestionNumber}
+            onCloseIngestionDetail={handleCloseIngestionDetail}
           />
         </PanelErrorBoundary>
 
         {/* Right Sidebar - Chat History & Ingestion History */}
         <PanelErrorBoundary panelName="History Panel">
-          <RightSidebar className="flex-shrink-0" projectId={project.id} />
+          <RightSidebar
+            className="flex-shrink-0"
+            projectId={project.id}
+            selectedIngestionNumber={selectedIngestionNumber}
+            onSelectIngestion={handleSelectIngestion}
+          />
         </PanelErrorBoundary>
       </div>
 
