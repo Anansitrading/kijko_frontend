@@ -4,15 +4,17 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Database,
   Upload,
   Package,
-  Sparkles,
   AlertTriangle,
   FileX,
+  Palette,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "../../utils/cn";
-import { IngestionConfig } from "../../types";
+import { IngestionConfig, ChromacodeConfig, CHROMACODE_DEFAULTS, CHROMACODE_LABELS } from "../../types";
 
 // ============================================================================
 // Types
@@ -63,6 +65,7 @@ function getInitialState(file: { id: string; name: string }): WizardState {
       tags: [],
       description: "",
       neverCompress: false,
+      chromacode: { ...CHROMACODE_DEFAULTS },
     },
     isProcessing: false,
     validationErrors: {},
@@ -264,8 +267,8 @@ function Step1ProcessingMode({
   neverCompress,
   onNeverCompressChange,
 }: {
-  value: "none" | "compress" | "compress_enrich";
-  onChange: (mode: "none" | "compress" | "compress_enrich") => void;
+  value: "none" | "compress";
+  onChange: (mode: "none" | "compress") => void;
   neverCompress: boolean;
   onNeverCompressChange: (checked: boolean) => void;
 }) {
@@ -282,12 +285,6 @@ function Step1ProcessingMode({
       title: "Compress",
       description: "Basic compression for context efficiency",
     },
-    {
-      id: "compress_enrich" as const,
-      icon: Sparkles,
-      title: "Compress and Enrich",
-      description: "AI-powered metadata extraction, summaries, tags, and key concepts",
-    },
   ];
 
   return (
@@ -303,7 +300,7 @@ function Step1ProcessingMode({
         {options.map((option) => {
           const Icon = option.icon;
           const isSelected = value === option.id;
-          const colorClass = option.id === "none" ? "slate" : option.id === "compress" ? "blue" : "emerald";
+          const colorClass = option.id === "none" ? "slate" : "blue";
 
           return (
             <button
@@ -315,9 +312,7 @@ function Step1ProcessingMode({
                 isSelected
                   ? colorClass === "slate"
                     ? "border-slate-500 bg-slate-600/10"
-                    : colorClass === "blue"
-                    ? "border-blue-500 bg-blue-600/10"
-                    : "border-emerald-500 bg-emerald-600/10"
+                    : "border-blue-500 bg-blue-600/10"
                   : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
               )}
             >
@@ -327,9 +322,7 @@ function Step1ProcessingMode({
                   isSelected
                     ? colorClass === "slate"
                       ? "bg-slate-600/20 text-slate-300"
-                      : colorClass === "blue"
-                      ? "bg-blue-600/20 text-blue-400"
-                      : "bg-emerald-600/20 text-emerald-400"
+                      : "bg-blue-600/20 text-blue-400"
                     : "bg-slate-700 text-slate-400"
                 )}
               >
@@ -366,9 +359,7 @@ function Step1ProcessingMode({
                   isSelected
                     ? colorClass === "slate"
                       ? "border-slate-500 bg-slate-500"
-                      : colorClass === "blue"
-                      ? "border-blue-500 bg-blue-500"
-                      : "border-emerald-500 bg-emerald-500"
+                      : "border-blue-500 bg-blue-500"
                     : "border-slate-600"
                 )}
               >
@@ -392,13 +383,41 @@ function Step2FileMetadata({
   onDisplayNameChange,
   onTagsChange,
   errors,
+  showChromacode,
+  chromacode,
+  onChromacodeChange,
 }: {
   displayName: string;
   tags: string[];
   onDisplayNameChange: (name: string) => void;
   onTagsChange: (tags: string[]) => void;
   errors: Record<string, string>;
+  showChromacode: boolean;
+  chromacode: ChromacodeConfig | undefined;
+  onChromacodeChange: (config: ChromacodeConfig) => void;
 }) {
+  const [chromacodeExpanded, setChromacodeExpanded] = useState(false);
+
+  const chromacodeKeys = Object.keys(CHROMACODE_LABELS) as (keyof ChromacodeConfig)[];
+
+  const hasCustomColors = chromacode
+    ? chromacodeKeys.some((k) => chromacode[k] !== CHROMACODE_DEFAULTS[k])
+    : false;
+
+  const handleColorChange = (key: keyof ChromacodeConfig, hex: string) => {
+    const current = chromacode ?? { ...CHROMACODE_DEFAULTS };
+    onChromacodeChange({ ...current, [key]: hex });
+  };
+
+  const handleResetOne = (key: keyof ChromacodeConfig) => {
+    const current = chromacode ?? { ...CHROMACODE_DEFAULTS };
+    onChromacodeChange({ ...current, [key]: CHROMACODE_DEFAULTS[key] });
+  };
+
+  const handleResetAll = () => {
+    onChromacodeChange({ ...CHROMACODE_DEFAULTS });
+  };
+
   return (
     <div className="p-6 space-y-5">
       <div className="mb-6">
@@ -438,6 +457,121 @@ function Step2FileMetadata({
         </label>
         <TagInput value={tags} onChange={onTagsChange} />
       </div>
+
+      {/* Chromacode */}
+      {showChromacode && (
+        <div className="space-y-2">
+          {/* Header row: label + default swatches + customize toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Palette size={14} className="text-slate-400" />
+              <label className="text-xs text-slate-300 font-medium">Chromacode</label>
+              {/* Compact color dots when collapsed */}
+              {!chromacodeExpanded && (
+                <div className="flex items-center gap-1 ml-1">
+                  {chromacodeKeys.map((key) => (
+                    <div
+                      key={key}
+                      className="w-3 h-3 rounded-full border border-slate-600"
+                      style={{ backgroundColor: chromacode?.[key] ?? CHROMACODE_DEFAULTS[key] }}
+                      title={CHROMACODE_LABELS[key].label}
+                    />
+                  ))}
+                </div>
+              )}
+              {hasCustomColors && !chromacodeExpanded && (
+                <span className="text-[10px] text-blue-400 font-mono ml-1">customized</span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setChromacodeExpanded(!chromacodeExpanded)}
+              className="text-[11px] text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1"
+            >
+              {chromacodeExpanded ? "Collapse" : "Customize"}
+              <ChevronDown
+                size={12}
+                className={cn("transition-transform", chromacodeExpanded && "rotate-180")}
+              />
+            </button>
+          </div>
+
+          {/* Expanded color editor */}
+          {chromacodeExpanded && (
+            <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
+              {chromacodeKeys.map((key, index) => {
+                const info = CHROMACODE_LABELS[key];
+                const currentHex = chromacode?.[key] ?? CHROMACODE_DEFAULTS[key];
+                const isCustom = currentHex !== CHROMACODE_DEFAULTS[key];
+
+                return (
+                  <div
+                    key={key}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2",
+                      index > 0 && "border-t border-slate-700/50"
+                    )}
+                  >
+                    {/* Color swatch + picker */}
+                    <label className="relative cursor-pointer group">
+                      <div
+                        className="w-5 h-5 rounded-full border-2 border-slate-600 group-hover:border-slate-400 transition-colors"
+                        style={{ backgroundColor: currentHex }}
+                      />
+                      <input
+                        type="color"
+                        value={currentHex}
+                        onChange={(e) => handleColorChange(key, e.target.value)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                    </label>
+
+                    {/* Label + role */}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs text-slate-200">{info.label}</span>
+                      <span className="text-[10px] text-slate-500 ml-1.5">{info.role}</span>
+                    </div>
+
+                    {/* Hex value */}
+                    <span className={cn(
+                      "text-[10px] font-mono",
+                      isCustom ? "text-blue-400" : "text-slate-500"
+                    )}>
+                      {currentHex.toUpperCase()}
+                    </span>
+
+                    {/* Reset single */}
+                    {isCustom && (
+                      <button
+                        type="button"
+                        onClick={() => handleResetOne(key)}
+                        className="text-slate-500 hover:text-slate-300 transition-colors"
+                        title="Reset to default"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Reset all footer */}
+              {hasCustomColors && (
+                <div className="border-t border-slate-700/50 px-3 py-1.5 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleResetAll}
+                    className="text-[11px] text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1"
+                  >
+                    <RotateCcw size={10} />
+                    Reset all
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -457,20 +591,25 @@ function Step3Confirmation({
   isProcessing: boolean;
   onStartIngestion: () => void;
 }) {
+  const hasCustomColors = config.chromacode
+    ? (Object.keys(CHROMACODE_DEFAULTS) as (keyof ChromacodeConfig)[]).some(
+        (k) => config.chromacode![k] !== CHROMACODE_DEFAULTS[k]
+      )
+    : false;
+
+  const processingLabel =
+    config.processingMode === "none"
+      ? config.neverCompress
+        ? "Uncompressed (never compress)"
+        : "Uncompressed"
+      : hasCustomColors
+      ? "Compress + Chromacode (custom)"
+      : "Compress + Chromacode";
+
   const summaryItems = [
     { label: "File", value: config.fileName },
     { label: "Display Name", value: config.displayName },
-    {
-      label: "Processing",
-      value:
-        config.processingMode === "none"
-          ? config.neverCompress
-            ? "Uncompressed (never compress)"
-            : "Uncompressed"
-          : config.processingMode === "compress"
-          ? "Compress"
-          : "Compress and Enrich",
-    },
+    { label: "Processing", value: processingLabel },
     { label: "Project", value: projectName },
     { label: "Tags", value: config.tags?.join(", ") || "None" },
   ];
@@ -503,6 +642,29 @@ function Step3Confirmation({
               Description
             </span>
             <p className="text-sm text-slate-300">{config.description}</p>
+          </div>
+        )}
+
+        {/* Chromacode color preview */}
+        {config.processingMode === "compress" && config.chromacode && (
+          <div className="pt-2 border-t border-slate-700">
+            <span className="text-xs text-slate-400 font-mono uppercase block mb-2">
+              Chromacode
+            </span>
+            <div className="flex gap-1.5">
+              {(Object.keys(CHROMACODE_LABELS) as (keyof ChromacodeConfig)[]).map((key) => (
+                <div key={key} className="flex flex-col items-center gap-1">
+                  <div
+                    className="w-4 h-4 rounded-full border border-slate-600"
+                    style={{ backgroundColor: config.chromacode![key] }}
+                    title={`${CHROMACODE_LABELS[key].label}: ${config.chromacode![key]}`}
+                  />
+                  <span className="text-[8px] text-slate-500 leading-none">
+                    {CHROMACODE_LABELS[key].label.split(' ')[0]}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -628,6 +790,7 @@ export function IngestionWizard({
                   payload: {
                     processingMode: mode,
                     neverCompress: mode === "none" ? state.config.neverCompress : false,
+                    chromacode: mode === "compress" ? (state.config.chromacode ?? { ...CHROMACODE_DEFAULTS }) : undefined,
                   },
                 })
               }
@@ -648,6 +811,11 @@ export function IngestionWizard({
                 dispatch({ type: "UPDATE_CONFIG", payload: { tags } })
               }
               errors={state.validationErrors}
+              showChromacode={state.config.processingMode === "compress"}
+              chromacode={state.config.chromacode}
+              onChromacodeChange={(chromacode) =>
+                dispatch({ type: "UPDATE_CONFIG", payload: { chromacode } })
+              }
             />
           )}
           {state.currentStep === 3 && (

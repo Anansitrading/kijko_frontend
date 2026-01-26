@@ -8,7 +8,7 @@ import { INTEGRATION_CATEGORIES } from '../../../types/settings';
 
 export interface SidebarFilters {
   selectedCategories: IntegrationCategory[];
-  selectedStatuses: ('connected' | 'warning' | 'disconnected')[];
+  selectedStatuses: ('connected' | 'warning' | 'disconnected' | 'default')[];
   selectedTypes: ('pre-built' | 'custom')[];
 }
 
@@ -25,6 +25,7 @@ interface FilterSidebarProps {
 
 // Filter section definitions
 const STATUS_OPTIONS: { value: SidebarFilters['selectedStatuses'][number]; label: string }[] = [
+  { value: 'default', label: 'Default' },
   { value: 'connected', label: 'Connected' },
   { value: 'warning', label: 'Warning' },
   { value: 'disconnected', label: 'Disconnected' },

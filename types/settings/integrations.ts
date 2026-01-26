@@ -28,8 +28,10 @@ export type IntegrationProvider =
   | 'google-analytics'
   | 'mixpanel'
   | 'amplitude'
-  // Storage
+  // Kijko
   | 'kijko-file-storage'
+  | 'kijko-knowledge-graph'
+  // Storage
   | 'google-drive'
   | 'dropbox'
   | 'onedrive'
@@ -219,7 +221,7 @@ export const INTEGRATION_APPS: IntegrationApp[] = [
     icon: 'amplitude',
     permissions: ['track_events', 'read_data'],
   },
-  // Storage
+  // Kijko
   {
     id: 'kijko-file-storage',
     name: 'Kijko File Storage',
@@ -229,6 +231,16 @@ export const INTEGRATION_APPS: IntegrationApp[] = [
     permissions: ['read_files', 'write_files', 'delete_files', 'manage_folders'],
     isPopular: true,
   },
+  {
+    id: 'kijko-knowledge-graph',
+    name: 'Kijko Knowledge Graph',
+    category: 'analytics',
+    description: 'Built-in knowledge graph powered by Kijko.',
+    icon: 'kijko-knowledge-graph',
+    permissions: ['read_graph', 'write_graph', 'manage_entities', 'manage_relations'],
+    isPopular: true,
+  },
+  // Storage
   {
     id: 'google-drive',
     name: 'Google Drive',
@@ -411,7 +423,7 @@ export interface IntegrationCardData {
   iconUrl?: string;
   isPopular?: boolean;
   isConnected?: boolean;
-  connectionStatus?: 'connected' | 'warning' | 'disconnected';
+  connectionStatus?: 'connected' | 'warning' | 'disconnected' | 'default';
   lastSynced?: Date;
   permissions?: string[];
   isCustom?: boolean;
@@ -422,7 +434,7 @@ export interface IntegrationConnection {
   id: string;
   integrationId: string; // 'salesforce', 'slack', or custom_connector_id
   integrationType: 'pre_built' | 'custom';
-  status: 'connected' | 'warning' | 'disconnected';
+  status: 'connected' | 'warning' | 'disconnected' | 'default';
   lastSyncedAt?: Date;
   config?: Record<string, unknown>;
   createdAt: Date;

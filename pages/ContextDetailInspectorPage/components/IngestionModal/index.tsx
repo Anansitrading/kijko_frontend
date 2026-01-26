@@ -1,52 +1,17 @@
 import { useCallback, useState, useRef } from 'react';
 import { IngestionWizard } from '../../../../components/Hypervisa/IngestionWizard';
 import { useIngestion, formatFileSizeFromBytes, SelectedFile } from '../../../../contexts/IngestionContext';
-import { useSourceFiles, SourceFile } from '../../../../contexts/SourceFilesContext';
+import { addIngestionEntry } from '../../../../services/compressionService';
 import { IngestionConfig } from '../../../../types';
 import { X, Upload, FileText, FolderOpen } from 'lucide-react';
 
-// Get file type from extension
-function getFileTypeFromExtension(filename: string): SourceFile['type'] {
-  const ext = filename.split('.').pop()?.toLowerCase() || '';
-  switch (ext) {
-    case 'ts':
-    case 'tsx':
-      return 'typescript';
-    case 'js':
-    case 'jsx':
-      return 'javascript';
-    case 'json':
-      return 'json';
-    case 'md':
-    case 'mdx':
-      return 'markdown';
-    case 'css':
-    case 'scss':
-    case 'sass':
-    case 'less':
-      return 'css';
-    case 'html':
-    case 'htm':
-      return 'html';
-    case 'py':
-      return 'python';
-    default:
-      return 'other';
-  }
-}
-
-// Get extension from filename
-function getExtension(filename: string): string {
-  return filename.split('.').pop() || '';
-}
-
 interface IngestionModalProps {
   projectName: string;
+  projectId: string;
 }
 
-export function IngestionModal({ projectName }: IngestionModalProps) {
+export function IngestionModal({ projectName, projectId }: IngestionModalProps) {
   const { isModalOpen, selectedFile, closeIngestionModal, openIngestionModal } = useIngestion();
-  const { addFiles } = useSourceFiles();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
@@ -55,24 +20,13 @@ export function IngestionModal({ projectName }: IngestionModalProps) {
       // Simulate processing delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Create a new source file from the ingestion config
-      if (selectedFile) {
-        const newFile: SourceFile = {
-          id: selectedFile.id,
-          name: config.displayName || selectedFile.name,
-          extension: getExtension(selectedFile.name),
-          size: selectedFile.sizeBytes,
-          type: getFileTypeFromExtension(selectedFile.name),
-        };
-
-        // Add the file to the source files list
-        addFiles([newFile]);
-      }
+      // Add an ingestion entry to the right panel's ingestion history
+      await addIngestionEntry(projectId, 1, 0, config.displayName);
 
       // Close the modal after successful ingestion
       closeIngestionModal();
     },
-    [selectedFile, addFiles, closeIngestionModal]
+    [projectId, closeIngestionModal]
   );
 
   const handleFileSelect = useCallback((files: FileList | null) => {

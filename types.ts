@@ -31,7 +31,7 @@ export interface IngestionConfig {
     fileId: string;
     fileName: string;
     displayName: string;
-    processingMode: 'none' | 'compress' | 'compress_enrich';
+    processingMode: 'none' | 'compress';
     codebase: {
         type: 'existing' | 'new';
         id?: string;
@@ -40,7 +40,38 @@ export interface IngestionConfig {
     tags?: string[];
     description?: string;
     neverCompress?: boolean;
+    chromacode?: ChromacodeConfig;
 }
+
+export interface ChromacodeColorEntry {
+    label: string;
+    role: string;
+    hex: string;
+}
+
+export interface ChromacodeConfig {
+    controlFlow: string;
+    storage: string;
+    literals: string;
+    execution: string;
+    meta: string;
+}
+
+export const CHROMACODE_DEFAULTS: ChromacodeConfig = {
+    controlFlow: '#D00000',
+    storage: '#0000D0',
+    literals: '#007000',
+    execution: '#800080',
+    meta: '#505050',
+};
+
+export const CHROMACODE_LABELS: Record<keyof ChromacodeConfig, { label: string; role: string; example: string }> = {
+    controlFlow: { label: 'Control Flow', role: 'if, for, while', example: 'Conditionals & loops' },
+    storage: { label: 'Storage / Identity', role: 'class, def, var', example: 'Definitions & declarations' },
+    literals: { label: 'Literals / Payload', role: 'strings, numbers', example: 'Values & data' },
+    execution: { label: 'Execution', role: 'function calls', example: 'Invocations & calls' },
+    meta: { label: 'Meta / Context', role: 'comments', example: 'Annotations & docs' },
+};
 
 // Project Overview Types
 export interface ProjectLastActiveUser {

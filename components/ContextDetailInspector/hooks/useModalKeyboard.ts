@@ -9,8 +9,9 @@ interface UseModalKeyboardOptions {
 
 const TAB_MAP: Record<number, TabType> = {
   1: 'overview',
-  2: 'compression',
-  3: 'enrichments',
+  2: 'knowledgebase',
+  3: 'compression',
+  4: 'knowledgegraph',
 };
 
 /**
@@ -34,11 +35,11 @@ export function useModalKeyboard({
         return;
       }
 
-      // Cmd/Ctrl + 1-3 for tab switching
+      // Cmd/Ctrl + 1-4 for tab switching
       const isMeta = event.metaKey || event.ctrlKey;
       if (isMeta) {
         const num = parseInt(event.key, 10);
-        if (num >= 1 && num <= 3) {
+        if (num >= 1 && num <= 4) {
           event.preventDefault();
           const tab = TAB_MAP[num];
           if (tab) {

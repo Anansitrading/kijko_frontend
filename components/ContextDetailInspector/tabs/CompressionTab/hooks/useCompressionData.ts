@@ -63,6 +63,21 @@ export function useCompressionData(contextId: string): UseCompressionDataReturn 
     fetchData();
   }, [fetchData]);
 
+  // Directly update state when a new ingestion is added via the service
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.entry) {
+        setHistory(prev => [detail.entry, ...prev]);
+      }
+      if (detail?.metrics) {
+        setMetrics(detail.metrics);
+      }
+    };
+    window.addEventListener('kijko-ingestion-added', handler);
+    return () => window.removeEventListener('kijko-ingestion-added', handler);
+  }, []);
+
   const recompress = useCallback(async () => {
     try {
       setIsRecompressing(true);

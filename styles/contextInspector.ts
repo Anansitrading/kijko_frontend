@@ -122,8 +122,9 @@ export const animations = {
 // Tab configuration (Users tab removed - sharing via header; Changelog moved to master-detail in RightSidebar)
 export const tabConfig = [
   { id: 'overview', label: 'Chat', shortcut: 1 },
-  { id: 'compression', label: 'Compression', shortcut: 2 },
-  { id: 'enrichments', label: 'Enrichments', shortcut: 3 },
+  { id: 'knowledgebase', label: 'Knowledge Base', shortcut: 2 },
+  { id: 'compression', label: 'Hypervisa', shortcut: 3 },
+  { id: 'knowledgegraph', label: 'Knowledge Graph', shortcut: 4 },
 ] as const;
 
 // Footer button configurations per tab (users removed - sharing via header; changelog moved to master-detail)
@@ -136,9 +137,13 @@ export const footerConfig = {
     primary: { label: 'Recompress', action: 'recompress' },
     secondary: { label: 'View Details', action: 'viewDetails' },
   },
-  enrichments: {
-    primary: { label: 'Run All Enrichments', action: 'runEnrichments' },
-    secondary: { label: 'Configure', action: 'configure' },
+  knowledgebase: {
+    primary: { label: 'New Ingestion', action: 'newIngestion' },
+    secondary: { label: 'Export', action: 'export' },
+  },
+  knowledgegraph: {
+    primary: { label: 'Rebuild Graph', action: 'rebuildGraph' },
+    secondary: { label: 'View Graph', action: 'viewGraph' },
   },
 } as const;
 

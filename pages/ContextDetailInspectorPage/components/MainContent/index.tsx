@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { cn } from '../../../../utils/cn';
 import { PageOverviewTab } from './PageOverviewTab';
 import { CompressionTab } from '../../../../components/ContextDetailInspector/tabs/CompressionTab';
-import { EnrichmentsTab } from '../../../../components/ContextDetailInspector/tabs/EnrichmentsTab';
+import { KnowledgeBaseTab } from '../../../../components/ContextDetailInspector/tabs/KnowledgeBaseTab';
+import { KnowledgeGraphTab } from '../../../../components/ContextDetailInspector/tabs/KnowledgeGraphTab';
 import { IngestionDetailView } from './IngestionDetailView';
 import type { TabType, ContextItem } from '../../../../types/contextInspector';
 
@@ -13,6 +14,7 @@ interface MainContentProps {
   activeTab: TabType;
   selectedIngestionNumber?: number | null;
   onCloseIngestionDetail?: () => void;
+  onViewFullGraph?: () => void;
 }
 
 // Create a mock context item from project data
@@ -36,6 +38,7 @@ export function MainContent({
   activeTab,
   selectedIngestionNumber,
   onCloseIngestionDetail,
+  onViewFullGraph,
 }: MainContentProps) {
   // Project name state for editing
   const [currentProjectName, setCurrentProjectName] = useState(projectName);
@@ -65,10 +68,12 @@ export function MainContent({
     switch (activeTab) {
       case 'overview':
         return <PageOverviewTab contextItem={contextItem} />;
+      case 'knowledgebase':
+        return <KnowledgeBaseTab contextId={contextItem.id} />;
       case 'compression':
         return <CompressionTab contextItem={contextItem} />;
-      case 'enrichments':
-        return <EnrichmentsTab contextId={contextItem.id} />;
+      case 'knowledgegraph':
+        return <KnowledgeGraphTab contextId={contextItem.id} onViewFullGraph={onViewFullGraph} />;
       default:
         return <PageOverviewTab contextItem={contextItem} />;
     }

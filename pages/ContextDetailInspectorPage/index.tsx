@@ -14,8 +14,10 @@ import { UserAvatar } from '../../components/Dashboard/UserAvatar';
 import { UserDropdown } from '../../components/Dashboard/UserDropdown';
 import { SettingsModal } from '../../components/SettingsModal';
 import { ShareModal } from '../../components/ContextDetailInspector/modals/ShareModal';
+import { KnowledgeGraphFloatingWindow } from '../../components/ContextDetailInspector/modals/KnowledgeGraphFloatingWindow';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useProjects } from '../../contexts/ProjectsContext';
+import { useChatHistory } from '../../contexts/ChatHistoryContext';
 import { cn } from '../../utils/cn';
 import { tabConfig } from '../../styles/contextInspector';
 import { Loader2, AlertCircle, Share2, ArrowLeft, Wrench, ChevronDown, Check } from 'lucide-react';
@@ -23,7 +25,7 @@ import type { TabType } from '../../types/contextInspector';
 import type { Notification, SettingsSection } from '../../types/settings';
 
 // Valid tab values
-const VALID_TABS: TabType[] = ['overview', 'compression', 'enrichments'];
+const VALID_TABS: TabType[] = ['overview', 'knowledgebase', 'compression', 'knowledgegraph'];
 
 export function ProjectDetailPage() {
   const navigate = useNavigate();
@@ -31,6 +33,7 @@ export function ProjectDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: project, isLoading, error } = useProjectData(projectId);
   const { openIngestionModal, openIngestionModalEmpty } = useIngestion();
+  const { createNewChat, addMessage } = useChatHistory();
 
   // Selected ingestion for master-detail pattern
   const [selectedIngestionNumber, setSelectedIngestionNumber] = useState<number | null>(null);
@@ -51,6 +54,10 @@ export function ProjectDetailPage() {
 
   // Share modal state
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Knowledge Graph floating window state
+  const [isKGFloatingOpen, setIsKGFloatingOpen] = useState(false);
+  const handleKGFloatingClose = useCallback(() => setIsKGFloatingOpen(false), []);
 
   // Settings modal state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -127,8 +134,9 @@ export function ProjectDetailPage() {
       if (e.metaKey || e.ctrlKey) {
         const tabMap: Record<string, TabType> = {
           '1': 'overview',
-          '2': 'compression',
-          '3': 'enrichments',
+          '2': 'knowledgebase',
+          '3': 'compression',
+          '4': 'knowledgegraph',
         };
         const tab = tabMap[e.key];
         if (tab) {
@@ -190,6 +198,33 @@ export function ProjectDetailPage() {
   const handleCloseIngestionDetail = useCallback(() => {
     setSelectedIngestionNumber(null);
   }, []);
+
+  // Handler for opening Knowledge Graph full view + activating a KG chat session
+  const handleViewFullGraph = useCallback(() => {
+    // Open the KG popup window
+    setIsKGFloatingOpen(true);
+
+    // Create a dedicated chat session for discussing the Knowledge Graph
+    createNewChat(false, 'Knowledge Graph');
+
+    // Add an initial assistant message with KG context
+    // Use setTimeout to ensure the chat session is created before adding the message
+    setTimeout(() => {
+      addMessage({
+        role: 'model',
+        content:
+          'I\'m your Knowledge Graph assistant. I can help you understand the entities, relationships, and structure of your project\'s knowledge graph.\n\n' +
+          'You can ask me things like:\n' +
+          '- "What are the most connected entities?"\n' +
+          '- "Explain the relationship between module X and class Y"\n' +
+          '- "Which clusters have the most dependencies?"\n' +
+          '- "Suggest ways to reduce coupling in the graph"',
+      });
+    }, 50);
+
+    // Switch to Overview tab so the chat panel is visible
+    handleTabChange('overview');
+  }, [createNewChat, addMessage, handleTabChange]);
 
   // Loading state
   if (isLoading) {
@@ -434,6 +469,7 @@ export function ProjectDetailPage() {
               activeTab={activeTab}
               selectedIngestionNumber={selectedIngestionNumber}
               onCloseIngestionDetail={handleCloseIngestionDetail}
+              onViewFullGraph={handleViewFullGraph}
             />
           </PanelErrorBoundary>
 
@@ -450,7 +486,7 @@ export function ProjectDetailPage() {
       </div>
 
       {/* Ingestion Modal */}
-      <IngestionModal projectName={project.name} />
+      <IngestionModal projectName={project.name} projectId={project.id} />
 
       {/* Settings Modal */}
       <SettingsModal
@@ -465,6 +501,13 @@ export function ProjectDetailPage() {
         onClose={() => setIsShareModalOpen(false)}
         projectId={project.id}
         projectName={project.name}
+      />
+
+      {/* Knowledge Graph Floating Window */}
+      <KnowledgeGraphFloatingWindow
+        isOpen={isKGFloatingOpen}
+        onClose={handleKGFloatingClose}
+        contextId={project.id}
       />
     </>
   );

@@ -90,6 +90,14 @@ export function IntegrationsTab() {
       status: 'active',
     },
     {
+      id: '0b',
+      provider: 'kijko-knowledge-graph',
+      scopes: ['read_graph', 'write_graph', 'manage_entities', 'manage_relations'],
+      connectedAt: new Date('2024-01-01'),
+      lastSyncAt: new Date(),
+      status: 'active',
+    },
+    {
       id: '1',
       provider: 'slack',
       scopes: ['send_messages', 'read_channels'],
@@ -172,7 +180,9 @@ export function IntegrationsTab() {
         connectionStatus: connection
           ? connection.status === 'error'
             ? 'warning'
-            : 'connected'
+            : app.id.startsWith('kijko-')
+              ? 'default'
+              : 'connected'
           : undefined,
         lastSynced: connection?.lastSyncAt,
         permissions: app.permissions,

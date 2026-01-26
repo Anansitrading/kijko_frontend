@@ -148,7 +148,7 @@ export const MAX_PREVIEW_LENGTH = 100;
 export interface ChatHistoryContextValue {
   state: ChatHistoryState;
   // Actions
-  createNewChat: (retainSourceFiles?: boolean) => void;
+  createNewChat: (retainSourceFiles?: boolean, initialTitle?: string) => string;
   loadChat: (id: string) => Promise<void>;
   deleteChat: (id: string) => Promise<void>;
   renameChat: (id: string, title: string) => Promise<void>;

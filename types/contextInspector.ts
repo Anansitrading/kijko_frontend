@@ -9,7 +9,7 @@ export type { Role, UserRole };
 export { ROLE_CONFIG, getRoleLabel, getRoleColor };
 
 // Tab types for the modal (users removed - sharing via header; changelog moved to master-detail in RightSidebar)
-export type TabType = 'overview' | 'compression' | 'enrichments';
+export type TabType = 'overview' | 'knowledgebase' | 'compression' | 'knowledgegraph';
 
 // Context item types
 export type ContextItemType = 'package' | 'repo' | 'files';
@@ -94,6 +94,7 @@ export interface IngestionEntry {
   timestamp: Date;
   filesAdded: number;
   filesRemoved: number;
+  displayName?: string;
 }
 
 // Compression algorithm details

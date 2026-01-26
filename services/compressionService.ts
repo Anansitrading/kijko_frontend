@@ -62,16 +62,16 @@ const MOCK_COMPRESSION_DATA: Record<string, {
       avgInterval: 3.2,
     },
     history: [
-      { number: 12, timestamp: new Date('2026-01-22T15:23:00'), filesAdded: 127, filesRemoved: 3 },
-      { number: 11, timestamp: new Date('2026-01-19T09:45:00'), filesAdded: 45, filesRemoved: 1 },
-      { number: 10, timestamp: new Date('2026-01-15T14:12:00'), filesAdded: 89, filesRemoved: 12 },
-      { number: 9, timestamp: new Date('2026-01-12T11:30:00'), filesAdded: 23, filesRemoved: 0 },
-      { number: 8, timestamp: new Date('2026-01-09T16:45:00'), filesAdded: 156, filesRemoved: 8 },
-      { number: 7, timestamp: new Date('2026-01-05T10:20:00'), filesAdded: 67, filesRemoved: 4 },
-      { number: 6, timestamp: new Date('2026-01-02T13:15:00'), filesAdded: 34, filesRemoved: 2 },
-      { number: 5, timestamp: new Date('2025-12-28T09:00:00'), filesAdded: 201, filesRemoved: 15 },
-      { number: 4, timestamp: new Date('2025-12-24T14:30:00'), filesAdded: 78, filesRemoved: 5 },
-      { number: 3, timestamp: new Date('2025-12-20T11:45:00'), filesAdded: 112, filesRemoved: 7 },
+      { number: 12, timestamp: new Date('2026-01-22T15:23:00'), filesAdded: 127, filesRemoved: 3, displayName: 'Full project sync' },
+      { number: 11, timestamp: new Date('2026-01-19T09:45:00'), filesAdded: 45, filesRemoved: 1, displayName: 'Auth module update' },
+      { number: 10, timestamp: new Date('2026-01-15T14:12:00'), filesAdded: 89, filesRemoved: 12, displayName: 'API refactor' },
+      { number: 9, timestamp: new Date('2026-01-12T11:30:00'), filesAdded: 23, filesRemoved: 0, displayName: 'Config files' },
+      { number: 8, timestamp: new Date('2026-01-09T16:45:00'), filesAdded: 156, filesRemoved: 8, displayName: 'Dashboard components' },
+      { number: 7, timestamp: new Date('2026-01-05T10:20:00'), filesAdded: 67, filesRemoved: 4, displayName: 'Utility functions' },
+      { number: 6, timestamp: new Date('2026-01-02T13:15:00'), filesAdded: 34, filesRemoved: 2, displayName: 'Test suite' },
+      { number: 5, timestamp: new Date('2025-12-28T09:00:00'), filesAdded: 201, filesRemoved: 15, displayName: 'Initial codebase import' },
+      { number: 4, timestamp: new Date('2025-12-24T14:30:00'), filesAdded: 78, filesRemoved: 5, displayName: 'Shared types' },
+      { number: 3, timestamp: new Date('2025-12-20T11:45:00'), filesAdded: 112, filesRemoved: 7, displayName: 'Core services' },
     ],
     algorithmInfo: {
       method: 'Hypervisa Contextual Compression v2.1',
@@ -97,6 +97,38 @@ export async function getCompressionData(contextId: string): Promise<Compression
   await new Promise(resolve => setTimeout(resolve, 800));
   const data = MOCK_COMPRESSION_DATA[contextId] || MOCK_COMPRESSION_DATA.default;
   return data;
+}
+
+export async function addIngestionEntry(
+  contextId: string,
+  filesAdded: number,
+  filesRemoved: number = 0,
+  displayName?: string
+): Promise<IngestionEntry> {
+  await new Promise(resolve => setTimeout(resolve, 300));
+  const data = MOCK_COMPRESSION_DATA[contextId] || MOCK_COMPRESSION_DATA.default;
+  const maxNumber = data.history.reduce((max, e) => Math.max(max, e.number), 0);
+  const newEntry: IngestionEntry = {
+    number: maxNumber + 1,
+    timestamp: new Date(),
+    filesAdded,
+    filesRemoved,
+    displayName,
+  };
+  // Create new array reference so React detects the change
+  data.history = [newEntry, ...data.history];
+  data.metrics = {
+    ...data.metrics,
+    totalIngestions: data.metrics.totalIngestions + 1,
+    lastIngestion: new Date(),
+  };
+
+  // Notify listeners with the new entry + updated metrics
+  window.dispatchEvent(new CustomEvent('kijko-ingestion-added', {
+    detail: { entry: newEntry, metrics: data.metrics },
+  }));
+
+  return newEntry;
 }
 
 export async function triggerRecompression(contextId: string): Promise<{ success: boolean; message: string }> {

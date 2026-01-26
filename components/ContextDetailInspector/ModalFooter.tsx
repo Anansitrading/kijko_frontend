@@ -1,11 +1,11 @@
 import {
   RefreshCw,
   Eye,
-  Zap,
-  Settings,
   Download,
   Loader2,
-  Clock
+  Clock,
+  Database,
+  GitBranch,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import type { ModalFooterProps, TabType } from '../../types/contextInspector';
@@ -21,13 +21,17 @@ const FOOTER_BUTTONS: Record<TabType, { primary: FooterButtonConfig; secondary: 
     primary: { label: 'Export Context Info', icon: Download, variant: 'secondary' },
     secondary: { label: 'Regenerate Summary', icon: RefreshCw, variant: 'secondary' },
   },
+  knowledgebase: {
+    primary: { label: 'New Ingestion', icon: Database, variant: 'primary' },
+    secondary: { label: 'Export', icon: Download, variant: 'secondary' },
+  },
   compression: {
     primary: { label: 'Recompress', icon: RefreshCw, variant: 'primary' },
     secondary: { label: 'View Details', icon: Eye, variant: 'secondary' },
   },
-  enrichments: {
-    primary: { label: 'Run All Enrichments', icon: Zap, variant: 'primary' },
-    secondary: { label: 'Configure', icon: Settings, variant: 'secondary' },
+  knowledgegraph: {
+    primary: { label: 'Rebuild Graph', icon: GitBranch, variant: 'primary' },
+    secondary: { label: 'View Graph', icon: Eye, variant: 'secondary' },
   },
 };
 

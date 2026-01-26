@@ -13,6 +13,7 @@ import {
   Cloud,
   Zap,
   HardDrive,
+  Network,
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import type { IntegrationCardProps, IntegrationCategory } from '../../../types/settings';
@@ -25,6 +26,8 @@ const getIntegrationIcon = (iconName: string): React.ReactNode => {
   switch (iconName) {
     case 'kijko-file-storage':
       return <HardDrive className={iconClass} />;
+    case 'kijko-knowledge-graph':
+      return <Network className={iconClass} />;
     case 'github':
       return <Github className={iconClass} />;
     case 'slack':
@@ -86,6 +89,16 @@ function ActionBadge({
     );
   }
 
+  // Default → Orange "Default" (view only)
+  if (integration.connectionStatus === 'default') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border bg-orange-500/10 text-orange-500 border-orange-500/20 shrink-0">
+        <CheckCircle2 size={12} />
+        Default
+      </span>
+    );
+  }
+
   // Connected → Green "Connected" (view only)
   return (
     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shrink-0">
@@ -135,7 +148,7 @@ export function IntegrationCard({
         onClick={handleCardClick}
         className={cn(
           'bg-card/50 border rounded-xl p-4 flex items-center gap-4 transition-all duration-200',
-          integration.id === 'kijko-file-storage'
+          integration.connectionStatus === 'default'
             ? 'border-orange-500 hover:bg-card hover:border-orange-400'
             : 'border-border hover:bg-card hover:border-primary/30',
           (onCardClick || (integration.isConnected && onManage)) && 'cursor-pointer'
@@ -205,7 +218,7 @@ export function IntegrationCard({
       onClick={handleCardClick}
       className={cn(
         'bg-card/50 border rounded-xl p-4 flex flex-col h-full transition-all duration-200',
-        integration.id === 'kijko-file-storage'
+        integration.connectionStatus === 'default'
           ? 'border-orange-500 hover:bg-card hover:border-orange-400'
           : 'border-border hover:bg-card hover:border-primary/30',
         (onCardClick || (integration.isConnected && onManage)) && 'cursor-pointer'

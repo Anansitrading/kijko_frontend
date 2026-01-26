@@ -434,7 +434,7 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
   }, [state.hasUnsavedChanges, state.activeSession, state.historyItems]);
 
   // Create a new chat
-  const createNewChat = useCallback((retainSourceFiles = false) => {
+  const createNewChat = useCallback((retainSourceFiles = false, initialTitle?: string): string => {
     // Save current session before creating new one
     if (state.activeSession && state.hasUnsavedChanges) {
       saveChatSession(state.activeSession);
@@ -447,7 +447,7 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     const metadata: ChatHistoryItem = {
       id,
       timestamp: now,
-      title: 'New Chat',
+      title: initialTitle || 'New Chat',
       preview: '',
       messageCount: 0,
       lastActivity: now,
@@ -469,6 +469,8 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     // Save immediately
     saveChatSession(newSession);
     saveChatHistoryList([metadata, ...state.historyItems]);
+
+    return id;
   }, [state.activeSession, state.hasUnsavedChanges, state.historyItems]);
 
   // Load a chat session

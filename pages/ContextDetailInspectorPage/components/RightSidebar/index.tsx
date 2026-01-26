@@ -4,6 +4,7 @@ import { cn } from '../../../../utils/cn';
 import { useChatHistory } from '../../../../contexts/ChatHistoryContext';
 import { useIngestion, formatFileSizeFromBytes } from '../../../../contexts/IngestionContext';
 import { useCompressionData } from '../../../../components/ContextDetailInspector/tabs/CompressionTab/hooks';
+import { useSourceFiles, formatFileSize } from '../../../../contexts/SourceFilesContext';
 import { formatRelativeTime } from '../../../../utils/chatHistoryStorage';
 import { formatDateTime, formatFileChange, formatInterval } from '../../../../utils/formatting';
 import type { ChatHistoryItem } from '../../../../types/chatHistory';
@@ -340,7 +341,7 @@ function IngestionEntryRow({ entry, isSelected, onSelect }: IngestionEntryRowPro
         }
       }}
     >
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between mb-0.5">
         <span className={cn(
           "font-mono text-xs font-semibold",
           isSelected ? "text-blue-400" : "text-gray-500"
@@ -351,6 +352,11 @@ function IngestionEntryRow({ entry, isSelected, onSelect }: IngestionEntryRowPro
           {formatDateTime(entry.timestamp)}
         </span>
       </div>
+      {entry.displayName && (
+        <p className="text-[11px] text-slate-300 truncate mb-0.5">
+          {entry.displayName}
+        </p>
+      )}
       <div className="flex items-center gap-3 text-xs">
         {entry.filesAdded > 0 && (
           <span className="text-emerald-400">
@@ -487,6 +493,14 @@ export function RightSidebar({
   const { state: chatState, loadChat, deleteChat, renameChat } = useChatHistory();
   const { metrics, history: ingestionHistory, isLoading: ingestionLoading } = useCompressionData(projectId);
   const { openIngestionModal } = useIngestion();
+  const { selectedSize, selectedCount, totalCount } = useSourceFiles();
+
+  // Size bar calculations (matching left sidebar)
+  const tokenEstimate = useMemo(() => Math.round(selectedSize / 4), [selectedSize]);
+  const progressPercentage = useMemo(
+    () => (totalCount > 0 ? (selectedCount / totalCount) * 100 : 0),
+    [selectedCount, totalCount]
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -587,7 +601,8 @@ export function RightSidebar({
       filtered = ingestionHistory.filter(entry => {
         const numStr = `#${entry.number}`;
         const dateStr = formatDateTime(entry.timestamp).toLowerCase();
-        return numStr.includes(searchLower) || dateStr.includes(searchLower);
+        const nameStr = entry.displayName?.toLowerCase() || '';
+        return numStr.includes(searchLower) || dateStr.includes(searchLower) || nameStr.includes(searchLower);
       });
     }
 
@@ -860,23 +875,48 @@ export function RightSidebar({
             )}
           </div>
 
-          {/* Ingestion Stats (only for ingestions tab) */}
-          {activeTab === 'ingestions' && metrics && (
-            <div className="shrink-0 px-3 py-2 border-t border-white/10">
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div>
-                  <div className="text-white font-semibold text-sm">{metrics.totalIngestions}</div>
-                  <div className="text-gray-500 text-[9px] uppercase">Total</div>
+          {/* Size Bar + Ingestion Stats (only for ingestions tab) */}
+          {activeTab === 'ingestions' && (
+            <div className="shrink-0 border-t border-[#1e293b]">
+              {/* Size Bar - matching left sidebar */}
+              <div className="p-3 bg-slate-900/50">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500">Selected size:</span>
+                  <span className="text-slate-300 font-medium">
+                    {formatFileSize(selectedSize)}
+                  </span>
                 </div>
-                <div>
-                  <div className="text-white font-medium text-[11px]">{formatRelativeTime(metrics.lastIngestion)}</div>
-                  <div className="text-gray-500 text-[9px] uppercase">Last</div>
+                <div className="mt-1.5 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                    style={{ width: `${progressPercentage}%` }}
+                  />
                 </div>
-                <div>
-                  <div className="text-white font-medium text-[11px]">{formatInterval(metrics.avgInterval)}</div>
-                  <div className="text-gray-500 text-[9px] uppercase">Avg</div>
+                <div className="mt-1 flex items-center justify-between text-[10px] text-slate-500">
+                  <span>{selectedCount} files</span>
+                  <span>~{tokenEstimate} tokens</span>
                 </div>
               </div>
+
+              {/* Ingestion Stats */}
+              {metrics && (
+                <div className="px-3 py-2 border-t border-white/10">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <div className="text-white font-semibold text-sm">{metrics.totalIngestions}</div>
+                      <div className="text-gray-500 text-[9px] uppercase">Total</div>
+                    </div>
+                    <div>
+                      <div className="text-white font-medium text-[11px]">{formatRelativeTime(metrics.lastIngestion)}</div>
+                      <div className="text-gray-500 text-[9px] uppercase">Last</div>
+                    </div>
+                    <div>
+                      <div className="text-white font-medium text-[11px]">{formatInterval(metrics.avgInterval)}</div>
+                      <div className="text-gray-500 text-[9px] uppercase">Avg</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

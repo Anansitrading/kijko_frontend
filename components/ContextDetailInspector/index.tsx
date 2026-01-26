@@ -15,7 +15,8 @@ import { SearchModal, KnowledgeGraphModal, CompressionSettingsModal, LSPConfigMo
 import { ConnectionStatus } from './common';
 import { OverviewTab } from './tabs/OverviewTab';
 import { CompressionTab } from './tabs/CompressionTab';
-import { EnrichmentsTab } from './tabs/EnrichmentsTab';
+import { KnowledgeBaseTab } from './tabs/KnowledgeBaseTab';
+import { KnowledgeGraphTab } from './tabs/KnowledgeGraphTab';
 import { ShareModal } from './modals/ShareModal';
 import { exportContextInfo, downloadOriginalFiles } from '../../services/export';
 import type { TabType, SearchResult, CompressionSettings, LSPConfig, ChromaCodeConfig } from '../../types/contextInspector';
@@ -120,10 +121,15 @@ export function ContextDetailInspector() {
           await new Promise((resolve) => setTimeout(resolve, 1500));
           console.log('Recompression started');
           break;
-        case 'enrichments':
-          // Run all enrichments (mock)
+        case 'knowledgebase':
+          // Refresh knowledge base (mock)
           await new Promise((resolve) => setTimeout(resolve, 1000));
-          console.log('Enrichments started');
+          console.log('Knowledge base refreshed');
+          break;
+        case 'knowledgegraph':
+          // Rebuild knowledge graph (mock)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          console.log('Knowledge graph rebuild started');
           break;
       }
     } finally {
@@ -148,9 +154,15 @@ export function ContextDetailInspector() {
           setIsActionLoading(false);
         }
         break;
-      case 'enrichments':
-        // Configure - open settings modal
-        setIsCompressionSettingsOpen(true);
+      case 'knowledgebase':
+        // Export knowledge base
+        if (state.contextItem) {
+          exportContextInfo(state.contextItem);
+        }
+        break;
+      case 'knowledgegraph':
+        // View graph
+        console.log('View full knowledge graph');
         break;
     }
   }, [state.activeTab, state.contextItem]);
@@ -179,10 +191,12 @@ export function ContextDetailInspector() {
     switch (state.activeTab) {
       case 'overview':
         return <OverviewTab contextItem={state.contextItem!} />;
+      case 'knowledgebase':
+        return <KnowledgeBaseTab contextId={state.contextItem!.id} />;
       case 'compression':
         return <CompressionTab contextItem={state.contextItem!} />;
-      case 'enrichments':
-        return <EnrichmentsTab contextId={state.contextItem!.id} />;
+      case 'knowledgegraph':
+        return <KnowledgeGraphTab contextId={state.contextItem!.id} />;
       default:
         return null;
     }
