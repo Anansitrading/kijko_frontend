@@ -48,10 +48,14 @@ export interface ChatSession {
 export interface ChatHistoryState {
   // List of all chat history items (lightweight metadata)
   historyItems: ChatHistoryItem[];
-  // Currently active chat ID (null if no active chat or new unsaved chat)
+  // Currently active/focused chat ID (null if no active chat)
   activeChatId: string | null;
-  // Full session data for active chat
+  // Full session data for active/focused chat
   activeSession: ChatSession | null;
+  // Multi-tab support: ordered list of open tab chat IDs
+  openTabIds: string[];
+  // Multi-tab support: loaded session data for each open tab
+  openTabSessions: Record<string, ChatSession>;
   // Loading states
   isLoading: boolean;
   isSaving: boolean;
@@ -77,7 +81,12 @@ export type ChatHistoryAction =
   | { type: 'UPDATE_SOURCE_FILES'; payload: SourceFile[] }
   | { type: 'RENAME_CHAT'; payload: { id: string; title: string } }
   | { type: 'SET_UNSAVED_CHANGES'; payload: boolean }
-  | { type: 'SYNC_FROM_STORAGE'; payload: { items: ChatHistoryItem[]; activeSession: ChatSession | null } };
+  | { type: 'SYNC_FROM_STORAGE'; payload: { items: ChatHistoryItem[]; activeSession: ChatSession | null } }
+  // Multi-tab actions
+  | { type: 'OPEN_TAB'; payload: { id: string; session: ChatSession } }
+  | { type: 'CLOSE_TAB'; payload: string }
+  | { type: 'FOCUS_TAB'; payload: string }
+  | { type: 'SET_OPEN_TABS'; payload: string[] };
 
 // ==========================================
 // Persistence
@@ -113,6 +122,8 @@ export const STORAGE_KEYS = {
   getChatSessionKey: (id: string) => `kijko_chat_session_${id}`,
   // Panel state persistence (Sprint EX5 Feature 3)
   PANEL_STATES: 'kijko_panel_states',
+  // Open tab IDs persistence
+  OPEN_TABS: 'kijko_open_tabs',
 } as const;
 
 // Panel state persistence types (Sprint EX5 Feature 3)
@@ -146,4 +157,8 @@ export interface ChatHistoryContextValue {
   saveCurrentSession: () => Promise<void>;
   // Computed
   getCurrentSession: () => ChatSession | null;
+  // Tab actions
+  openTab: (id: string) => Promise<void>;
+  closeTab: (id: string) => void;
+  focusTab: (id: string) => void;
 }

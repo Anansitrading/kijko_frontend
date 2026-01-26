@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Trash2, Settings2, FileInput, UserPlus, Star, Archive } from 'lucide-react';
+import { Trash2, Settings2, FileInput, UserPlus, Star, Archive, ArchiveRestore } from 'lucide-react';
 import { Project } from '../../types';
 import { FolderSettingsPanel } from './FolderSettingsPanel';
 
@@ -14,6 +14,7 @@ interface ProjectContextMenuProps {
   onUpdateProject?: (updates: Partial<Project>) => void;
   onToggleStarred?: () => void;
   onArchive?: () => void;
+  onUnarchive?: () => void;
 }
 
 export function ProjectContextMenu({
@@ -27,6 +28,7 @@ export function ProjectContextMenu({
   onUpdateProject,
   onToggleStarred,
   onArchive,
+  onUnarchive,
 }: ProjectContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const folderSettingsRef = useRef<HTMLDivElement>(null);
@@ -103,12 +105,12 @@ export function ProjectContextMenu({
       },
     },
     {
-      icon: Trash2,
-      label: 'Delete or Archive',
+      icon: project.archived ? ArchiveRestore : Trash2,
+      label: project.archived ? 'Unarchive or Delete' : 'Delete or Archive',
       onClick: () => {
         setShowDeleteArchive(true);
       },
-      destructive: true,
+      destructive: !project.archived,
     },
   ];
 
@@ -139,19 +141,35 @@ export function ProjectContextMenu({
               What do you want to do?
             </p>
             <div className="flex flex-col gap-1.5">
-              <button
-                onClick={() => {
-                  onArchive?.();
-                  onClose();
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md transition-colors"
-              >
-                <Archive size={16} />
-                <div className="text-left">
-                  <div>Archive</div>
-                  <div className="text-xs text-muted-foreground">Move to archive, can be restored</div>
-                </div>
-              </button>
+              {project.archived ? (
+                <button
+                  onClick={() => {
+                    onUnarchive?.();
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md transition-colors"
+                >
+                  <ArchiveRestore size={16} />
+                  <div className="text-left">
+                    <div>Unarchive</div>
+                    <div className="text-xs text-muted-foreground">Restore from archive</div>
+                  </div>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    onArchive?.();
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md transition-colors"
+                >
+                  <Archive size={16} />
+                  <div className="text-left">
+                    <div>Archive</div>
+                    <div className="text-xs text-muted-foreground">Move to archive, can be restored</div>
+                  </div>
+                </button>
+              )}
               <button
                 onClick={onDelete}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"

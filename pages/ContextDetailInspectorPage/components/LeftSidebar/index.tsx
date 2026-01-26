@@ -10,11 +10,13 @@ import {
   ChevronRight,
   GripVertical,
   Globe,
+  ArrowLeft,
+  Wrench,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '../../../../utils/cn';
 import { useSourceFiles, formatFileSize, SourceFile } from '../../../../contexts/SourceFilesContext';
 import { useIngestion, formatFileSizeFromBytes } from '../../../../contexts/IngestionContext';
-import { KijkoHeader } from '../../../../components/LeftSidebar';
 import { FileContextMenu, ContextMenuAction } from './FileContextMenu';
 
 interface LeftSidebarProps {
@@ -220,6 +222,7 @@ interface ContextMenuState {
 }
 
 export function LeftSidebar({ className, projectName = 'Project', projectId }: LeftSidebarProps) {
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -530,8 +533,22 @@ export function LeftSidebar({ className, projectName = 'Project', projectId }: L
         className
       )}
     >
-      {/* Kijko Header with Logo */}
-      <KijkoHeader />
+      {/* Back to dashboard + project info */}
+      <div className="px-3 py-3 border-b border-[#1e293b] flex items-center gap-2">
+        <button
+          onClick={() => navigate('/')}
+          className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors duration-150"
+          aria-label="Back to project dashboard"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-500/20 flex items-center justify-center">
+          <Wrench className="w-3.5 h-3.5 text-blue-400" />
+        </div>
+        <span className="text-sm font-semibold text-white truncate">
+          {projectName}
+        </span>
+      </div>
 
       {/* Hidden file input for drop zone */}
       <input

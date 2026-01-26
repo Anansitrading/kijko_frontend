@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Download, ChevronLeft, ChevronRight, FileJson, FileText, Clock, MessageSquare, Search, X, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Download, ChevronLeft, ChevronRight, FileJson, FileText, Clock, MessageSquare, Search, X, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import { useChatHistory } from '../../../../contexts/ChatHistoryContext';
-import { useIngestion } from '../../../../contexts/IngestionContext';
 import { useCompressionData } from '../../../../components/ContextDetailInspector/tabs/CompressionTab/hooks';
 import { formatRelativeTime } from '../../../../utils/chatHistoryStorage';
 import { formatDateTime, formatFileChange, formatInterval } from '../../../../utils/formatting';
@@ -500,8 +499,7 @@ export function RightSidebar({
   selectedIngestionNumber,
   onSelectIngestion,
 }: RightSidebarProps) {
-  const { state: chatState, getCurrentSession, createNewChat, loadChat, deleteChat, renameChat } = useChatHistory();
-  const { openIngestionModalEmpty } = useIngestion();
+  const { state: chatState, getCurrentSession, loadChat, deleteChat, renameChat } = useChatHistory();
   const { metrics, history: ingestionHistory, isLoading: ingestionLoading } = useCompressionData(projectId);
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -620,10 +618,6 @@ export function RightSidebar({
       loadChat(id);
     }
   }, [chatState.activeChatId, loadChat]);
-
-  const handleNewChat = useCallback(() => {
-    createNewChat(false);
-  }, [createNewChat]);
 
   const handleRenameChat = useCallback((id: string, newTitle: string) => {
     renameChat(id, newTitle);
@@ -813,34 +807,6 @@ export function RightSidebar({
               />
             </div>
           </div>
-
-          {/* New Chat Button (only for chats tab) */}
-          {activeTab === 'chats' && (
-            <div className="shrink-0 px-3 py-2 border-b border-white/10">
-              <button
-                onClick={handleNewChat}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium transition-colors"
-                aria-label="Start new chat"
-              >
-                <Plus size={14} />
-                <span>New Chat</span>
-              </button>
-            </div>
-          )}
-
-          {/* New Ingestion Button (only for ingestions tab) */}
-          {activeTab === 'ingestions' && (
-            <div className="shrink-0 px-3 py-2 border-b border-white/10">
-              <button
-                onClick={openIngestionModalEmpty}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium transition-colors"
-                aria-label="Start new ingestion"
-              >
-                <Plus size={14} />
-                <span>New Ingestion</span>
-              </button>
-            </div>
-          )}
 
           {/* Search Input */}
           <div className="shrink-0 px-3 py-2 border-b border-white/10">

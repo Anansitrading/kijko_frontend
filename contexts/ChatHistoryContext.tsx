@@ -19,6 +19,7 @@ import { Message } from '../types';
 import {
   AUTO_SAVE_DEBOUNCE_MS,
   MAX_TITLE_LENGTH,
+  STORAGE_KEYS,
 } from '../types/chatHistory';
 import {
   generateChatId,
@@ -37,6 +38,8 @@ const initialState: ChatHistoryState = {
   historyItems: [],
   activeChatId: null,
   activeSession: null,
+  openTabIds: [],
+  openTabSessions: {},
   isLoading: false,
   isSaving: false,
   error: null,
@@ -68,6 +71,11 @@ function chatHistoryReducer(
         historyItems: [newItem, ...state.historyItems],
         activeChatId: action.payload.id,
         activeSession: action.payload,
+        openTabIds: [...state.openTabIds, action.payload.id],
+        openTabSessions: {
+          ...state.openTabSessions,
+          [action.payload.id]: action.payload,
+        },
         hasUnsavedChanges: false,
       };
     }
@@ -91,11 +99,25 @@ function chatHistoryReducer(
       const deletedId = action.payload;
       const newItems = state.historyItems.filter((item) => item.id !== deletedId);
       const wasActive = state.activeChatId === deletedId;
+      const newTabIds = state.openTabIds.filter(id => id !== deletedId);
+      const { [deletedId]: _removedDeleted, ...remainingDeletedSessions } = state.openTabSessions;
+
+      let newActiveChatId = wasActive ? null : state.activeChatId;
+      let newActiveSession = wasActive ? null : state.activeSession;
+      if (wasActive && newTabIds.length > 0) {
+        const closedIndex = state.openTabIds.indexOf(deletedId);
+        const newFocusIndex = Math.min(closedIndex, newTabIds.length - 1);
+        newActiveChatId = newTabIds[newFocusIndex];
+        newActiveSession = remainingDeletedSessions[newActiveChatId] || null;
+      }
+
       return {
         ...state,
         historyItems: newItems,
-        activeChatId: wasActive ? null : state.activeChatId,
-        activeSession: wasActive ? null : state.activeSession,
+        activeChatId: newActiveChatId,
+        activeSession: newActiveSession,
+        openTabIds: newTabIds,
+        openTabSessions: remainingDeletedSessions,
       };
     }
 
@@ -104,6 +126,13 @@ function chatHistoryReducer(
         ...state,
         activeChatId: action.payload.id,
         activeSession: action.payload.session,
+        openTabIds: state.openTabIds.includes(action.payload.id)
+          ? state.openTabIds
+          : [...state.openTabIds, action.payload.id],
+        openTabSessions: {
+          ...state.openTabSessions,
+          [action.payload.id]: action.payload.session,
+        },
         hasUnsavedChanges: false,
       };
 
@@ -152,6 +181,9 @@ function chatHistoryReducer(
         historyItems: state.historyItems.map((item) =>
           item.id === updatedSession.id ? updatedMetadata : item
         ),
+        openTabSessions: state.openTabIds.includes(updatedSession.id)
+          ? { ...state.openTabSessions, [updatedSession.id]: updatedSession }
+          : state.openTabSessions,
         hasUnsavedChanges: true,
       };
     }
@@ -170,17 +202,22 @@ function chatHistoryReducer(
         lastActivity: now,
       };
 
+      const updatedMsgSession: ChatSession = {
+        ...state.activeSession,
+        messages: action.payload,
+        metadata: updatedMetadata,
+        updatedAt: now,
+      };
+
       return {
         ...state,
-        activeSession: {
-          ...state.activeSession,
-          messages: action.payload,
-          metadata: updatedMetadata,
-          updatedAt: now,
-        },
+        activeSession: updatedMsgSession,
         historyItems: state.historyItems.map((item) =>
           item.id === state.activeSession!.id ? updatedMetadata : item
         ),
+        openTabSessions: state.openTabIds.includes(state.activeSession.id)
+          ? { ...state.openTabSessions, [state.activeSession.id]: updatedMsgSession }
+          : state.openTabSessions,
         hasUnsavedChanges: true,
       };
     }
@@ -188,13 +225,18 @@ function chatHistoryReducer(
     case 'UPDATE_SOURCE_FILES': {
       if (!state.activeSession) return state;
 
+      const updatedSrcSession: ChatSession = {
+        ...state.activeSession,
+        sourceFiles: action.payload,
+        updatedAt: new Date(),
+      };
+
       return {
         ...state,
-        activeSession: {
-          ...state.activeSession,
-          sourceFiles: action.payload,
-          updatedAt: new Date(),
-        },
+        activeSession: updatedSrcSession,
+        openTabSessions: state.openTabIds.includes(state.activeSession.id)
+          ? { ...state.openTabSessions, [state.activeSession.id]: updatedSrcSession }
+          : state.openTabSessions,
         hasUnsavedChanges: true,
       };
     }
@@ -203,18 +245,32 @@ function chatHistoryReducer(
       const { id, title } = action.payload;
       const truncatedTitle = title.slice(0, MAX_TITLE_LENGTH);
 
+      const renamedActiveSession =
+        state.activeSession?.id === id
+          ? {
+              ...state.activeSession,
+              metadata: { ...state.activeSession.metadata, title: truncatedTitle },
+            }
+          : state.activeSession;
+
+      // Update tab session if open
+      const updatedRenameTabSessions = state.openTabSessions[id]
+        ? {
+            ...state.openTabSessions,
+            [id]: {
+              ...state.openTabSessions[id],
+              metadata: { ...state.openTabSessions[id].metadata, title: truncatedTitle },
+            },
+          }
+        : state.openTabSessions;
+
       return {
         ...state,
         historyItems: state.historyItems.map((item) =>
           item.id === id ? { ...item, title: truncatedTitle } : item
         ),
-        activeSession:
-          state.activeSession?.id === id
-            ? {
-                ...state.activeSession,
-                metadata: { ...state.activeSession.metadata, title: truncatedTitle },
-              }
-            : state.activeSession,
+        activeSession: renamedActiveSession,
+        openTabSessions: updatedRenameTabSessions,
         hasUnsavedChanges: true,
       };
     }
@@ -228,6 +284,63 @@ function chatHistoryReducer(
         historyItems: action.payload.items,
         activeSession: action.payload.activeSession,
         activeChatId: action.payload.activeSession?.id ?? null,
+      };
+
+    case 'OPEN_TAB': {
+      const { id: openId, session: openSession } = action.payload;
+      const alreadyOpen = state.openTabIds.includes(openId);
+      return {
+        ...state,
+        activeChatId: openId,
+        activeSession: openSession,
+        openTabIds: alreadyOpen ? state.openTabIds : [...state.openTabIds, openId],
+        openTabSessions: {
+          ...state.openTabSessions,
+          [openId]: openSession,
+        },
+        hasUnsavedChanges: false,
+      };
+    }
+
+    case 'CLOSE_TAB': {
+      const closedId = action.payload;
+      const newClosedTabIds = state.openTabIds.filter(id => id !== closedId);
+      const { [closedId]: _removedClosed, ...remainingClosedSessions } = state.openTabSessions;
+
+      const wasClosedActive = state.activeChatId === closedId;
+      let newClosedActiveChatId = wasClosedActive ? null : state.activeChatId;
+      let newClosedActiveSession = wasClosedActive ? null : state.activeSession;
+
+      if (wasClosedActive && newClosedTabIds.length > 0) {
+        const closedIndex = state.openTabIds.indexOf(closedId);
+        const newFocusIndex = Math.min(closedIndex, newClosedTabIds.length - 1);
+        newClosedActiveChatId = newClosedTabIds[newFocusIndex];
+        newClosedActiveSession = remainingClosedSessions[newClosedActiveChatId] || null;
+      }
+
+      return {
+        ...state,
+        activeChatId: newClosedActiveChatId,
+        activeSession: newClosedActiveSession,
+        openTabIds: newClosedTabIds,
+        openTabSessions: remainingClosedSessions,
+      };
+    }
+
+    case 'FOCUS_TAB': {
+      const focusId = action.payload;
+      const focusSession = state.openTabSessions[focusId] || null;
+      return {
+        ...state,
+        activeChatId: focusId,
+        activeSession: focusSession,
+      };
+    }
+
+    case 'SET_OPEN_TABS':
+      return {
+        ...state,
+        openTabIds: action.payload,
       };
 
     default:
@@ -264,6 +377,26 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     try {
       const items = loadChatHistoryList();
       dispatch({ type: 'SET_HISTORY_ITEMS', payload: items });
+
+      // Restore open tabs from localStorage
+      const storedTabs = localStorage.getItem(STORAGE_KEYS.OPEN_TABS);
+      if (storedTabs) {
+        const tabIds: string[] = JSON.parse(storedTabs);
+        const validTabIds: string[] = [];
+
+        for (const id of tabIds) {
+          const session = loadChatSession(id);
+          if (session) {
+            validTabIds.push(id);
+            dispatch({ type: 'OPEN_TAB', payload: { id, session } });
+          }
+        }
+
+        // Focus the first tab if any were restored
+        if (validTabIds.length > 0) {
+          dispatch({ type: 'FOCUS_TAB', payload: validTabIds[0] });
+        }
+      }
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: 'Failed to load chat history' });
     } finally {
@@ -446,6 +579,62 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
     return state.activeSession;
   }, [state.activeSession]);
 
+  // Open a chat as a tab (and focus it)
+  const openTab = useCallback(async (id: string) => {
+    // If already open, just focus it
+    if (state.openTabSessions[id]) {
+      dispatch({ type: 'FOCUS_TAB', payload: id });
+      return;
+    }
+
+    // Load from storage and open as tab
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      const session = loadChatSession(id);
+      if (session) {
+        dispatch({ type: 'OPEN_TAB', payload: { id, session } });
+      } else {
+        dispatch({ type: 'SET_ERROR', payload: `Chat session ${id} not found` });
+      }
+    } catch {
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to open chat tab' });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  }, [state.openTabSessions]);
+
+  // Close a tab (save session, remove from tabs)
+  const closeTab = useCallback((id: string) => {
+    // Save the session before closing
+    const session = state.openTabSessions[id];
+    if (session) {
+      saveChatSession(session);
+      saveChatHistoryList(state.historyItems);
+    }
+    dispatch({ type: 'CLOSE_TAB', payload: id });
+  }, [state.openTabSessions, state.historyItems]);
+
+  // Switch focus to another open tab
+  const focusTab = useCallback((id: string) => {
+    // Save current focused session before switching
+    if (state.activeSession && state.hasUnsavedChanges) {
+      saveChatSession(state.activeSession);
+      saveChatHistoryList(state.historyItems);
+    }
+    dispatch({ type: 'FOCUS_TAB', payload: id });
+  }, [state.activeSession, state.hasUnsavedChanges, state.historyItems]);
+
+  // Persist open tab IDs to localStorage
+  useEffect(() => {
+    if (isLocalStorageAvailable()) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.OPEN_TABS, JSON.stringify(state.openTabIds));
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+  }, [state.openTabIds]);
+
   const value = useMemo<ChatHistoryContextValue>(
     () => ({
       state,
@@ -457,6 +646,9 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
       updateSourceFiles,
       saveCurrentSession,
       getCurrentSession,
+      openTab,
+      closeTab,
+      focusTab,
     }),
     [
       state,
@@ -468,6 +660,9 @@ export function ChatHistoryProvider({ children }: ChatHistoryProviderProps) {
       updateSourceFiles,
       saveCurrentSession,
       getCurrentSession,
+      openTab,
+      closeTab,
+      focusTab,
     ]
   );
 

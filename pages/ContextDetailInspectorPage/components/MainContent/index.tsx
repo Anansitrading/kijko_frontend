@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { cn } from '../../../../utils/cn';
 import { ProjectHeader } from './ProjectHeader';
-import { TabNavigation } from '../../../../components/ContextDetailInspector/TabNavigation';
 import { PageOverviewTab } from './PageOverviewTab';
 import { CompressionTab } from '../../../../components/ContextDetailInspector/tabs/CompressionTab';
 import { EnrichmentsTab } from '../../../../components/ContextDetailInspector/tabs/EnrichmentsTab';
@@ -131,16 +130,12 @@ export function MainContent({
         className
       )}
     >
-      {/* Project Header with editable name, status, and close button */}
+      {/* Project Header with tabs, share, and status */}
       <ProjectHeader
         projectName={currentProjectName}
         onNameChange={handleNameChange}
         onShare={() => setIsShareModalOpen(true)}
         isLive={true}
-      />
-
-      {/* Tab Navigation */}
-      <TabNavigation
         activeTab={activeTab}
         onTabChange={handleTabChange}
       />

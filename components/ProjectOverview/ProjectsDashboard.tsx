@@ -108,6 +108,10 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = 
     updateProject(id, { archived: true });
   };
 
+  const handleUnarchiveProject = (id: string) => {
+    updateProject(id, { archived: false });
+  };
+
   const handleDropProject = (projectId: string, target: DropTarget) => {
     if (target.type === 'starred') {
       updateProject(projectId, { starred: true });
@@ -412,6 +416,10 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = 
           }}
           onArchive={() => {
             handleArchiveProject(contextMenu.project.id);
+            setContextMenu(null);
+          }}
+          onUnarchive={() => {
+            handleUnarchiveProject(contextMenu.project.id);
             setContextMenu(null);
           }}
         />

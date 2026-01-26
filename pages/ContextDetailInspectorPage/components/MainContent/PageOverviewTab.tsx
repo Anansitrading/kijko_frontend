@@ -1,9 +1,9 @@
-import { useCallback, useState, useEffect } from 'react';
 import { ChatPanel } from '../../../../components/ContextDetailInspector/tabs/OverviewTab/ChatPanel';
 import { Toast, useToast } from '../../../../components/Toast';
 import { useContextSummary } from '../../../../hooks/useContextSummary';
 import { useContextChat } from '../../../../hooks/useContextChat';
 import { useTokenUsage } from '../../../../hooks/useTokenUsage';
+import { useChatHistory } from '../../../../contexts/ChatHistoryContext';
 import type { ContextItem } from '../../../../types/contextInspector';
 
 interface PageOverviewTabProps {
@@ -16,12 +16,16 @@ interface PageOverviewTabProps {
  * - Uses SourceFilesContext for token calculations (via useTokenUsage)
  * - Does not show source files panel (it's in the LeftSidebar)
  * - Shows only the chat panel in a full-width layout
+ * - Keys chat to activeChatId for multi-tab support
  */
 export function PageOverviewTab({ contextItem }: PageOverviewTabProps) {
+  const { state } = useChatHistory();
+  const chatId = state.activeChatId || contextItem.id;
+
   const { summary, isLoading: summaryLoading } = useContextSummary(contextItem.id);
-  const { messages, isLoading: chatLoading, sendMessage } = useContextChat(contextItem.id);
+  const { messages, isLoading: chatLoading, sendMessage } = useContextChat(chatId);
   const tokenUsage = useTokenUsage();
-  const { toast, showToast, hideToast } = useToast();
+  const { toast, hideToast } = useToast();
 
   return (
     <>
@@ -29,7 +33,7 @@ export function PageOverviewTab({ contextItem }: PageOverviewTabProps) {
         {/* Full-width chat panel since source files are in the left sidebar */}
         <div className="flex-1 min-w-0 h-full">
           <ChatPanel
-            contextId={contextItem.id}
+            contextId={chatId}
             contextName={contextItem.name}
             messages={messages}
             isLoading={chatLoading}
