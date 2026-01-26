@@ -6,10 +6,10 @@ import {
   File,
   Search,
   X,
-  Upload,
   Folder,
   ChevronRight,
   GripVertical,
+  Globe,
 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import { useSourceFiles, formatFileSize, SourceFile } from '../../../../contexts/SourceFilesContext';
@@ -20,6 +20,7 @@ import { FileContextMenu, ContextMenuAction } from './FileContextMenu';
 interface LeftSidebarProps {
   className?: string;
   projectName?: string;
+  projectId?: string;
 }
 
 // File type icon mapping
@@ -218,7 +219,7 @@ interface ContextMenuState {
   file?: SourceFile;
 }
 
-export function LeftSidebar({ className, projectName = 'Project' }: LeftSidebarProps) {
+export function LeftSidebar({ className, projectName = 'Project', projectId }: LeftSidebarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -309,6 +310,13 @@ export function LeftSidebar({ className, projectName = 'Project' }: LeftSidebarP
   const handleOpenSearch = useCallback(() => {
     setIsSearchOpen(true);
   }, []);
+
+  // Open project preview in new tab
+  const handleOpenPreview = useCallback(() => {
+    if (!projectId) return;
+    const previewUrl = `https://app.kijko.nl/preview/${projectId}`;
+    window.open(previewUrl, '_blank', 'noopener,noreferrer');
+  }, [projectId]);
 
   // Toggle folder expansion
   const handleFolderToggle = useCallback((folderId: string) => {
@@ -423,34 +431,38 @@ export function LeftSidebar({ className, projectName = 'Project' }: LeftSidebarP
     setDragTargetId(null);
   }, [draggedFile, moveFile]);
 
-  // Drop zone handlers for external files
-  const handleDropZoneDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
-  }, []);
-
-  const handleDropZoneDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  }, []);
-
-  const handleDropZoneDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      const id = `file-${Date.now()}`;
-      openIngestionModal({
-        id,
-        name: file.name,
-        size: formatFileSizeFromBytes(file.size),
-        sizeBytes: file.size,
-      });
+  // Drop zone handlers for external files (applied to entire explorer area)
+  const handleExplorerDragOver = useCallback((e: React.DragEvent) => {
+    // Only handle external file drops, not internal file reordering
+    if (e.dataTransfer.types.includes('Files')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(true);
     }
+  }, []);
+
+  const handleExplorerDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleExplorerDrop = useCallback((e: React.DragEvent) => {
+    // Only handle external file drops
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const id = `file-${Date.now()}`;
+    openIngestionModal({
+      id,
+      name: file.name,
+      size: formatFileSizeFromBytes(file.size),
+      sizeBytes: file.size,
+    });
   }, [openIngestionModal]);
 
   // Render file list recursively
@@ -556,20 +568,36 @@ export function LeftSidebar({ className, projectName = 'Project' }: LeftSidebarP
         ) : (
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-400 font-medium">Explorer</span>
-            <button
-              onClick={handleOpenSearch}
-              className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
-            >
-              <Search size={14} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleOpenPreview}
+                disabled={!projectId}
+                className="p-1 text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Preview project in new tab"
+              >
+                <Globe size={14} />
+              </button>
+              <button
+                onClick={handleOpenSearch}
+                className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                <Search size={14} />
+              </button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Files List */}
+      {/* Files List — also serves as drop zone for external files */}
       <div
-        className="flex-1 overflow-y-auto"
+        className={cn(
+          'flex-1 overflow-y-auto transition-colors',
+          isDragOver && 'bg-blue-500/10 ring-2 ring-inset ring-blue-500/40'
+        )}
         onContextMenu={handleListContextMenu}
+        onDragOver={handleExplorerDragOver}
+        onDragLeave={handleExplorerDragLeave}
+        onDrop={handleExplorerDrop}
       >
         {filteredFiles.length === 0 ? (
           <div className="p-4 text-center text-sm text-slate-500">
@@ -622,26 +650,6 @@ export function LeftSidebar({ className, projectName = 'Project' }: LeftSidebarP
           <span>{selectedCount} files</span>
           <span>~{tokenEstimate} tokens</span>
         </div>
-      </div>
-
-      {/* Drop Zone - Add Files */}
-      <div
-        onDragOver={handleDropZoneDragOver}
-        onDragLeave={handleDropZoneDragLeave}
-        onDrop={handleDropZoneDrop}
-        onClick={handleNewIngestion}
-        className={cn(
-          'mx-3 mb-3 p-4 rounded-lg border-2 border-dashed cursor-pointer transition-all duration-200',
-          'flex flex-col items-center justify-center gap-2',
-          isDragOver
-            ? 'border-blue-500 bg-blue-500/10 text-blue-400'
-            : 'border-slate-600 hover:border-slate-500 text-slate-500 hover:text-slate-400 hover:bg-slate-800/30'
-        )}
-      >
-        <Upload size={20} />
-        <span className="text-xs font-medium">
-          {isDragOver ? 'Drop file here' : 'Drop file or click to add'}
-        </span>
       </div>
 
       {/* Context Menu */}

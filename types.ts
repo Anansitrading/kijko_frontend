@@ -39,6 +39,7 @@ export interface IngestionConfig {
     };
     tags?: string[];
     description?: string;
+    neverCompress?: boolean;
 }
 
 // Project Overview Types
@@ -66,6 +67,7 @@ export interface Project {
     starred?: boolean;
     archived?: boolean;
     lastActiveUser?: ProjectLastActiveUser;
+    previewUrl?: string;
 }
 
 export interface ProjectIcon {

@@ -62,6 +62,7 @@ function getInitialState(file: { id: string; name: string }): WizardState {
       codebase: { type: "existing", name: "" },
       tags: [],
       description: "",
+      neverCompress: false,
     },
     isProcessing: false,
     validationErrors: {},
@@ -260,9 +261,13 @@ function TagInput({
 function Step1ProcessingMode({
   value,
   onChange,
+  neverCompress,
+  onNeverCompressChange,
 }: {
   value: "none" | "compress" | "compress_enrich";
   onChange: (mode: "none" | "compress" | "compress_enrich") => void;
+  neverCompress: boolean;
+  onNeverCompressChange: (checked: boolean) => void;
 }) {
   const options = [
     {
@@ -306,7 +311,7 @@ function Step1ProcessingMode({
               type="button"
               onClick={() => onChange(option.id)}
               className={cn(
-                "w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all text-left",
+                "w-full flex items-center gap-4 p-4 rounded-lg border-2 text-left transition-all",
                 isSelected
                   ? colorClass === "slate"
                     ? "border-slate-500 bg-slate-600/10"
@@ -337,6 +342,23 @@ function Step1ProcessingMode({
                 <div className="text-xs text-slate-500 mt-0.5">
                   {option.description}
                 </div>
+                {/* Never compress checkbox inline */}
+                {option.id === "none" && isSelected && (
+                  <label
+                    className="flex items-center gap-1.5 mt-1.5 cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={neverCompress}
+                      onChange={(e) => onNeverCompressChange(e.target.checked)}
+                      className="w-3 h-3 rounded border-amber-500 bg-slate-700 text-amber-500 focus:ring-amber-500 focus:ring-offset-0 cursor-pointer accent-amber-500"
+                    />
+                    <span className="text-[11px] text-amber-400">
+                      Never compress this file
+                    </span>
+                  </label>
+                )}
               </div>
               <div
                 className={cn(
@@ -442,7 +464,9 @@ function Step3Confirmation({
       label: "Processing",
       value:
         config.processingMode === "none"
-          ? "Uncompressed"
+          ? config.neverCompress
+            ? "Uncompressed (never compress)"
+            : "Uncompressed"
           : config.processingMode === "compress"
           ? "Compress"
           : "Compress and Enrich",
@@ -599,7 +623,17 @@ export function IngestionWizard({
             <Step1ProcessingMode
               value={state.config.processingMode}
               onChange={(mode) =>
-                dispatch({ type: "UPDATE_CONFIG", payload: { processingMode: mode } })
+                dispatch({
+                  type: "UPDATE_CONFIG",
+                  payload: {
+                    processingMode: mode,
+                    neverCompress: mode === "none" ? state.config.neverCompress : false,
+                  },
+                })
+              }
+              neverCompress={state.config.neverCompress ?? false}
+              onNeverCompressChange={(neverCompress) =>
+                dispatch({ type: "UPDATE_CONFIG", payload: { neverCompress } })
               }
             />
           )}

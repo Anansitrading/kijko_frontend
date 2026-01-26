@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, MoreVertical, Calendar, FileText } from 'lucide-react';
+import { Globe, MoreVertical, Calendar, FileText, Upload } from 'lucide-react';
 import { Project, ProjectLastActiveUser } from '../../types';
 import { cn } from '../../utils/cn';
 
@@ -8,6 +8,7 @@ interface ProjectCardProps {
   viewMode: 'grid' | 'list';
   onClick: () => void;
   onMenuClick: (e: React.MouseEvent) => void;
+  onFileDrop?: (projectId: string, file: File) => void;
 }
 
 function ProjectIcon({ icon }: { icon: Project['icon'] }) {
@@ -91,7 +92,9 @@ function UserPreview({ user }: { user: ProjectLastActiveUser }) {
   );
 }
 
-export function ProjectCard({ project, viewMode, onClick, onMenuClick }: ProjectCardProps) {
+export function ProjectCard({ project, viewMode, onClick, onMenuClick, onFileDrop }: ProjectCardProps) {
+  const [isFileDropTarget, setIsFileDropTarget] = useState(false);
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     onMenuClick(e);
@@ -102,6 +105,45 @@ export function ProjectCard({ project, viewMode, onClick, onMenuClick }: Project
     e.dataTransfer.effectAllowed = 'move';
   };
 
+  // Detect OS file drag (not internal project card drag)
+  const isExternalFileDrag = (e: React.DragEvent): boolean => {
+    return e.dataTransfer.types.includes('Files') &&
+      !e.dataTransfer.types.includes('text/projectId');
+  };
+
+  const handleFileDragOver = (e: React.DragEvent) => {
+    if (isExternalFileDrag(e)) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const handleFileDragEnter = (e: React.DragEvent) => {
+    if (isExternalFileDrag(e)) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsFileDropTarget(true);
+    }
+  };
+
+  const handleFileDragLeave = (e: React.DragEvent) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsFileDropTarget(false);
+  };
+
+  const handleFileDrop = (e: React.DragEvent) => {
+    if (isExternalFileDrag(e)) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsFileDropTarget(false);
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && onFileDrop) {
+        onFileDrop(project.id, files[0]);
+      }
+    }
+  };
+
   if (viewMode === 'list') {
     return (
       <div
@@ -109,8 +151,25 @@ export function ProjectCard({ project, viewMode, onClick, onMenuClick }: Project
         onDragStart={handleDragStart}
         onClick={onClick}
         onContextMenu={handleContextMenu}
-        className="group flex items-center gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all cursor-pointer "
+        onDragOver={handleFileDragOver}
+        onDragEnter={handleFileDragEnter}
+        onDragLeave={handleFileDragLeave}
+        onDrop={handleFileDrop}
+        className={cn(
+          "group relative flex items-center gap-4 p-4 rounded-xl border bg-card/50 hover:bg-card transition-all cursor-pointer",
+          isFileDropTarget
+            ? 'border-primary ring-2 ring-primary bg-primary/5'
+            : 'border-border hover:border-primary/30'
+        )}
       >
+        {isFileDropTarget && (
+          <div className="absolute inset-0 flex items-center justify-center bg-primary/10 rounded-xl pointer-events-none z-10">
+            <div className="flex items-center gap-2 text-primary font-medium text-sm">
+              <Upload size={18} />
+              <span>Drop to ingest</span>
+            </div>
+          </div>
+        )}
         <ProjectIcon icon={project.icon} />
 
         <div className="flex-1 min-w-0">
@@ -177,8 +236,25 @@ export function ProjectCard({ project, viewMode, onClick, onMenuClick }: Project
       onDragStart={handleDragStart}
       onClick={onClick}
       onContextMenu={handleContextMenu}
-      className="group relative flex flex-col p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all cursor-pointer "
+      onDragOver={handleFileDragOver}
+      onDragEnter={handleFileDragEnter}
+      onDragLeave={handleFileDragLeave}
+      onDrop={handleFileDrop}
+      className={cn(
+        "group relative flex flex-col p-4 rounded-xl border bg-card/50 hover:bg-card transition-all cursor-pointer",
+        isFileDropTarget
+          ? 'border-primary ring-2 ring-primary bg-primary/5'
+          : 'border-border hover:border-primary/30'
+      )}
     >
+      {isFileDropTarget && (
+        <div className="absolute inset-0 flex items-center justify-center bg-primary/10 rounded-xl pointer-events-none z-10">
+          <div className="flex items-center gap-2 text-primary font-medium text-sm">
+            <Upload size={18} />
+            <span>Drop to ingest</span>
+          </div>
+        </div>
+      )}
       {/* Menu Button */}
       <button
         onClick={onMenuClick}

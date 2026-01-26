@@ -19,6 +19,7 @@ import { UserManagementModal } from './UserManagementModal';
 import { ProjectsFilterSidebar, DEFAULT_PROJECT_SIDEBAR_FILTERS } from './ProjectsFilterSidebar';
 import type { ProjectSidebarFilters, DropTarget } from './ProjectsFilterSidebar';
 import type { ProjectCreationForm } from '../../types/project';
+import { setPendingFileForIngestion } from '../../utils/fileTransferStore';
 
 interface ProjectsDashboardProps {
   onProjectSelect: (project: Project) => void;
@@ -115,6 +116,11 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = 
     } else if (target.type === 'tag' && target.value) {
       updateProject(projectId, { label: target.value });
     }
+  };
+
+  const handleFileDropOnProject = (projectId: string, file: File) => {
+    setPendingFileForIngestion(file, projectId);
+    navigate(`/project/${projectId}?openIngestion=file`);
   };
 
   // Apply sidebar filters on top of context-filtered projects
@@ -350,6 +356,7 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = 
                     viewMode="grid"
                     onClick={() => handleProjectClick(project)}
                     onMenuClick={(e) => handleMenuClick(e, project)}
+                    onFileDrop={handleFileDropOnProject}
                   />
                 ))}
               </div>
@@ -363,6 +370,7 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = 
                     viewMode="list"
                     onClick={() => handleProjectClick(project)}
                     onMenuClick={(e) => handleMenuClick(e, project)}
+                    onFileDrop={handleFileDropOnProject}
                   />
                 ))}
               </div>

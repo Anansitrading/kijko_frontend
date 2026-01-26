@@ -103,6 +103,31 @@ export interface CompressionAlgorithmInfo {
   optimizationLevel: string;
 }
 
+// File-level compression data
+export interface CompressedFileItem {
+  id: string;
+  name: string;
+  path: string;
+  originalTokens: number;
+  compressedTokens: number;
+}
+
+export interface PendingCompressionFileItem {
+  id: string;
+  name: string;
+  path: string;
+  currentTokens: number;
+  estimatedTokens: number;
+}
+
+export interface NeverCompressFileItem {
+  id: string;
+  name: string;
+  path: string;
+  tokens: number;
+  reason?: string;
+}
+
 // Top entity reference
 export interface TopEntity {
   name: string;

@@ -7,13 +7,48 @@ import type {
   CompressionMetrics,
   IngestionEntry,
   CompressionAlgorithmInfo,
+  CompressedFileItem,
+  PendingCompressionFileItem,
+  NeverCompressFileItem,
 } from '../types/contextInspector';
 
 // Mock data for development
+const MOCK_COMPRESSED_FILES: CompressedFileItem[] = [
+  { id: 'cf-1', name: 'App.tsx', path: 'src/App.tsx', originalTokens: 12400, compressedTokens: 640 },
+  { id: 'cf-2', name: 'index.ts', path: 'src/index.ts', originalTokens: 2100, compressedTokens: 180 },
+  { id: 'cf-3', name: 'types.ts', path: 'src/types.ts', originalTokens: 8300, compressedTokens: 420 },
+  { id: 'cf-4', name: 'Sidebar.tsx', path: 'src/components/Sidebar.tsx', originalTokens: 5500, compressedTokens: 310 },
+  { id: 'cf-5', name: 'HypervisaView.tsx', path: 'src/components/HypervisaView.tsx', originalTokens: 14800, compressedTokens: 780 },
+  { id: 'cf-6', name: 'SettingsContext.tsx', path: 'src/contexts/SettingsContext.tsx', originalTokens: 7600, compressedTokens: 390 },
+  { id: 'cf-7', name: 'useTheme.ts', path: 'src/hooks/useTheme.ts', originalTokens: 1200, compressedTokens: 95 },
+  { id: 'cf-8', name: 'ProjectsDashboard.tsx', path: 'src/components/ProjectsDashboard.tsx', originalTokens: 10900, compressedTokens: 560 },
+  { id: 'cf-9', name: 'NotificationContext.tsx', path: 'src/contexts/NotificationContext.tsx', originalTokens: 5300, compressedTokens: 270 },
+  { id: 'cf-10', name: 'main.py', path: 'src/main.py', originalTokens: 3500, compressedTokens: 200 },
+  { id: 'cf-11', name: 'ContextDetailInspector.tsx', path: 'src/components/ContextDetailInspector.tsx', originalTokens: 18500, compressedTokens: 950 },
+  { id: 'cf-12', name: 'ChatHistoryPanel.tsx', path: 'src/components/ChatHistoryPanel.tsx', originalTokens: 9100, compressedTokens: 470 },
+];
+
+const MOCK_PENDING_FILES: PendingCompressionFileItem[] = [
+  { id: 'pf-1', name: 'IngestionWizard.tsx', path: 'src/components/Hypervisa/IngestionWizard.tsx', currentTokens: 14800, estimatedTokens: 760 },
+  { id: 'pf-2', name: 'ProjectCard.tsx', path: 'src/components/ProjectOverview/ProjectCard.tsx', currentTokens: 4200, estimatedTokens: 220 },
+  { id: 'pf-3', name: 'ChatInput.tsx', path: 'src/components/ContextDetailInspector/ChatInput.tsx', currentTokens: 3100, estimatedTokens: 160 },
+  { id: 'pf-4', name: 'EmptyState.tsx', path: 'src/components/EmptyState.tsx', currentTokens: 2100, estimatedTokens: 110 },
+  { id: 'pf-5', name: 'StatusBadge.tsx', path: 'src/components/StatusBadge.tsx', currentTokens: 1800, estimatedTokens: 95 },
+];
+
+const MOCK_NEVER_COMPRESS_FILES: NeverCompressFileItem[] = [
+  { id: 'nf-1', name: 'api-spec.json', path: 'src/api-spec.json', tokens: 44500, reason: 'API specification — must remain exact' },
+  { id: 'nf-2', name: 'package.json', path: 'package.json', tokens: 3100, reason: 'Package manifest' },
+  { id: 'nf-3', name: 'tsconfig.json', path: 'tsconfig.json', tokens: 800, reason: 'TypeScript configuration' },
+];
+
 const MOCK_COMPRESSION_DATA: Record<string, {
   metrics: CompressionMetrics;
   history: IngestionEntry[];
   algorithmInfo: CompressionAlgorithmInfo;
+  compressedFiles: CompressedFileItem[];
+  pendingFiles: PendingCompressionFileItem[];
+  neverCompressFiles: NeverCompressFileItem[];
 }> = {
   default: {
     metrics: {
@@ -43,6 +78,9 @@ const MOCK_COMPRESSION_DATA: Record<string, {
       preserves: ['Structure', 'Types', 'Exports', 'Documentation'],
       optimizationLevel: 'High (favor accuracy over compression)',
     },
+    compressedFiles: MOCK_COMPRESSED_FILES,
+    pendingFiles: MOCK_PENDING_FILES,
+    neverCompressFiles: MOCK_NEVER_COMPRESS_FILES,
   },
 };
 
@@ -50,6 +88,9 @@ export interface CompressionDataResponse {
   metrics: CompressionMetrics;
   history: IngestionEntry[];
   algorithmInfo: CompressionAlgorithmInfo;
+  compressedFiles: CompressedFileItem[];
+  pendingFiles: PendingCompressionFileItem[];
+  neverCompressFiles: NeverCompressFileItem[];
 }
 
 export async function getCompressionData(contextId: string): Promise<CompressionDataResponse> {

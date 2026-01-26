@@ -8,6 +8,7 @@ import { SkillsTab } from './SkillsTab';
 import { UserAvatar } from './UserAvatar';
 import { UserDropdown } from './UserDropdown';
 import { SettingsModal } from '../SettingsModal';
+import { Footer } from '../Footer';
 import { NotificationBell } from '../Notifications/NotificationBell';
 import { NotificationPanel } from '../Notifications/NotificationPanel';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -137,7 +138,7 @@ export function Dashboard({ onProjectSelect }: DashboardProps) {
       {/* Settings Button - Bottom Left */}
       <button
         onClick={() => setIsSettingsOpen(true)}
-        className="fixed bottom-6 left-6 flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-card transition-all shadow-lg group z-10"
+        className="fixed bottom-6 left-6 flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-card transition-all shadow-lg group z-50"
       >
         <Settings
           size={16}
@@ -145,6 +146,9 @@ export function Dashboard({ onProjectSelect }: DashboardProps) {
         />
         <span>Settings</span>
       </button>
+
+      {/* Global Footer */}
+      <Footer />
     </div>
   );
 }

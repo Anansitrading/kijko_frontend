@@ -1,11 +1,12 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { LeftSidebar } from './components/LeftSidebar';
 import { MainContent } from './components/MainContent';
 import { RightSidebar } from './components/RightSidebar';
 import { IngestionModal } from './components/IngestionModal';
 import { useProjectData } from '../../hooks/useProjectData';
-import { useIngestion } from '../../contexts/IngestionContext';
+import { useIngestion, formatFileSizeFromBytes } from '../../contexts/IngestionContext';
+import { getPendingFileForIngestion } from '../../utils/fileTransferStore';
 import { PanelErrorBoundary } from '../../components/ErrorBoundary';
 import { Loader2, AlertCircle } from 'lucide-react';
 import type { TabType } from '../../types/contextInspector';
@@ -17,7 +18,7 @@ export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: project, isLoading, error } = useProjectData(projectId);
-  const { openIngestionModalEmpty } = useIngestion();
+  const { openIngestionModal, openIngestionModalEmpty } = useIngestion();
 
   // Selected ingestion for master-detail pattern
   const [selectedIngestionNumber, setSelectedIngestionNumber] = useState<number | null>(null);
@@ -27,16 +28,37 @@ export function ProjectDetailPage() {
   const initialTab: TabType = tabParam && VALID_TABS.includes(tabParam) ? tabParam : 'overview';
 
   // Check for openIngestion param and trigger modal
-  const shouldOpenIngestion = searchParams.get('openIngestion') === 'true';
+  const openIngestionParam = searchParams.get('openIngestion');
+
+  // Ref to prevent React Strict Mode double-execution from consuming the
+  // one-time file store on the first run and then falling back to the empty
+  // modal on the second run (which would override the selected file).
+  const fileConsumedRef = useRef(false);
 
   useEffect(() => {
-    if (shouldOpenIngestion && project) {
+    if (!openIngestionParam || !project) return;
+
+    if (openIngestionParam === 'true') {
       openIngestionModalEmpty();
-      // Remove the param from URL after opening
-      searchParams.delete('openIngestion');
-      setSearchParams(searchParams, { replace: true });
+    } else if (openIngestionParam === 'file' && !fileConsumedRef.current) {
+      const pending = getPendingFileForIngestion();
+      if (pending) {
+        fileConsumedRef.current = true;
+        openIngestionModal({
+          id: `file-${Date.now()}`,
+          name: pending.file.name,
+          size: formatFileSizeFromBytes(pending.file.size),
+          sizeBytes: pending.file.size,
+        });
+      } else {
+        // File data lost (e.g. page refresh), fall back to empty modal
+        openIngestionModalEmpty();
+      }
     }
-  }, [shouldOpenIngestion, project, openIngestionModalEmpty, searchParams, setSearchParams]);
+
+    searchParams.delete('openIngestion');
+    setSearchParams(searchParams, { replace: true });
+  }, [openIngestionParam, project, openIngestionModal, openIngestionModalEmpty, searchParams, setSearchParams]);
 
   // Handler to update tab in URL - also clears selected ingestion
   const handleTabChange = useCallback((tab: TabType) => {
@@ -97,7 +119,7 @@ export function ProjectDetailPage() {
       <div className="h-screen w-full bg-[#0a0e1a] flex overflow-hidden">
         {/* Left Sidebar - Source Files */}
         <PanelErrorBoundary panelName="Source Files">
-          <LeftSidebar className="w-[240px] flex-shrink-0" projectName={project.name} />
+          <LeftSidebar className="w-[240px] flex-shrink-0" projectName={project.name} projectId={project.id} />
         </PanelErrorBoundary>
 
         {/* Main Content - Tabs and Chat */}

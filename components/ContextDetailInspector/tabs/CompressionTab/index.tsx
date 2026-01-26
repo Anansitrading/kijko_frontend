@@ -4,6 +4,7 @@ import { useCompressionData } from './hooks';
 import { CompressionStats } from './CompressionStats';
 import { CompressionProgress } from './CompressionProgress';
 import { CompressionDetails } from './CompressionDetails';
+import { CompressionFileLists } from './CompressionFileLists';
 
 function LoadingSkeleton() {
   return (
@@ -41,6 +42,9 @@ export function CompressionTab({ contextItem }: TabProps) {
   const {
     metrics,
     algorithmInfo,
+    compressedFiles,
+    pendingFiles,
+    neverCompressFiles,
     isLoading,
     error,
     refresh,
@@ -68,8 +72,8 @@ export function CompressionTab({ contextItem }: TabProps) {
   const tokensSaved = metrics.originalTokens - metrics.compressedTokens;
 
   return (
-    <div className="p-6 overflow-y-auto custom-scrollbar">
-      <div className="space-y-5 max-w-2xl">
+    <div className="p-6 h-full overflow-y-auto custom-scrollbar">
+      <div className="space-y-5">
         <CompressionProgress
           savingsPercent={metrics.savingsPercent}
           ratio={metrics.ratio}
@@ -77,6 +81,14 @@ export function CompressionTab({ contextItem }: TabProps) {
         />
 
         <CompressionStats metrics={metrics} tokensSaved={tokensSaved} />
+
+        <div className="border-t border-white/5 pt-5">
+          <CompressionFileLists
+            compressedFiles={compressedFiles}
+            pendingFiles={pendingFiles}
+            neverCompressFiles={neverCompressFiles}
+          />
+        </div>
 
         <div className="border-t border-white/5 pt-5">
           <CompressionDetails algorithmInfo={algorithmInfo} />

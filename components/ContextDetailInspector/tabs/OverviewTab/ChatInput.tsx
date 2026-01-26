@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, KeyboardEvent } from 'react';
+import { useState, useCallback, useRef, useEffect, KeyboardEvent, ClipboardEvent } from 'react';
 import {
   Send,
   Loader2,
@@ -100,6 +100,8 @@ export function ChatInput({
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [expandedPreview, setExpandedPreview] = useState<number | null>(null);
   const [internalExpanded, setInternalExpanded] = useState(false);
   const [isContextSelectorOpen, setIsContextSelectorOpen] = useState(false);
 
@@ -172,13 +174,31 @@ export function ChatInput({
     [isContextSelectorOpen]
   );
 
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  const addAttachmentsWithPreviews = useCallback((files: File[]) => {
+    const newUrls = files.map((file) =>
+      file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
+    );
+    setAttachments((prev) => [...prev, ...files]);
+    setPreviewUrls((prev) => [...prev, ...newUrls]);
+  }, []);
+
   const handleSubmit = useCallback(() => {
     if (value.trim() && !isLoading && !disabled) {
       onSend(value.trim());
       setValue('');
+      previewUrls.forEach((url) => { if (url) URL.revokeObjectURL(url); });
       setAttachments([]);
+      setPreviewUrls([]);
+      setExpandedPreview(null);
     }
-  }, [value, isLoading, disabled, onSend]);
+  }, [value, isLoading, disabled, onSend, previewUrls]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -248,14 +268,43 @@ export function ChatInput({
   // File attachment handlers
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setAttachments((prev) => [...prev, ...files]);
+    addAttachmentsWithPreviews(files);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, []);
+  }, [addAttachmentsWithPreviews]);
+
+  // Paste handler for clipboard images
+  const handlePaste = useCallback((e: ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = e.clipboardData?.files;
+    if (!files || files.length === 0) return;
+
+    const imageFiles: File[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type.startsWith('image/')) {
+        imageFiles.push(file);
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      e.preventDefault();
+      addAttachmentsWithPreviews(imageFiles);
+    }
+  }, [addAttachmentsWithPreviews]);
 
   const removeAttachment = useCallback((index: number) => {
+    setPreviewUrls((prev) => {
+      const url = prev[index];
+      if (url) URL.revokeObjectURL(url);
+      return prev.filter((_, i) => i !== index);
+    });
     setAttachments((prev) => prev.filter((_, i) => i !== index));
+    setExpandedPreview((prev) => {
+      if (prev === null) return null;
+      if (prev === index) return null;
+      return prev > index ? prev - 1 : prev;
+    });
   }, []);
 
   const handleModelSelect = useCallback((modelId: AIModel) => {
@@ -304,22 +353,53 @@ export function ChatInput({
       >
         {/* Attachments Preview */}
         {attachments.length > 0 && (
-          <div className="flex flex-wrap gap-2 px-4 py-2 border-b border-white/5">
-            {attachments.map((file, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-2 px-2 py-1 bg-white/5 rounded-lg text-sm"
-              >
-                <Paperclip className="w-3 h-3 text-gray-400" />
-                <span className="text-gray-300 max-w-[150px] truncate">{file.name}</span>
-                <button
-                  onClick={() => removeAttachment(index)}
-                  className="p-0.5 text-gray-500 hover:text-gray-300"
+          <div
+            className="flex flex-wrap gap-2 px-4 py-2 border-b border-white/5"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setExpandedPreview(null);
+            }}
+          >
+            {attachments.map((file, index) =>
+              file.type.startsWith('image/') && previewUrls[index] ? (
+                <div
+                  key={index}
+                  className={cn(
+                    'relative group rounded-lg overflow-hidden bg-white/5 cursor-pointer transition-all duration-200',
+                    expandedPreview === index ? 'w-1/4' : 'w-16 h-16'
+                  )}
+                  onClick={() => setExpandedPreview(expandedPreview === index ? null : index)}
                 >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
+                  <img
+                    src={previewUrls[index]}
+                    alt={file.name}
+                    className={cn(
+                      'w-full',
+                      expandedPreview === index ? 'h-auto object-contain' : 'h-full object-cover'
+                    )}
+                  />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeAttachment(index); }}
+                    className="absolute top-0.5 right-0.5 p-0.5 bg-black/60 rounded-full text-gray-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 px-2 py-1 bg-white/5 rounded-lg text-sm"
+                >
+                  <Paperclip className="w-3 h-3 text-gray-400" />
+                  <span className="text-gray-300 max-w-[150px] truncate">{file.name}</span>
+                  <button
+                    onClick={() => removeAttachment(index)}
+                    className="p-0.5 text-gray-500 hover:text-gray-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )
+            )}
           </div>
         )}
 
@@ -351,6 +431,7 @@ export function ChatInput({
               value={value}
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder="Message Kijko — @ to include context, / for commands"
               disabled={isLoading || disabled}
               rows={isExpanded ? 10 : 2}
