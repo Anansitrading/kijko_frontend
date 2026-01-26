@@ -10,14 +10,17 @@ import {
   ChevronRight,
   GripVertical,
   Globe,
+  Download,
 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import { useSourceFiles, formatFileSize, SourceFile } from '../../../../contexts/SourceFilesContext';
 import { useIngestion, formatFileSizeFromBytes } from '../../../../contexts/IngestionContext';
+import { useChatHistory } from '../../../../contexts/ChatHistoryContext';
 import { FileContextMenu, ContextMenuAction } from './FileContextMenu';
 
 interface LeftSidebarProps {
   className?: string;
+  style?: React.CSSProperties;
   projectName?: string;
   projectId?: string;
 }
@@ -210,6 +213,34 @@ const FileListItem = memo(function FileListItem({
   );
 });
 
+// Export format dropdown (compact)
+type ExportFormat = 'json' | 'markdown';
+
+function ExportDropdown({ isOpen, onClose, onExport }: { isOpen: boolean; onClose: () => void; onExport: (format: ExportFormat) => void }) {
+  if (!isOpen) return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="absolute bottom-full right-0 mb-1 z-50 bg-[#1a1f2e] border border-white/10 rounded-md shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150 min-w-[140px]">
+        <button
+          onClick={() => onExport('json')}
+          className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-gray-400 hover:text-gray-200 hover:bg-white/10 transition-colors"
+        >
+          <FileJson size={12} className="text-blue-400" />
+          <span>JSON</span>
+        </button>
+        <button
+          onClick={() => onExport('markdown')}
+          className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-gray-400 hover:text-gray-200 hover:bg-white/10 transition-colors"
+        >
+          <FileText size={12} className="text-green-400" />
+          <span>Markdown</span>
+        </button>
+      </div>
+    </>
+  );
+}
+
 // Context menu state type
 interface ContextMenuState {
   isOpen: boolean;
@@ -218,7 +249,7 @@ interface ContextMenuState {
   file?: SourceFile;
 }
 
-export function LeftSidebar({ className, projectName = 'Project', projectId }: LeftSidebarProps) {
+export function LeftSidebar({ className, style, projectName = 'Project', projectId }: LeftSidebarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -249,6 +280,87 @@ export function LeftSidebar({ className, projectName = 'Project', projectId }: L
   } = useSourceFiles();
 
   const { openIngestionModal } = useIngestion();
+  const { state: chatState, getCurrentSession } = useChatHistory();
+
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [exportFeedback, setExportFeedback] = useState<'success' | 'error' | null>(null);
+
+  // Export handler
+  const handleExport = useCallback(async (format: ExportFormat) => {
+    setShowExportDropdown(false);
+    try {
+      const session = getCurrentSession();
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        chatSession: session ? {
+          id: session.id,
+          title: session.metadata.title,
+          createdAt: session.createdAt,
+          updatedAt: session.updatedAt,
+          messageCount: session.messages.length,
+          messages: session.messages.map(msg => ({ role: msg.role, content: msg.content })),
+          sourceFiles: session.sourceFiles.map(file => ({ name: file.name, path: file.path, type: file.type, size: file.size })),
+        } : null,
+        totalChats: chatState.historyItems.length,
+      };
+
+      let content: string;
+      let filename: string;
+      let mimeType: string;
+
+      if (format === 'json') {
+        content = JSON.stringify(exportData, null, 2);
+        filename = `context-export-${new Date().toISOString().split('T')[0]}.json`;
+        mimeType = 'application/json';
+      } else {
+        const lines: string[] = [
+          '# Context Export', '',
+          `**Exported:** ${new Date().toLocaleString()}`,
+          `**Total Chats:** ${exportData.totalChats}`, '',
+        ];
+        if (exportData.chatSession) {
+          lines.push('## Current Chat Session', '',
+            `**Title:** ${exportData.chatSession.title}`,
+            `**Created:** ${new Date(exportData.chatSession.createdAt).toLocaleString()}`,
+            `**Messages:** ${exportData.chatSession.messageCount}`, '');
+          if (exportData.chatSession.sourceFiles.length > 0) {
+            lines.push('### Source Files', '');
+            exportData.chatSession.sourceFiles.forEach(file => {
+              lines.push(`- ${file.name} (${file.path || 'unknown path'}) - ${Math.round(file.size / 1024)}KB`);
+            });
+            lines.push('');
+          }
+          if (exportData.chatSession.messages.length > 0) {
+            lines.push('### Conversation', '');
+            exportData.chatSession.messages.forEach(msg => {
+              lines.push(`${msg.role === 'user' ? '**User**' : '**Assistant**'}:`, '', msg.content, '', '---', '');
+            });
+          }
+        } else {
+          lines.push('*No active chat session*', '');
+        }
+        content = lines.join('\n');
+        filename = `context-export-${new Date().toISOString().split('T')[0]}.md`;
+        mimeType = 'text/markdown';
+      }
+
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setExportFeedback('success');
+      setTimeout(() => setExportFeedback(null), 2000);
+    } catch {
+      setExportFeedback('error');
+      setTimeout(() => setExportFeedback(null), 2000);
+    }
+  }, [getCurrentSession, chatState.historyItems.length]);
 
   // Get root level files (no parentId)
   const rootFiles = useMemo(() => {
@@ -528,6 +640,7 @@ export function LeftSidebar({ className, projectName = 'Project', projectId }: L
         'h-full bg-[#0d1220] border-r border-[#1e293b] flex flex-col',
         className
       )}
+      style={style}
     >
       {/* Hidden file input for drop zone */}
       <input
@@ -644,7 +757,31 @@ export function LeftSidebar({ className, projectName = 'Project', projectId }: L
         </div>
         <div className="mt-1 flex items-center justify-between text-[10px] text-slate-500">
           <span>{selectedCount} files</span>
-          <span>~{tokenEstimate} tokens</span>
+          <div className="flex items-center gap-1.5">
+            <span>~{tokenEstimate} tokens</span>
+            <div className="relative">
+              <button
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                className={cn(
+                  "p-0.5 rounded transition-colors",
+                  exportFeedback === 'success'
+                    ? "text-green-400"
+                    : exportFeedback === 'error'
+                      ? "text-red-400"
+                      : "text-blue-500/70 hover:text-blue-400"
+                )}
+                title="Export context"
+                aria-label="Export context"
+              >
+                <Download size={11} />
+              </button>
+              <ExportDropdown
+                isOpen={showExportDropdown}
+                onClose={() => setShowExportDropdown(false)}
+                onExport={handleExport}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

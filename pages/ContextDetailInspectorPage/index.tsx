@@ -15,9 +15,10 @@ import { UserDropdown } from '../../components/Dashboard/UserDropdown';
 import { SettingsModal } from '../../components/SettingsModal';
 import { ShareModal } from '../../components/ContextDetailInspector/modals/ShareModal';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useProjects } from '../../contexts/ProjectsContext';
 import { cn } from '../../utils/cn';
 import { tabConfig } from '../../styles/contextInspector';
-import { Loader2, AlertCircle, Share2, ArrowLeft, Wrench } from 'lucide-react';
+import { Loader2, AlertCircle, Share2, ArrowLeft, Wrench, ChevronDown, Check } from 'lucide-react';
 import type { TabType } from '../../types/contextInspector';
 import type { Notification, SettingsSection } from '../../types/settings';
 
@@ -57,6 +58,39 @@ export function ProjectDetailPage() {
 
   // User dropdown state
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+
+  // Project switcher dropdown
+  const [isProjectSwitcherOpen, setIsProjectSwitcherOpen] = useState(false);
+  const projectSwitcherRef = useRef<HTMLDivElement>(null);
+  const { projects } = useProjects();
+
+  // Left sidebar resizing
+  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const isResizingRef = useRef(false);
+
+  const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingRef.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isResizingRef.current) return;
+      const newWidth = Math.min(Math.max(ev.clientX, 180), 500);
+      setSidebarWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      isResizingRef.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
 
   // Notifications
   const {
@@ -106,6 +140,18 @@ export function ProjectDetailPage() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleTabChange]);
+
+  // Close project switcher on outside click
+  useEffect(() => {
+    if (!isProjectSwitcherOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (projectSwitcherRef.current && !projectSwitcherRef.current.contains(e.target as Node)) {
+        setIsProjectSwitcherOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProjectSwitcherOpen]);
 
   // Check for openIngestion param and trigger modal
   const openIngestionParam = searchParams.get('openIngestion');
@@ -189,7 +235,7 @@ export function ProjectDetailPage() {
         {/* Unified Top Bar (Row 1 - h-12) spanning full width */}
         <header className="h-12 shrink-0 flex items-center border-b border-[#1e293b] bg-[#0d1220]">
           {/* Left section - Back + Project name (same width as left sidebar) */}
-          <div className="w-[240px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-[#1e293b]">
+          <div className="shrink-0 h-full flex items-center gap-2 px-3 border-r border-[#1e293b]" style={{ width: sidebarWidth }}>
             <button
               onClick={() => navigate('/')}
               className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors duration-150"
@@ -197,12 +243,71 @@ export function ProjectDetailPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <Wrench className="w-3.5 h-3.5 text-blue-400" />
+
+            {/* Project switcher dropdown */}
+            <div ref={projectSwitcherRef} className="relative flex-1 min-w-0">
+              <button
+                onClick={() => setIsProjectSwitcherOpen(!isProjectSwitcherOpen)}
+                className={cn(
+                  'flex items-center gap-2 w-full px-1.5 py-1 rounded-lg transition-colors duration-150',
+                  'hover:bg-white/10',
+                  isProjectSwitcherOpen && 'bg-white/10'
+                )}
+              >
+                <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                  <Wrench className="w-3.5 h-3.5 text-blue-400" />
+                </div>
+                <span className="text-sm font-semibold text-white truncate">
+                  {project.name}
+                </span>
+                <ChevronDown className={cn(
+                  'w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform duration-150',
+                  isProjectSwitcherOpen && 'rotate-180'
+                )} />
+              </button>
+
+              {isProjectSwitcherOpen && (
+                <div className="absolute top-full left-0 mt-1 w-72 bg-[#141b2d] border border-[#1e293b] rounded-lg shadow-xl z-50 py-1 max-h-80 overflow-y-auto">
+                  {projects.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        if (p.id !== project.id) {
+                          navigate(`/project/${p.id}`);
+                        }
+                        setIsProjectSwitcherOpen(false);
+                      }}
+                      className={cn(
+                        'flex items-center gap-3 w-full px-3 py-2.5 text-left transition-colors duration-100',
+                        p.id === project.id
+                          ? 'bg-blue-500/10 text-white'
+                          : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                      )}
+                    >
+                      <div
+                        className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs"
+                        style={{ backgroundColor: `${p.icon.backgroundColor}30` }}
+                      >
+                        {p.icon.type === 'emoji' ? (
+                          <span>{p.icon.value}</span>
+                        ) : (
+                          <span className="text-[10px] font-bold" style={{ color: p.icon.backgroundColor }}>
+                            {p.icon.value}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{p.name}</div>
+                        <div className="text-[11px] text-gray-500">{p.sourceCount} sources</div>
+                      </div>
+                      {p.id === project.id && (
+                        <Check className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <span className="text-sm font-semibold text-white truncate">
-              {project.name}
-            </span>
           </div>
 
           {/* Center + Right section - Tabs + Share + Live + Bell + Avatar */}
@@ -311,8 +416,14 @@ export function ProjectDetailPage() {
         <div className="flex-1 flex overflow-hidden">
           {/* Left Sidebar - Source Files */}
           <PanelErrorBoundary panelName="Source Files">
-            <LeftSidebar className="w-[240px] flex-shrink-0" projectName={project.name} projectId={project.id} />
+            <LeftSidebar className="flex-shrink-0" style={{ width: sidebarWidth }} projectName={project.name} projectId={project.id} />
           </PanelErrorBoundary>
+
+          {/* Resize Handle */}
+          <div
+            onMouseDown={handleResizeMouseDown}
+            className="w-1 flex-shrink-0 cursor-col-resize bg-[#1e293b] hover:bg-blue-500/50 active:bg-blue-500 transition-colors"
+          />
 
           {/* Main Content */}
           <PanelErrorBoundary panelName="Main Content">

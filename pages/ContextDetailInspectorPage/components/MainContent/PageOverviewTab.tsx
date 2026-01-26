@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { ChatPanel } from '../../../../components/ContextDetailInspector/tabs/OverviewTab/ChatPanel';
 import { Toast, useToast } from '../../../../components/Toast';
 import { useContextSummary } from '../../../../hooks/useContextSummary';
@@ -19,13 +20,20 @@ interface PageOverviewTabProps {
  * - Keys chat to activeChatId for multi-tab support
  */
 export function PageOverviewTab({ contextItem }: PageOverviewTabProps) {
-  const { state } = useChatHistory();
+  const { state, addMessage } = useChatHistory();
   const chatId = state.activeChatId || contextItem.id;
 
   const { summary, isLoading: summaryLoading } = useContextSummary(contextItem.id);
   const { messages, isLoading: chatLoading, sendMessage } = useContextChat(chatId);
   const tokenUsage = useTokenUsage();
   const { toast, hideToast } = useToast();
+
+  // Wrap sendMessage to also dispatch to ChatHistoryContext,
+  // which triggers auto-rename of the tab from the first user message
+  const handleSendMessage = useCallback((content: string) => {
+    addMessage({ role: 'user', content });
+    sendMessage(content);
+  }, [addMessage, sendMessage]);
 
   return (
     <>
@@ -39,7 +47,7 @@ export function PageOverviewTab({ contextItem }: PageOverviewTabProps) {
             isLoading={chatLoading}
             summaryLoading={summaryLoading}
             summary={summary}
-            onSendMessage={sendMessage}
+            onSendMessage={handleSendMessage}
             tokenUsage={tokenUsage}
           />
         </div>

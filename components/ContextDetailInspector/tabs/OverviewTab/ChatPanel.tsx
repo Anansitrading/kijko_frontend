@@ -190,11 +190,11 @@ export function ChatPanel({
           </>
         ) : null}
 
-        {/* New Chat button */}
+        {/* New Chat button - pushed to right */}
         <button
           onClick={handleNewChat}
           className={cn(
-            'p-2 flex-shrink-0',
+            'p-2 flex-shrink-0 ml-auto',
             'text-gray-400 hover:text-white hover:bg-white/10',
             'transition-colors duration-150'
           )}
