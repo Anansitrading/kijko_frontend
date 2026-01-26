@@ -29,6 +29,7 @@ export type IntegrationProvider =
   | 'mixpanel'
   | 'amplitude'
   // Storage
+  | 'kijko-file-storage'
   | 'google-drive'
   | 'dropbox'
   | 'onedrive'
@@ -219,6 +220,15 @@ export const INTEGRATION_APPS: IntegrationApp[] = [
     permissions: ['track_events', 'read_data'],
   },
   // Storage
+  {
+    id: 'kijko-file-storage',
+    name: 'Kijko File Storage',
+    category: 'storage',
+    description: 'Built-in file storage powered by Kijko.',
+    icon: 'kijko-file-storage',
+    permissions: ['read_files', 'write_files', 'delete_files', 'manage_folders'],
+    isPopular: true,
+  },
   {
     id: 'google-drive',
     name: 'Google Drive',

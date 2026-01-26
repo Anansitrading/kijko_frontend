@@ -82,6 +82,14 @@ export function IntegrationsTab() {
   // Connected apps state (mock data - replace with actual API calls)
   const [connectedApps, setConnectedApps] = useState<ConnectedIntegration[]>([
     {
+      id: '0',
+      provider: 'kijko-file-storage',
+      scopes: ['read_files', 'write_files', 'delete_files', 'manage_folders'],
+      connectedAt: new Date('2024-01-01'),
+      lastSyncAt: new Date(),
+      status: 'active',
+    },
+    {
       id: '1',
       provider: 'slack',
       scopes: ['send_messages', 'read_channels'],

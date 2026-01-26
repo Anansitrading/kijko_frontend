@@ -12,6 +12,7 @@ import {
   Slack,
   Cloud,
   Zap,
+  HardDrive,
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import type { IntegrationCardProps, IntegrationCategory } from '../../../types/settings';
@@ -22,6 +23,8 @@ const getIntegrationIcon = (iconName: string): React.ReactNode => {
   const iconClass = 'w-8 h-8';
 
   switch (iconName) {
+    case 'kijko-file-storage':
+      return <HardDrive className={iconClass} />;
     case 'github':
       return <Github className={iconClass} />;
     case 'slack':
@@ -131,8 +134,10 @@ export function IntegrationCard({
       <div
         onClick={handleCardClick}
         className={cn(
-          'bg-card/50 border border-border rounded-xl p-4 flex items-center gap-4 transition-all duration-200',
-          'hover:bg-card hover:border-primary/30',
+          'bg-card/50 border rounded-xl p-4 flex items-center gap-4 transition-all duration-200',
+          integration.id === 'kijko-file-storage'
+            ? 'border-orange-500 hover:bg-card hover:border-orange-400'
+            : 'border-border hover:bg-card hover:border-primary/30',
           (onCardClick || (integration.isConnected && onManage)) && 'cursor-pointer'
         )}
       >
@@ -199,8 +204,10 @@ export function IntegrationCard({
     <div
       onClick={handleCardClick}
       className={cn(
-        'bg-card/50 border border-border rounded-xl p-4 flex flex-col h-full transition-all duration-200',
-        'hover:bg-card hover:border-primary/30',
+        'bg-card/50 border rounded-xl p-4 flex flex-col h-full transition-all duration-200',
+        integration.id === 'kijko-file-storage'
+          ? 'border-orange-500 hover:bg-card hover:border-orange-400'
+          : 'border-border hover:bg-card hover:border-primary/30',
         (onCardClick || (integration.isConnected && onManage)) && 'cursor-pointer'
       )}
     >

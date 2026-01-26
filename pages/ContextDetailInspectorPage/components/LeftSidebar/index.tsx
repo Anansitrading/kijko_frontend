@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import { useSourceFiles, formatFileSize, SourceFile } from '../../../../contexts/SourceFilesContext';
-import { useIngestion, formatFileSizeFromBytes } from '../../../../contexts/IngestionContext';
 import { useChatHistory } from '../../../../contexts/ChatHistoryContext';
 import { FileContextMenu, ContextMenuAction } from './FileContextMenu';
 
@@ -250,10 +249,8 @@ interface ContextMenuState {
 }
 
 export function LeftSidebar({ className, style, projectName = 'Project', projectId }: LeftSidebarProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
   const [isRootExpanded, setIsRootExpanded] = useState(true);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [dragTargetId, setDragTargetId] = useState<string | null>(null);
@@ -279,7 +276,6 @@ export function LeftSidebar({ className, style, projectName = 'Project', project
     moveFile,
   } = useSourceFiles();
 
-  const { openIngestionModal } = useIngestion();
   const { state: chatState, getCurrentSession } = useChatHistory();
 
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -388,29 +384,6 @@ export function LeftSidebar({ className, style, projectName = 'Project', project
     [selectedCount, totalCount]
   );
 
-  // Handle file selection from input
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const id = `file-${Date.now()}`;
-      openIngestionModal({
-        id,
-        name: file.name,
-        size: formatFileSizeFromBytes(file.size),
-        sizeBytes: file.size,
-      });
-    }
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  }, [openIngestionModal]);
-
-  // Handle New Ingestion button click
-  const handleNewIngestion = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
   // Close search
   const handleCloseSearch = useCallback(() => {
     setIsSearchOpen(false);
@@ -459,9 +432,6 @@ export function LeftSidebar({ className, style, projectName = 'Project', project
 
   const handleContextMenuAction = useCallback((action: ContextMenuAction['id'], fileId?: string) => {
     switch (action) {
-      case 'new-file':
-        handleNewIngestion();
-        break;
       case 'new-folder':
         const folderName = prompt('Enter folder name:');
         if (folderName) {
@@ -487,7 +457,7 @@ export function LeftSidebar({ className, style, projectName = 'Project', project
         console.log('Compress:', fileId);
         break;
     }
-  }, [contextMenu.file, createFolder, files, handleNewIngestion, removeFile]);
+  }, [contextMenu.file, createFolder, files, removeFile]);
 
   // Rename handlers
   const handleRenameChange = useCallback((value: string) => {
@@ -510,9 +480,32 @@ export function LeftSidebar({ className, style, projectName = 'Project', project
   // Drag & drop handlers for file reordering
   const handleFileDragStart = useCallback((e: React.DragEvent, file: SourceFile) => {
     setDraggedFile(file);
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed = 'copyMove';
+
+    // Existing: for internal reordering
     e.dataTransfer.setData('text/plain', file.id);
-  }, []);
+
+    // For cross-component drops (e.g., into chat input)
+    // If the dragged file is selected, include ALL selected files
+    const filesToDrag = selectedFileIds.has(file.id)
+      ? files.filter(f => selectedFileIds.has(f.id))
+      : [file];
+
+    const payload = JSON.stringify(
+      filesToDrag.map(f => ({ id: f.id, name: f.name }))
+    );
+    e.dataTransfer.setData('application/x-kijko-source-file', payload);
+
+    // Custom drag ghost for multi-file drags
+    if (filesToDrag.length > 1) {
+      const ghost = document.createElement('div');
+      ghost.textContent = `${filesToDrag.length} files`;
+      ghost.style.cssText = 'position:absolute;top:-1000px;background:#1e293b;color:white;padding:4px 12px;border-radius:6px;font-size:12px;border:1px solid rgba(59,130,246,0.5)';
+      document.body.appendChild(ghost);
+      e.dataTransfer.setDragImage(ghost, 0, 0);
+      requestAnimationFrame(() => document.body.removeChild(ghost));
+    }
+  }, [files, selectedFileIds]);
 
   const handleFileDragOver = useCallback((e: React.DragEvent, targetFile: SourceFile) => {
     e.preventDefault();
@@ -541,40 +534,6 @@ export function LeftSidebar({ className, style, projectName = 'Project', project
     setDraggedFile(null);
     setDragTargetId(null);
   }, [draggedFile, moveFile]);
-
-  // Drop zone handlers for external files (applied to entire explorer area)
-  const handleExplorerDragOver = useCallback((e: React.DragEvent) => {
-    // Only handle external file drops, not internal file reordering
-    if (e.dataTransfer.types.includes('Files')) {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragOver(true);
-    }
-  }, []);
-
-  const handleExplorerDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  }, []);
-
-  const handleExplorerDrop = useCallback((e: React.DragEvent) => {
-    // Only handle external file drops
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-
-    const id = `file-${Date.now()}`;
-    openIngestionModal({
-      id,
-      name: file.name,
-      size: formatFileSizeFromBytes(file.size),
-      sizeBytes: file.size,
-    });
-  }, [openIngestionModal]);
 
   // Render file list recursively
   const renderFileList = useCallback((fileList: SourceFile[], depth = 0) => {
@@ -642,15 +601,6 @@ export function LeftSidebar({ className, style, projectName = 'Project', project
       )}
       style={style}
     >
-      {/* Hidden file input for drop zone */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        onChange={handleFileSelect}
-        className="hidden"
-        accept=".ts,.tsx,.js,.jsx,.json,.md,.css,.html,.py,.txt"
-      />
-
       {/* Search & Selection Controls */}
       <div className="px-3 h-10 border-b border-[#1e293b] flex items-center shrink-0">
         {/* Search Toggle/Input */}
@@ -697,16 +647,10 @@ export function LeftSidebar({ className, style, projectName = 'Project', project
         )}
       </div>
 
-      {/* Files List — also serves as drop zone for external files */}
+      {/* Files List */}
       <div
-        className={cn(
-          'flex-1 overflow-y-auto transition-colors',
-          isDragOver && 'bg-blue-500/10 ring-2 ring-inset ring-blue-500/40'
-        )}
+        className="flex-1 overflow-y-auto"
         onContextMenu={handleListContextMenu}
-        onDragOver={handleExplorerDragOver}
-        onDragLeave={handleExplorerDragLeave}
-        onDrop={handleExplorerDrop}
       >
         {filteredFiles.length === 0 ? (
           <div className="p-4 text-center text-sm text-slate-500">

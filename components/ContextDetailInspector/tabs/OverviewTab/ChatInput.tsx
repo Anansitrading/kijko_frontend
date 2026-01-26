@@ -104,6 +104,8 @@ export function ChatInput({
   const [expandedPreview, setExpandedPreview] = useState<number | null>(null);
   const [internalExpanded, setInternalExpanded] = useState(false);
   const [isContextSelectorOpen, setIsContextSelectorOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const dragCounterRef = useRef(0);
 
   // Use external expanded state if provided, otherwise use internal
   const isExpanded = externalExpanded !== undefined ? externalExpanded : internalExpanded;
@@ -293,6 +295,97 @@ export function ChatInput({
     }
   }, [addAttachmentsWithPreviews]);
 
+  // --- Drag & Drop handlers for context references ---
+
+  const insertTextAtCursor = useCallback((text: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setValue(prev => prev + text);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const current = value;
+
+    const needsLeadingSpace = start > 0 && current[start - 1] !== ' ' && current[start - 1] !== '\n';
+    const needsTrailingSpace = end < current.length && current[end] !== ' ' && current[end] !== '\n';
+
+    const insert = (needsLeadingSpace ? ' ' : '') + text + (needsTrailingSpace ? ' ' : '');
+    const newValue = current.substring(0, start) + insert + current.substring(end);
+
+    setValue(newValue);
+
+    requestAnimationFrame(() => {
+      if (textarea) {
+        const newPos = start + insert.length;
+        textarea.selectionStart = newPos;
+        textarea.selectionEnd = newPos;
+        textarea.focus();
+      }
+    });
+  }, [value]);
+
+  const isKijkoDrag = useCallback((e: React.DragEvent) => {
+    return e.dataTransfer.types.includes('application/x-kijko-source-file') ||
+           e.dataTransfer.types.includes('application/x-kijko-ingestion');
+  }, []);
+
+  const handleInputDragEnter = useCallback((e: React.DragEvent) => {
+    if (!isKijkoDrag(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    setIsDragOver(true);
+  }, [isKijkoDrag]);
+
+  const handleInputDragOver = useCallback((e: React.DragEvent) => {
+    if (!isKijkoDrag(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'copy';
+  }, [isKijkoDrag]);
+
+  const handleInputDragLeave = useCallback((e: React.DragEvent) => {
+    if (!isKijkoDrag(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragOver(false);
+    }
+  }, [isKijkoDrag]);
+
+  const handleInputDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDragOver(false);
+
+    const sourceFileData = e.dataTransfer.getData('application/x-kijko-source-file');
+    if (sourceFileData) {
+      try {
+        const files: Array<{ id: string; name: string }> = JSON.parse(sourceFileData);
+        const references = files.map(f => `@${f.name}`).join(' ');
+        insertTextAtCursor(references);
+      } catch (err) {
+        console.error('Failed to parse source file drag data:', err);
+      }
+      return;
+    }
+
+    const ingestionData = e.dataTransfer.getData('application/x-kijko-ingestion');
+    if (ingestionData) {
+      try {
+        const ingestion: { number: number } = JSON.parse(ingestionData);
+        insertTextAtCursor(`@Ingestion #${ingestion.number}`);
+      } catch (err) {
+        console.error('Failed to parse ingestion drag data:', err);
+      }
+      return;
+    }
+  }, [insertTextAtCursor]);
+
   const removeAttachment = useCallback((index: number) => {
     setPreviewUrls((prev) => {
       const url = prev[index];
@@ -408,9 +501,25 @@ export function ChatInput({
           <div
             className={cn(
               'relative bg-gray-800/50 border border-white/10 rounded-xl',
-              isExpanded && 'flex-1 flex flex-col'
+              isExpanded && 'flex-1 flex flex-col',
+              isDragOver && 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30'
             )}
+            onDragEnter={handleInputDragEnter}
+            onDragOver={handleInputDragOver}
+            onDragLeave={handleInputDragLeave}
+            onDrop={handleInputDrop}
           >
+            {/* Drop overlay indicator */}
+            {isDragOver && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-blue-500/5 pointer-events-none">
+                <div className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-500/40 rounded-lg">
+                  <span className="text-sm font-medium text-blue-300">
+                    Drop to add reference
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Expand button in top-right corner */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}

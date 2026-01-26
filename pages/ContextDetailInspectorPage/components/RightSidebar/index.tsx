@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Clock, MessageSquare, Search, X, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Clock, MessageSquare, Search, X, Pencil, Trash2, Loader2, Plus } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import { useChatHistory } from '../../../../contexts/ChatHistoryContext';
+import { useIngestion, formatFileSizeFromBytes } from '../../../../contexts/IngestionContext';
 import { useCompressionData } from '../../../../components/ContextDetailInspector/tabs/CompressionTab/hooks';
 import { formatRelativeTime } from '../../../../utils/chatHistoryStorage';
 import { formatDateTime, formatFileChange, formatInterval } from '../../../../utils/formatting';
@@ -298,12 +299,34 @@ interface IngestionEntryRowProps {
 }
 
 function IngestionEntryRow({ entry, isSelected, onSelect }: IngestionEntryRowProps) {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragStart = useCallback((e: React.DragEvent) => {
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'copy';
+
+    const payload = JSON.stringify({
+      number: entry.number,
+      timestamp: entry.timestamp,
+    });
+    e.dataTransfer.setData('application/x-kijko-ingestion', payload);
+    e.dataTransfer.setData('text/plain', `@Ingestion #${entry.number}`);
+  }, [entry.number, entry.timestamp]);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
   return (
     <div
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onClick={onSelect}
       className={cn(
-        "py-2 px-2.5 rounded-lg transition-all duration-150 cursor-pointer",
+        "py-2 px-2.5 rounded-lg transition-all duration-150 cursor-grab active:cursor-grabbing",
         "border-l-[3px]",
+        isDragging && "opacity-40 ring-1 ring-blue-500/30",
         isSelected
           ? "bg-blue-500/10 border-l-blue-500 hover:bg-blue-500/15"
           : "bg-slate-800/30 border-l-transparent hover:bg-slate-800/50 hover:border-l-blue-500/30"
@@ -463,6 +486,8 @@ export function RightSidebar({
 }: RightSidebarProps) {
   const { state: chatState, loadChat, deleteChat, renameChat } = useChatHistory();
   const { metrics, history: ingestionHistory, isLoading: ingestionLoading } = useCompressionData(projectId);
+  const { openIngestionModal } = useIngestion();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -591,6 +616,60 @@ export function RightSidebar({
     setSearchQuery('');
   }, []);
 
+  // Ingestion handlers
+  const [isIngestionDragOver, setIsIngestionDragOver] = useState(false);
+
+  const handleNewIngestion = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const id = `file-${Date.now()}`;
+      openIngestionModal({
+        id,
+        name: file.name,
+        size: formatFileSizeFromBytes(file.size),
+        sizeBytes: file.size,
+      });
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [openIngestionModal]);
+
+  const handleIngestionDragOver = useCallback((e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('Files')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsIngestionDragOver(true);
+    }
+  }, []);
+
+  const handleIngestionDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsIngestionDragOver(false);
+  }, []);
+
+  const handleIngestionDrop = useCallback((e: React.DragEvent) => {
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    setIsIngestionDragOver(false);
+
+    const id = `file-${Date.now()}`;
+    openIngestionModal({
+      id,
+      name: file.name,
+      size: formatFileSizeFromBytes(file.size),
+      sizeBytes: file.size,
+    });
+  }, [openIngestionModal]);
+
   const currentWidth = isCollapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH;
 
   return (
@@ -628,6 +707,15 @@ export function RightSidebar({
       ) : (
         // Expanded state
         <>
+          {/* Hidden file input for ingestion */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileSelect}
+            className="hidden"
+            accept=".ts,.tsx,.js,.jsx,.json,.md,.css,.html,.py,.txt"
+          />
+
           {/* Header with collapse button - matches Explorer row style */}
           <div className="shrink-0 px-3 h-10 flex items-center justify-between border-b border-[#1e293b]">
             <span className="text-xs text-slate-400 font-medium">
@@ -725,28 +813,50 @@ export function RightSidebar({
               )
             ) : (
               // Ingestions Tab Content
-              ingestionLoading ? (
-                <div className="flex-1 flex items-center justify-center h-full">
-                  <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+              <div
+                className={cn(
+                  "h-full flex flex-col transition-colors",
+                  isIngestionDragOver && "bg-blue-500/10 ring-2 ring-inset ring-blue-500/40"
+                )}
+                onDragOver={handleIngestionDragOver}
+                onDragLeave={handleIngestionDragLeave}
+                onDrop={handleIngestionDrop}
+              >
+                {/* New Ingestion Button */}
+                <div className="shrink-0 px-2 pt-2 pb-1">
+                  <button
+                    onClick={handleNewIngestion}
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 hover:border-blue-500/30 transition-colors"
+                  >
+                    <Plus size={14} />
+                    <span>New Ingestion</span>
+                  </button>
                 </div>
-              ) : !hasIngestionsResults ? (
-                <EmptyState type="ingestions" hasSearch={debouncedSearch.trim().length > 0} />
-              ) : (
-                <div className="h-full overflow-y-auto px-2 py-2">
-                  <div className="space-y-1.5 pb-4">
-                    {filteredIngestions.map((entry) => (
-                      <IngestionEntryRow
-                        key={entry.number}
-                        entry={entry}
-                        isSelected={selectedIngestionNumber === entry.number}
-                        onSelect={() => onSelectIngestion?.(
-                          selectedIngestionNumber === entry.number ? null : entry.number
-                        )}
-                      />
-                    ))}
+
+                {/* Ingestion List */}
+                {ingestionLoading ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
                   </div>
-                </div>
-              )
+                ) : !hasIngestionsResults ? (
+                  <EmptyState type="ingestions" hasSearch={debouncedSearch.trim().length > 0} />
+                ) : (
+                  <div className="flex-1 overflow-y-auto px-2 py-1">
+                    <div className="space-y-1.5 pb-4">
+                      {filteredIngestions.map((entry) => (
+                        <IngestionEntryRow
+                          key={entry.number}
+                          entry={entry}
+                          isSelected={selectedIngestionNumber === entry.number}
+                          onSelect={() => onSelectIngestion?.(
+                            selectedIngestionNumber === entry.number ? null : entry.number
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

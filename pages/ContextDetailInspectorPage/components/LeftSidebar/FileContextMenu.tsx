@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import {
-  FilePlus,
   FolderPlus,
   Archive,
   Pencil,
@@ -9,15 +8,14 @@ import {
 import { cn } from '../../../../utils/cn';
 
 export interface ContextMenuAction {
-  id: 'new-file' | 'new-folder' | 'compress' | 'rename' | 'delete';
+  id: 'new-folder' | 'compress' | 'rename' | 'delete';
   label: string;
-  icon: typeof FilePlus;
+  icon: typeof FolderPlus;
   shortcut?: string;
   danger?: boolean;
 }
 
 const CONTEXT_MENU_ACTIONS: ContextMenuAction[] = [
-  { id: 'new-file', label: 'New File', icon: FilePlus, shortcut: 'Ctrl+N' },
   { id: 'new-folder', label: 'New Folder...', icon: FolderPlus, shortcut: 'Ctrl+Shift+N' },
   { id: 'compress', label: 'Compress', icon: Archive },
   { id: 'rename', label: 'Rename', icon: Pencil, shortcut: 'F2' },
@@ -89,13 +87,9 @@ export function FileContextMenu({
 
   // Filter actions based on context
   const availableActions = CONTEXT_MENU_ACTIONS.filter((action) => {
-    // If no file is selected (right-click on empty space), only show new file/folder
+    // If no file is selected (right-click on empty space), only show new folder
     if (!fileId) {
-      return action.id === 'new-file' || action.id === 'new-folder';
-    }
-    // Folders can't be compressed in the same way
-    if (isFolder && action.id === 'compress') {
-      return true; // Still allow, but could be folder compression
+      return action.id === 'new-folder';
     }
     return true;
   });
