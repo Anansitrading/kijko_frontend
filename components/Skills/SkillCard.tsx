@@ -59,8 +59,8 @@ export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = fa
       <div
         onClick={handleCardClick}
         className={cn(
-          'group relative bg-card border border-border rounded-xl p-4',
-          'hover:border-border/80 hover:shadow-lg hover:shadow-black/5',
+          'group relative bg-card/50 border border-border rounded-xl p-4',
+          'hover:bg-card hover:border-primary/30',
           'transition-all duration-200',
           !skill.isActive && 'opacity-60',
           onView && 'cursor-pointer'
@@ -180,8 +180,8 @@ export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = fa
     <div
       onClick={handleCardClick}
       className={cn(
-        'group relative bg-card border border-border rounded-xl p-4',
-        'hover:border-border/80 hover:shadow-lg hover:shadow-black/5',
+        'group relative bg-card/50 border border-border rounded-xl p-4',
+        'hover:bg-card hover:border-primary/30',
         'transition-all duration-200',
         !skill.isActive && 'opacity-60',
         onView && 'cursor-pointer'

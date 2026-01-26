@@ -1,41 +1,21 @@
 // Unified Integration Card Component
 // Handles both pre-built and custom integrations with status indicators
+// Card is clickable to manage; top-right badge shows status and action
 
 import { useState } from 'react';
 import {
   Link2,
-  Unlink,
-  Settings2,
   Loader2,
   CheckCircle2,
-  AlertCircle,
-  AlertTriangle,
+  RefreshCw,
   Github,
   Slack,
   Cloud,
-  MoreVertical,
-  RefreshCw,
-  FileText,
   Zap,
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import type { IntegrationCardProps, IntegrationCategory } from '../../../types/settings';
 import { INTEGRATION_CATEGORIES } from '../../../types/settings';
-
-// Simple relative time formatter
-function formatTimeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  return date.toLocaleDateString();
-}
 
 // Icon mapping for integrations
 const getIntegrationIcon = (iconName: string): React.ReactNode => {
@@ -54,37 +34,60 @@ const getIntegrationIcon = (iconName: string): React.ReactNode => {
   }
 };
 
-// Status badge component
-function StatusBadge({ status }: { status: 'connected' | 'warning' | 'disconnected' }) {
-  const config = {
-    connected: {
-      icon: CheckCircle2,
-      label: 'Connected',
-      className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    },
-    warning: {
-      icon: AlertTriangle,
-      label: 'Warning',
-      className: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    },
-    disconnected: {
-      icon: AlertCircle,
-      label: 'Disconnected',
-      className: 'bg-red-500/10 text-red-500 border-red-500/20',
-    },
-  };
+// Unified action badge component
+function ActionBadge({
+  integration,
+  isConnecting,
+  onConnect,
+  onReconnect,
+}: {
+  integration: IntegrationCardProps['integration'];
+  isConnecting: boolean;
+  onConnect: () => void;
+  onReconnect?: (id: string) => void;
+}) {
+  // Not connected → Blue "Connect" (clickable)
+  if (!integration.isConnected) {
+    return (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onConnect();
+        }}
+        disabled={isConnecting}
+        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border bg-blue-600 text-white border-blue-600 hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+      >
+        {isConnecting ? (
+          <Loader2 size={12} className="animate-spin" />
+        ) : (
+          <Link2 size={12} />
+        )}
+        {isConnecting ? 'Connecting...' : 'Connect'}
+      </button>
+    );
+  }
 
-  const { icon: Icon, label, className } = config[status];
+  // Connected with warning → Orange "Reconnect" (clickable)
+  if (integration.connectionStatus === 'warning' || integration.connectionStatus === 'disconnected') {
+    return (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onReconnect?.(integration.id);
+        }}
+        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20 transition-colors cursor-pointer shrink-0"
+      >
+        <RefreshCw size={12} />
+        Reconnect
+      </button>
+    );
+  }
 
+  // Connected → Green "Connected" (view only)
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border',
-        className
-      )}
-    >
-      <Icon size={12} />
-      {label}
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shrink-0">
+      <CheckCircle2 size={12} />
+      Connected
     </span>
   );
 }
@@ -93,13 +96,11 @@ export function IntegrationCard({
   integration,
   viewMode = 'grid',
   onConnect,
-  onDisconnect,
   onManage,
-  onViewLogs,
   onReconnect,
-}: IntegrationCardProps) {
+  onCardClick,
+}: IntegrationCardProps & { onCardClick?: (id: string) => void }) {
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleConnect = async () => {
     if (!onConnect) return;
@@ -108,6 +109,14 @@ export function IntegrationCard({
       await onConnect(integration.id);
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  const handleCardClick = () => {
+    if (onCardClick) {
+      onCardClick(integration.id);
+    } else if (integration.isConnected && onManage) {
+      onManage(integration.id);
     }
   };
 
@@ -120,9 +129,11 @@ export function IntegrationCard({
   if (viewMode === 'list') {
     return (
       <div
+        onClick={handleCardClick}
         className={cn(
           'bg-card/50 border border-border rounded-xl p-4 flex items-center gap-4 transition-all duration-200',
-          'hover:bg-card hover:border-primary/30'
+          'hover:bg-card hover:border-primary/30',
+          (onCardClick || (integration.isConnected && onManage)) && 'cursor-pointer'
         )}
       >
         {/* App Icon */}
@@ -170,99 +181,14 @@ export function IntegrationCard({
           </span>
         </div>
 
-        {/* Connection Status */}
-        <div className="flex-shrink-0 w-28">
-          {integration.isConnected && integration.connectionStatus && (
-            <StatusBadge status={integration.connectionStatus} />
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {integration.isConnected ? (
-            <>
-              <button
-                onClick={() => onManage?.(integration.id)}
-                className="flex items-center gap-1.5 text-sm bg-secondary hover:bg-muted text-secondary-foreground font-medium rounded-md h-8 px-3 border border-border transition-colors"
-              >
-                <Settings2 className="w-3.5 h-3.5" />
-                Manage
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-                >
-                  <MoreVertical size={16} />
-                </button>
-
-                {isMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
-                    <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-lg shadow-xl z-50 py-1">
-                      {onReconnect && (
-                        <button
-                          onClick={() => {
-                            onReconnect(integration.id);
-                            setIsMenuOpen(false);
-                          }}
-                          className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2"
-                        >
-                          <RefreshCw size={14} />
-                          Reconnect
-                        </button>
-                      )}
-                      {onViewLogs && (
-                        <button
-                          onClick={() => {
-                            onViewLogs(integration.id);
-                            setIsMenuOpen(false);
-                          }}
-                          className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2"
-                        >
-                          <FileText size={14} />
-                          View Logs
-                        </button>
-                      )}
-                      {onDisconnect && (
-                        <>
-                          <div className="border-t border-border my-1" />
-                          <button
-                            onClick={() => {
-                              onDisconnect(integration.id);
-                              setIsMenuOpen(false);
-                            }}
-                            className="w-full px-3 py-2 text-sm text-left text-red-500 hover:bg-red-500/10 flex items-center gap-2"
-                          >
-                            <Unlink size={14} />
-                            Disconnect
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            </>
-          ) : (
-            <button
-              onClick={handleConnect}
-              disabled={isConnecting}
-              className="flex items-center gap-1 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded h-6 px-2 transition-colors disabled:opacity-50"
-            >
-              {isConnecting ? (
-                <>
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <Link2 className="w-3 h-3" />
-                  Connect
-                </>
-              )}
-            </button>
-          )}
+        {/* Action Badge */}
+        <div className="flex-shrink-0">
+          <ActionBadge
+            integration={integration}
+            isConnecting={isConnecting}
+            onConnect={handleConnect}
+            onReconnect={onReconnect}
+          />
         </div>
       </div>
     );
@@ -271,9 +197,11 @@ export function IntegrationCard({
   // Grid View Layout (default)
   return (
     <div
+      onClick={handleCardClick}
       className={cn(
         'bg-card/50 border border-border rounded-xl p-4 flex flex-col h-full transition-all duration-200',
-        'hover:bg-card hover:border-primary/30'
+        'hover:bg-card hover:border-primary/30',
+        (onCardClick || (integration.isConnected && onManage)) && 'cursor-pointer'
       )}
     >
       {/* Header */}
@@ -318,91 +246,14 @@ export function IntegrationCard({
           </span>
         </div>
 
-        {/* Status or Menu */}
-        {integration.isConnected && integration.connectionStatus ? (
-          <div className="relative">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-            >
-              <MoreVertical size={16} />
-            </button>
-
-            {isMenuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
-                <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-lg shadow-xl z-50 py-1">
-                  {onReconnect && (
-                    <button
-                      onClick={() => {
-                        onReconnect(integration.id);
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2"
-                    >
-                      <RefreshCw size={14} />
-                      Reconnect
-                    </button>
-                  )}
-                  {onManage && (
-                    <button
-                      onClick={() => {
-                        onManage(integration.id);
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2"
-                    >
-                      <Settings2 size={14} />
-                      Configure
-                    </button>
-                  )}
-                  {onViewLogs && (
-                    <button
-                      onClick={() => {
-                        onViewLogs(integration.id);
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full px-3 py-2 text-sm text-left text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2"
-                    >
-                      <FileText size={14} />
-                      View Logs
-                    </button>
-                  )}
-                  {onDisconnect && (
-                    <>
-                      <div className="border-t border-border my-1" />
-                      <button
-                        onClick={() => {
-                          onDisconnect(integration.id);
-                          setIsMenuOpen(false);
-                        }}
-                        className="w-full px-3 py-2 text-sm text-left text-red-500 hover:bg-red-500/10 flex items-center gap-2"
-                      >
-                        <Unlink size={14} />
-                        Disconnect
-                      </button>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        ) : integration.isConnected ? (
-          <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-        ) : null}
+        {/* Top-right: Unified Action Badge */}
+        <ActionBadge
+          integration={integration}
+          isConnecting={isConnecting}
+          onConnect={handleConnect}
+          onReconnect={onReconnect}
+        />
       </div>
-
-      {/* Connection Status Badge (for connected integrations) */}
-      {integration.isConnected && integration.connectionStatus && (
-        <div className="mb-3">
-          <StatusBadge status={integration.connectionStatus} />
-          {integration.lastSynced && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Last synced: {formatTimeAgo(integration.lastSynced)}
-            </p>
-          )}
-        </div>
-      )}
 
       {/* Description */}
       <p className="text-sm text-muted-foreground mb-4 flex-1 line-clamp-2">
@@ -431,36 +282,6 @@ export function IntegrationCard({
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-2 mt-auto">
-        {integration.isConnected ? (
-          <button
-            onClick={() => onManage?.(integration.id)}
-            className="flex-1 flex items-center justify-center gap-2 text-sm bg-secondary hover:bg-muted text-secondary-foreground font-medium rounded-md h-9 px-4 border border-border transition-colors"
-          >
-            <Settings2 className="w-4 h-4" />
-            Manage
-          </button>
-        ) : (
-          <button
-            onClick={handleConnect}
-            disabled={isConnecting}
-            className="flex items-center justify-center gap-1 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded h-6 px-2 transition-colors disabled:opacity-50"
-          >
-            {isConnecting ? (
-              <>
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Connecting...
-              </>
-            ) : (
-              <>
-                <Link2 className="w-3 h-3" />
-                Connect
-              </>
-            )}
-          </button>
-        )}
-      </div>
     </div>
   );
 }

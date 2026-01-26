@@ -20,6 +20,7 @@ const MOCK_PROJECTS: Project[] = [
     description: 'Comprehensive analysis of user behavior and market trends',
     label: 'Marketing',
     color: '#7c3aed',
+    starred: true,
     lastActiveUser: {
       id: 'user-1',
       firstName: 'Jane',
@@ -65,7 +66,9 @@ const MOCK_PROJECTS: Project[] = [
     sharedBy: 'Product Team',
     owner: 'product@kijko.io',
     description: 'Sprint planning documents and retrospectives',
+    label: 'Product',
     color: '#059669',
+    archived: true,
     lastActiveUser: {
       id: 'user-3',
       firstName: 'Alice',

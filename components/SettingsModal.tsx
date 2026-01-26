@@ -6,18 +6,21 @@
 
 import { X } from "lucide-react";
 import { SettingsLayout } from "./Settings/SettingsLayout";
-import { NotificationsSection } from "./Settings/Notifications";
+import { ProfileSection } from "./Settings/Profile";
 import { SecuritySection, AdvancedSecuritySection } from "./Settings/Security";
 import { BillingSection } from "./Settings/Billing";
 import { MembersSection } from "./Settings/Members";
+import { NotificationsSection } from "./Settings/Notifications";
 import { AuditLogSection } from "./Settings/AuditLog";
+import type { SettingsSection } from "../types/settings";
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialSection?: SettingsSection;
 }
 
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -39,11 +42,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         {/* Content - Full Settings Layout */}
         <div className="flex-1 overflow-hidden">
-          <SettingsLayout>
-            <NotificationsSection />
+          <SettingsLayout initialSection={initialSection}>
+            <ProfileSection />
             <SecuritySection />
             <BillingSection />
             <MembersSection />
+            <NotificationsSection />
             <AdvancedSecuritySection />
             <AuditLogSection />
           </SettingsLayout>

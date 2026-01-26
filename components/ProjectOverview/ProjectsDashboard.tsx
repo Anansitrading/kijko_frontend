@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -16,6 +16,8 @@ import { ProjectCard } from './ProjectCard';
 import { ProjectCreationModal } from './ProjectCreationModal';
 import { ProjectContextMenu } from './ProjectContextMenu';
 import { UserManagementModal } from './UserManagementModal';
+import { ProjectsFilterSidebar, DEFAULT_PROJECT_SIDEBAR_FILTERS } from './ProjectsFilterSidebar';
+import type { ProjectSidebarFilters, DropTarget } from './ProjectsFilterSidebar';
 import type { ProjectCreationForm } from '../../types/project';
 
 interface ProjectsDashboardProps {
@@ -40,6 +42,7 @@ const SORT_OPTIONS: { id: ProjectSort; label: string }[] = [
 export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = false }: ProjectsDashboardProps) {
   const navigate = useNavigate();
   const {
+    projects,
     filteredProjects,
     filter,
     sort,
@@ -54,6 +57,7 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = 
     updateProject,
   } = useProjects();
 
+  const [sidebarFilters, setSidebarFilters] = useState<ProjectSidebarFilters>(DEFAULT_PROJECT_SIDEBAR_FILTERS);
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
@@ -91,6 +95,53 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = 
     deleteProject(id);
     setContextMenu(null);
   };
+
+  const handleToggleStarred = (id: string) => {
+    const project = projects.find((p) => p.id === id);
+    if (project) {
+      updateProject(id, { starred: !project.starred });
+    }
+  };
+
+  const handleArchiveProject = (id: string) => {
+    updateProject(id, { archived: true });
+  };
+
+  const handleDropProject = (projectId: string, target: DropTarget) => {
+    if (target.type === 'starred') {
+      updateProject(projectId, { starred: true });
+    } else if (target.type === 'archived') {
+      updateProject(projectId, { archived: true });
+    } else if (target.type === 'tag' && target.value) {
+      updateProject(projectId, { label: target.value });
+    }
+  };
+
+  // Apply sidebar filters on top of context-filtered projects
+  const displayedProjects = useMemo(() => {
+    let result = [...filteredProjects];
+
+    // Quick filter
+    if (sidebarFilters.quickFilter === 'starred') {
+      result = result.filter((p) => p.starred);
+    } else if (sidebarFilters.quickFilter === 'archived') {
+      result = result.filter((p) => p.archived);
+    } else if (sidebarFilters.quickFilter === 'recent') {
+      result = [...result].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    }
+
+    // Hide archived by default (unless explicitly viewing archive)
+    if (sidebarFilters.quickFilter !== 'archived') {
+      result = result.filter((p) => !p.archived);
+    }
+
+    // Tag filters (multi-select, OR logic)
+    if (sidebarFilters.selectedTags.length > 0) {
+      result = result.filter((p) => p.label && sidebarFilters.selectedTags.includes(p.label));
+    }
+
+    return result;
+  }, [filteredProjects, sidebarFilters]);
 
   const currentSortLabel = SORT_OPTIONS.find((o) => o.id === sort)?.label || 'Sort';
 
@@ -245,66 +296,79 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = 
 
       {/* Content */}
       <main className="flex-1 overflow-y-auto p-6">
-        {/* Section Title */}
-        <h2 className="text-lg font-semibold text-muted-foreground mb-4">
-          {filter === 'all'
-            ? 'All projects'
-            : filter === 'mine'
-            ? 'My projects'
-            : 'Shared with me'}
-        </h2>
+        <div className="flex gap-6">
+          {/* Filter Sidebar */}
+          <ProjectsFilterSidebar
+            filters={sidebarFilters}
+            onFiltersChange={setSidebarFilters}
+            projects={projects}
+            onDropProject={handleDropProject}
+          />
 
-        {filteredProjects.length === 0 ? (
-          // Empty State
-          <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-            <div className="p-4 bg-muted/50 rounded-xl border border-border mb-4">
-              <FolderOpen size={40} className="text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              No projects found
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-              {searchQuery
-                ? 'Try a different search query'
-                : 'Start by creating your first project to organize your sources'}
-            </p>
-            {!searchQuery && (
-              <button
-                onClick={() => setIsNewProjectModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-colors"
-              >
-                <Plus size={18} />
-                <span>Create new project</span>
-              </button>
+          {/* Project List */}
+          <div className="flex-1 min-w-0">
+            {/* Section Title */}
+            <h2 className="text-lg font-semibold text-muted-foreground mb-4">
+              {filter === 'all'
+                ? 'All projects'
+                : filter === 'mine'
+                ? 'My projects'
+                : 'Shared with me'}
+            </h2>
+
+            {displayedProjects.length === 0 ? (
+              // Empty State
+              <div className="flex flex-col items-center justify-center h-[50vh] text-center">
+                <div className="p-4 bg-muted/50 rounded-xl border border-border mb-4">
+                  <FolderOpen size={40} className="text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  No projects found
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                  {searchQuery
+                    ? 'Try a different search query'
+                    : 'Start by creating your first project to organize your sources'}
+                </p>
+                {!searchQuery && (
+                  <button
+                    onClick={() => setIsNewProjectModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Plus size={18} />
+                    <span>Create new project</span>
+                  </button>
+                )}
+              </div>
+            ) : viewMode === 'grid' ? (
+              // Grid View
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {displayedProjects.map((project) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    viewMode="grid"
+                    onClick={() => handleProjectClick(project)}
+                    onMenuClick={(e) => handleMenuClick(e, project)}
+                  />
+                ))}
+              </div>
+            ) : (
+              // List View
+              <div className="space-y-2">
+                {displayedProjects.map((project) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    viewMode="list"
+                    onClick={() => handleProjectClick(project)}
+                    onMenuClick={(e) => handleMenuClick(e, project)}
+                  />
+                ))}
+              </div>
             )}
           </div>
-        ) : viewMode === 'grid' ? (
-          // Grid View
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-            {filteredProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                viewMode="grid"
-                onClick={() => handleProjectClick(project)}
-                onMenuClick={(e) => handleMenuClick(e, project)}
-              />
-            ))}
-          </div>
-        ) : (
-          // List View
-          <div className="space-y-2">
-            {filteredProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                viewMode="list"
-                onClick={() => handleProjectClick(project)}
-                onMenuClick={(e) => handleMenuClick(e, project)}
-              />
-            ))}
-          </div>
-        )}
+        </div>
       </main>
 
       {/* Project Creation Modal */}
@@ -333,6 +397,14 @@ export function ProjectsDashboard({ onProjectSelect, onOpenSettings, embedded = 
           }}
           onUpdateProject={(updates) => {
             updateProject(contextMenu.project.id, updates);
+          }}
+          onToggleStarred={() => {
+            handleToggleStarred(contextMenu.project.id);
+            setContextMenu(null);
+          }}
+          onArchive={() => {
+            handleArchiveProject(contextMenu.project.id);
+            setContextMenu(null);
           }}
         />
       )}

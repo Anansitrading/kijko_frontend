@@ -70,13 +70,13 @@ export const dimensions = {
 
 // Navigation items configuration
 // Note: 'integrations' moved to dedicated Dashboard tab (task_1_4)
-// Note: 'profile' moved to user dropdown modal (task_1_5)
-// Note: 'general' removed - functionality moved to My Profile modal
+// Note: 'general' removed - functionality moved to My Profile
 export const navigationItems: SettingsNavItem[] = [
-  { id: 'notifications', label: 'Notifications', icon: 'Bell' },
+  { id: 'profile', label: 'My Profile', icon: 'User' },
   { id: 'security', label: 'Security and Data', icon: 'Shield' },
   { id: 'billing', label: 'Billing and Usage', icon: 'CreditCard' },
   { id: 'members', label: 'Members', icon: 'Users', badge: 'Teams/Enterprise' },
+  { id: 'notifications', label: 'Notifications', icon: 'Bell' },
   { id: 'advanced-security', label: 'Advanced Security', icon: 'Lock' },
   { id: 'audit-log', label: 'Audit Log', icon: 'FileText' },
 ] as const;
@@ -86,9 +86,9 @@ export const navigationItems: SettingsNavItem[] = [
 // Note: 'profile' moved to user dropdown modal (task_1_5)
 // Note: 'general' removed - functionality moved to My Profile modal
 export const sectionConfig: Record<SettingsSection, { title: string; description: string }> = {
-  notifications: {
-    title: 'Notifications',
-    description: 'Configure how and when you receive notifications',
+  profile: {
+    title: 'My Profile',
+    description: 'Manage your personal details, photo, and preferences',
   },
   security: {
     title: 'Security and Data',
@@ -101,6 +101,10 @@ export const sectionConfig: Record<SettingsSection, { title: string; description
   members: {
     title: 'Team Members',
     description: 'Manage team members and their roles',
+  },
+  notifications: {
+    title: 'Notifications',
+    description: 'Manage your notification preferences and delivery settings',
   },
   'advanced-security': {
     title: 'Advanced Security',

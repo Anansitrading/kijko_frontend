@@ -25,13 +25,13 @@ export const AI_MODELS: AIModelOption[] = [
 
 // Settings section navigation
 // Note: 'integrations' was moved to dedicated Dashboard tab (task_1_4)
-// Note: 'profile' was moved to user dropdown modal (task_1_5)
-// Note: 'general' was removed - functionality moved to My Profile modal
+// Note: 'general' was removed - functionality moved to My Profile
 export type SettingsSection =
-  | 'notifications'
+  | 'profile'
   | 'security'
   | 'billing'
   | 'members'
+  | 'notifications'
   | 'advanced-security'
   | 'audit-log';
 

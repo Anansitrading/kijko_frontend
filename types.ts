@@ -63,6 +63,8 @@ export interface Project {
     description?: string;
     label?: string;
     color?: string;
+    starred?: boolean;
+    archived?: boolean;
     lastActiveUser?: ProjectLastActiveUser;
 }
 

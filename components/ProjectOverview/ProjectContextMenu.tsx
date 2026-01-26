@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Trash2, Settings2, FileInput, UserPlus } from 'lucide-react';
+import { Trash2, Settings2, FileInput, UserPlus, Star, Archive } from 'lucide-react';
 import { Project } from '../../types';
 import { FolderSettingsPanel } from './FolderSettingsPanel';
 
@@ -12,6 +12,8 @@ interface ProjectContextMenuProps {
   onShare?: () => void;
   onConfigureIngestion?: () => void;
   onUpdateProject?: (updates: Partial<Project>) => void;
+  onToggleStarred?: () => void;
+  onArchive?: () => void;
 }
 
 export function ProjectContextMenu({
@@ -23,10 +25,13 @@ export function ProjectContextMenu({
   onShare,
   onConfigureIngestion,
   onUpdateProject,
+  onToggleStarred,
+  onArchive,
 }: ProjectContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const folderSettingsRef = useRef<HTMLDivElement>(null);
   const [showFolderSettings, setShowFolderSettings] = useState(false);
+  const [showDeleteArchive, setShowDeleteArchive] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -43,6 +48,8 @@ export function ProjectContextMenu({
       if (e.key === 'Escape') {
         if (showFolderSettings) {
           setShowFolderSettings(false);
+        } else if (showDeleteArchive) {
+          setShowDeleteArchive(false);
         } else {
           onClose();
         }
@@ -56,11 +63,11 @@ export function ProjectContextMenu({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [onClose, showFolderSettings]);
+  }, [onClose, showFolderSettings, showDeleteArchive]);
 
   const adjustedPosition = {
     x: Math.min(x, window.innerWidth - 280),
-    y: Math.min(y, window.innerHeight - 250),
+    y: Math.min(y, window.innerHeight - 300),
   };
 
   const menuItems = [
@@ -88,9 +95,19 @@ export function ProjectContextMenu({
       },
     },
     {
+      icon: Star,
+      label: project.starred ? 'Remove from starred' : 'Add to starred',
+      onClick: () => {
+        onToggleStarred?.();
+        onClose();
+      },
+    },
+    {
       icon: Trash2,
-      label: 'Delete',
-      onClick: onDelete,
+      label: 'Delete or Archive',
+      onClick: () => {
+        setShowDeleteArchive(true);
+      },
       destructive: true,
     },
   ];
@@ -115,26 +132,66 @@ export function ProjectContextMenu({
           <p className="text-xs text-muted-foreground truncate">{project.name}</p>
         </div>
 
-        {/* Menu Items */}
-        <div className="py-1">
-          {menuItems.map((item, index) => {
-            const Icon = item.icon;
-            return (
+        {showDeleteArchive ? (
+          /* Delete / Archive Confirmation */
+          <div className="p-3">
+            <p className="text-sm font-medium text-foreground mb-3">
+              What do you want to do?
+            </p>
+            <div className="flex flex-col gap-1.5">
               <button
-                key={index}
-                onClick={item.onClick}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
-                  item.destructive
-                    ? 'text-destructive hover:bg-destructive/10'
-                    : 'text-foreground hover:bg-muted'
-                }`}
+                onClick={() => {
+                  onArchive?.();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded-md transition-colors"
               >
-                <Icon size={16} />
-                <span>{item.label}</span>
+                <Archive size={16} />
+                <div className="text-left">
+                  <div>Archive</div>
+                  <div className="text-xs text-muted-foreground">Move to archive, can be restored</div>
+                </div>
               </button>
-            );
-          })}
-        </div>
+              <button
+                onClick={onDelete}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+              >
+                <Trash2 size={16} />
+                <div className="text-left">
+                  <div>Delete permanently</div>
+                  <div className="text-xs text-destructive/70">This cannot be undone</div>
+                </div>
+              </button>
+            </div>
+            <button
+              onClick={() => setShowDeleteArchive(false)}
+              className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground text-center py-1 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          /* Menu Items */
+          <div className="py-1">
+            {menuItems.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={index}
+                  onClick={item.onClick}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                    item.destructive
+                      ? 'text-destructive hover:bg-destructive/10'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  <Icon size={16} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Folder Settings Panel - Flyout */}

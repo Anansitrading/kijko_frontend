@@ -8,7 +8,6 @@ import { QuietHours } from './QuietHours';
 export function NotificationsSection() {
   const { state } = useSettings();
 
-  // Only render when the notifications section is active
   if (state.activeSection !== 'notifications') {
     return null;
   }

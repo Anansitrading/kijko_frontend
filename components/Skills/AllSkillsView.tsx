@@ -3,6 +3,7 @@ import { useSkills } from '../../hooks/useSkills';
 import { SkillsGrid } from './SkillsGrid';
 import { EmptyState } from './EmptyState';
 import type { Skill } from '../../types/skills';
+import type { SkillsSidebarFilters } from './SkillsFilterSidebar';
 
 type SortOption = 'most-used' | 'recent' | 'alphabetical';
 type ViewMode = 'grid' | 'list';
@@ -17,6 +18,7 @@ interface AllSkillsViewProps {
   search?: string;
   sortBy?: SortOption;
   viewMode?: ViewMode;
+  sidebarFilters?: SkillsSidebarFilters;
 }
 
 export function AllSkillsView({
@@ -29,6 +31,7 @@ export function AllSkillsView({
   search = '',
   sortBy = 'most-used',
   viewMode = 'grid',
+  sidebarFilters,
 }: AllSkillsViewProps) {
   const {
     skills,
@@ -40,6 +43,32 @@ export function AllSkillsView({
   // Filter and sort skills
   const filteredSkills = useMemo(() => {
     let result = [...skills];
+
+    // Apply sidebar quick filter
+    if (sidebarFilters?.quickFilter) {
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+      switch (sidebarFilters.quickFilter) {
+        case 'recent':
+          result = result.filter(
+            (s) => s.lastExecutedAt && new Date(s.lastExecutedAt) >= fourteenDaysAgo
+          );
+          break;
+        case 'populair':
+          result = result.filter((s) => s.executionCount >= 30);
+          break;
+        case 'new':
+          result = result.filter((s) => new Date(s.createdAt) >= sevenDaysAgo);
+          break;
+      }
+    }
+
+    // Apply sidebar category filter
+    if (sidebarFilters?.selectedCategories && sidebarFilters.selectedCategories.length > 0) {
+      result = result.filter((s) => sidebarFilters.selectedCategories.includes(s.category));
+    }
 
     // Filter by search
     if (search.trim()) {
@@ -65,7 +94,7 @@ export function AllSkillsView({
     }
 
     return result;
-  }, [skills, search, sortBy]);
+  }, [skills, search, sortBy, sidebarFilters]);
 
   const hasNoSkills = !loading && !error && skills.length === 0;
   const hasNoResults = !loading && !error && skills.length > 0 && filteredSkills.length === 0;

@@ -9,6 +9,8 @@ import { useState, useCallback } from 'react';
 import { Plus, Search, LayoutGrid, List, ChevronDown } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { SkillsLibrary, CustomSkillWizard, OnboardingModal, useSkillsOnboarding } from '../Skills';
+import { SkillsFilterSidebar, DEFAULT_SKILLS_SIDEBAR_FILTERS } from '../Skills/SkillsFilterSidebar';
+import type { SkillsSidebarFilters } from '../Skills/SkillsFilterSidebar';
 import { useSkills } from '../../hooks/useSkills';
 import { useSkillsSubNavigation, type SkillsSubTabType } from '../../hooks/useSkillsSubNavigation';
 import type { Skill } from '../../types/skills';
@@ -39,6 +41,7 @@ export function SkillsTab() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('most-used');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sidebarFilters, setSidebarFilters] = useState<SkillsSidebarFilters>(DEFAULT_SKILLS_SIDEBAR_FILTERS);
 
   const handleCreateSkill = useCallback(() => {
     setIsWizardOpen(true);
@@ -178,15 +181,26 @@ export function SkillsTab() {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-6xl mx-auto">
-          <SkillsLibrary
-            onCreateSkill={handleCreateSkill}
-            onEditSkill={handleEditSkill}
-            onRunSkill={handleRunSkill}
-            search={search}
-            sortBy={sortBy}
-            viewMode={viewMode}
+        <div className="max-w-6xl mx-auto flex gap-6">
+          {/* Filter Sidebar */}
+          <SkillsFilterSidebar
+            filters={sidebarFilters}
+            onFiltersChange={setSidebarFilters}
+            skills={skills}
           />
+
+          {/* Skills Content */}
+          <div className="flex-1 min-w-0">
+            <SkillsLibrary
+              onCreateSkill={handleCreateSkill}
+              onEditSkill={handleEditSkill}
+              onRunSkill={handleRunSkill}
+              search={search}
+              sortBy={sortBy}
+              viewMode={viewMode}
+              sidebarFilters={sidebarFilters}
+            />
+          </div>
         </div>
       </main>
 

@@ -1,15 +1,27 @@
-import React from 'react';
-import type { SettingsLayoutProps, SettingsSection } from '../../types/settings';
+import React, { useEffect } from 'react';
+import type { SettingsSection } from '../../types/settings';
 import { SettingsProvider, useSettings } from '../../contexts/SettingsContext';
 import { tw, sectionConfig } from '../../styles/settings';
 import SettingsSidebar from './SettingsSidebar';
 import SaveStatus from './SaveStatus';
 import { useAutoSave } from '../../hooks/useAutoSave';
 
+interface SettingsLayoutOuterProps {
+  children: React.ReactNode;
+  initialSection?: SettingsSection;
+}
+
 // Inner layout component that uses the context
-function SettingsLayoutInner({ children }: SettingsLayoutProps) {
+function SettingsLayoutInner({ children, initialSection }: SettingsLayoutOuterProps) {
   const { state, setSection } = useSettings();
   const { status, error, retry } = useAutoSave();
+
+  // Navigate to the requested section when the modal opens
+  useEffect(() => {
+    if (initialSection) {
+      setSection(initialSection);
+    }
+  }, [initialSection, setSection]);
 
   const handleSectionChange = (section: SettingsSection) => {
     setSection(section);
@@ -54,10 +66,10 @@ function SettingsLayoutInner({ children }: SettingsLayoutProps) {
 }
 
 // Outer component that provides the context
-export function SettingsLayout({ children }: SettingsLayoutProps) {
+export function SettingsLayout({ children, initialSection }: SettingsLayoutOuterProps) {
   return (
     <SettingsProvider>
-      <SettingsLayoutInner>{children}</SettingsLayoutInner>
+      <SettingsLayoutInner initialSection={initialSection}>{children}</SettingsLayoutInner>
     </SettingsProvider>
   );
 }

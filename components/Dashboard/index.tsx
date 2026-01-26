@@ -8,8 +8,11 @@ import { SkillsTab } from './SkillsTab';
 import { UserAvatar } from './UserAvatar';
 import { UserDropdown } from './UserDropdown';
 import { SettingsModal } from '../SettingsModal';
-import { MyProfileModal } from '../Profile/MyProfileModal';
+import { NotificationBell } from '../Notifications/NotificationBell';
+import { NotificationPanel } from '../Notifications/NotificationPanel';
+import { useNotifications } from '../../hooks/useNotifications';
 import type { Project } from '../../types';
+import type { Notification, SettingsSection } from '../../types/settings';
 
 interface DashboardProps {
   onProjectSelect: (project: Project) => void;
@@ -18,8 +21,25 @@ interface DashboardProps {
 export function Dashboard({ onProjectSelect }: DashboardProps) {
   const { activeTab, setActiveTab } = useTabNavigation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsInitialSection, setSettingsInitialSection] = useState<SettingsSection | undefined>();
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  const {
+    notifications,
+    groupedNotifications,
+    unreadCount,
+    isPanelOpen,
+    togglePanel,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    formatNotificationTime,
+  } = useNotifications();
+
+  const handleNotificationClick = (notification: Notification) => {
+    markAsRead(notification.id);
+    togglePanel(false);
+  };
 
   const handleLogout = () => {
     // TODO: Implement actual logout logic
@@ -52,13 +72,41 @@ export function Dashboard({ onProjectSelect }: DashboardProps) {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
+            {/* Notification Bell with Dropdown */}
+            <div className="relative z-50">
+              <NotificationBell
+                unreadCount={unreadCount}
+                onClick={() => togglePanel(!isPanelOpen)}
+              />
+              <NotificationPanel
+                isOpen={isPanelOpen}
+                notifications={notifications}
+                groupedNotifications={groupedNotifications}
+                unreadCount={unreadCount}
+                onClose={() => togglePanel(false)}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
+                onDelete={deleteNotification}
+                onNotificationClick={handleNotificationClick}
+                onSettingsClick={() => {
+                  togglePanel(false);
+                  setSettingsInitialSection('notifications');
+                  setIsSettingsOpen(true);
+                }}
+                formatTime={formatNotificationTime}
+              />
+            </div>
+
             {/* User Avatar with Dropdown */}
             <div className="relative z-50">
               <UserAvatar onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} />
               <UserDropdown
                 isOpen={isUserDropdownOpen}
                 onClose={() => setIsUserDropdownOpen(false)}
-                onOpenProfile={() => setIsProfileModalOpen(true)}
+                onOpenProfile={() => {
+                  setSettingsInitialSection('profile');
+                  setIsSettingsOpen(true);
+                }}
                 onOpenSettings={() => setIsSettingsOpen(true)}
                 onLogout={handleLogout}
               />
@@ -79,13 +127,11 @@ export function Dashboard({ onProjectSelect }: DashboardProps) {
       {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
-
-      {/* My Profile Modal */}
-      <MyProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
+        onClose={() => {
+          setIsSettingsOpen(false);
+          setSettingsInitialSection(undefined);
+        }}
+        initialSection={settingsInitialSection}
       />
 
       {/* Settings Button - Bottom Left */}

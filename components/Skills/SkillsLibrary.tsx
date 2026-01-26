@@ -13,6 +13,7 @@ import { CommunitySkillsView } from './CommunitySkillsView';
 import { ExecuteSkillModal } from './ExecuteSkillModal';
 import { SkillDetailModal } from './SkillDetailModal';
 import type { Skill } from '../../types/skills';
+import type { SkillsSidebarFilters } from './SkillsFilterSidebar';
 
 type SortOption = 'most-used' | 'recent' | 'alphabetical';
 type ViewMode = 'grid' | 'list';
@@ -24,6 +25,7 @@ interface SkillsLibraryProps {
   search?: string;
   sortBy?: SortOption;
   viewMode?: ViewMode;
+  sidebarFilters?: SkillsSidebarFilters;
 }
 
 export function SkillsLibrary({
@@ -33,6 +35,7 @@ export function SkillsLibrary({
   search = '',
   sortBy = 'most-used',
   viewMode = 'grid',
+  sidebarFilters,
 }: SkillsLibraryProps) {
   const { deleteSkill, refetch } = useSkills();
   const { activeSubTab, setActiveSubTab } = useSkillsSubNavigation();
@@ -129,6 +132,7 @@ export function SkillsLibrary({
             search={search}
             sortBy={sortBy}
             viewMode={viewMode}
+            sidebarFilters={sidebarFilters}
           />
         );
       case 'all-skills':
@@ -143,6 +147,7 @@ export function SkillsLibrary({
             search={search}
             sortBy={sortBy}
             viewMode={viewMode}
+            sidebarFilters={sidebarFilters}
           />
         );
       case 'community-skills':

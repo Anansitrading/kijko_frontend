@@ -97,12 +97,19 @@ export function ProjectCard({ project, viewMode, onClick, onMenuClick }: Project
     onMenuClick(e);
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/projectId', project.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
   if (viewMode === 'list') {
     return (
       <div
+        draggable
+        onDragStart={handleDragStart}
         onClick={onClick}
         onContextMenu={handleContextMenu}
-        className="group flex items-center gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all cursor-pointer"
+        className="group flex items-center gap-4 p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all cursor-pointer "
       >
         <ProjectIcon icon={project.icon} />
 
@@ -166,9 +173,11 @@ export function ProjectCard({ project, viewMode, onClick, onMenuClick }: Project
   // Grid view
   return (
     <div
+      draggable
+      onDragStart={handleDragStart}
       onClick={onClick}
       onContextMenu={handleContextMenu}
-      className="group relative flex flex-col p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all cursor-pointer"
+      className="group relative flex flex-col p-4 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all cursor-pointer "
     >
       {/* Menu Button */}
       <button

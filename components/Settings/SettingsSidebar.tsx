@@ -1,9 +1,10 @@
 import React from 'react';
 import {
-  Bell,
+  User,
   Shield,
   CreditCard,
   Users,
+  Bell,
   Lock,
   FileText,
 } from 'lucide-react';
@@ -15,10 +16,11 @@ import { navigationItems, tw } from '../../styles/settings';
 // Note: User icon removed - profile moved to user dropdown modal (task_1_5)
 // Note: Settings icon removed - general settings moved to My Profile modal
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Bell,
+  User,
   Shield,
   CreditCard,
   Users,
+  Bell,
   Lock,
   FileText,
 };

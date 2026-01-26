@@ -5,6 +5,7 @@ import { HypervisaView } from "./components/Hypervisa/HypervisaView";
 import { Dashboard } from "./components/Dashboard";
 import { SettingsModal } from "./components/SettingsModal";
 import { ProjectDetailPage } from "./pages/ContextDetailInspectorPage";
+import { IntegrationDetailPage } from "./components/Dashboard/integrations/IntegrationDetailPage";
 import { RealtimeProvider } from "./contexts/RealtimeContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
@@ -133,6 +134,12 @@ function App() {
           <Routes>
             {/* Main workspace route */}
             <Route path="/" element={<WorkspaceView />} />
+
+            {/* Integration Detail Page */}
+            <Route
+              path="/integration/:integrationId"
+              element={<IntegrationDetailPage />}
+            />
 
             {/* Context Detail Inspector full-page route */}
             <Route

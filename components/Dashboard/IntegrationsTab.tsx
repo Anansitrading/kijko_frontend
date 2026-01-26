@@ -3,14 +3,17 @@
 // Task 1_4: Integrations Tab Migration + Redesign
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Plus, Search, LayoutGrid, List, ChevronDown } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import {
   IntegrationCard,
   CustomConnectorModal,
   EmptyState,
+  FilterSidebar,
+  DEFAULT_SIDEBAR_FILTERS,
 } from './integrations';
+import type { SidebarFilters } from './integrations';
 import { WebhookList } from '../Settings/Integrations/WebhookList';
 import { WebhookForm } from '../Settings/Integrations/WebhookForm';
 import type {
@@ -51,6 +54,7 @@ const DEFAULT_FILTERS: IntegrationsFilterState = {
 };
 
 export function IntegrationsTab() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Active sub-tab from URL
@@ -130,6 +134,9 @@ export function IntegrationsTab() {
     },
   ]);
 
+  // Sidebar filter state
+  const [sidebarFilters, setSidebarFilters] = useState<SidebarFilters>(DEFAULT_SIDEBAR_FILTERS);
+
   // Modal states
   const [isCustomConnectorModalOpen, setIsCustomConnectorModalOpen] = useState(false);
   const [editingConnector, setEditingConnector] = useState<CustomConnector | undefined>();
@@ -139,6 +146,7 @@ export function IntegrationsTab() {
   // Reset filters when changing tabs
   useEffect(() => {
     setFilters(DEFAULT_FILTERS);
+    setSidebarFilters(DEFAULT_SIDEBAR_FILTERS);
   }, [activeTab]);
 
   // Transform pre-built apps to unified card data
@@ -240,6 +248,35 @@ export function IntegrationsTab() {
       });
     }
 
+    // Apply sidebar filters
+    if (sidebarFilters.selectedCategories.length > 0) {
+      items = items.filter(
+        (item) =>
+          item.category !== 'custom' &&
+          sidebarFilters.selectedCategories.includes(item.category)
+      );
+    }
+
+    if (sidebarFilters.selectedStatuses.length > 0) {
+      items = items.filter((item) => {
+        if (!item.isConnected && !item.connectionStatus) {
+          // Unconnected items: show only if 'disconnected' is selected
+          return sidebarFilters.selectedStatuses.includes('disconnected');
+        }
+        return (
+          item.connectionStatus &&
+          sidebarFilters.selectedStatuses.includes(item.connectionStatus)
+        );
+      });
+    }
+
+    if (sidebarFilters.selectedTypes.length > 0) {
+      items = items.filter((item) => {
+        if (item.isCustom) return sidebarFilters.selectedTypes.includes('custom');
+        return sidebarFilters.selectedTypes.includes('pre-built');
+      });
+    }
+
     // Apply sorting
     return items.sort((a, b) => {
       switch (filters.sortBy) {
@@ -261,6 +298,7 @@ export function IntegrationsTab() {
   }, [
     activeTab,
     filters,
+    sidebarFilters,
     connectedApps,
     customConnectors,
     transformAppToCardData,
@@ -520,29 +558,12 @@ export function IntegrationsTab() {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto p-6">
-        {/* Show Connected Only Toggle (for All tab) */}
-        {activeTab === 'all' && (
-          <div className="flex items-center mb-4">
-            <label className="flex items-center gap-2 cursor-pointer text-sm">
-              <div
-                className={cn(
-                  'relative inline-flex w-9 h-5 rounded-full cursor-pointer transition-colors duration-200',
-                  filters.showConnectedOnly ? 'bg-primary' : 'bg-muted'
-                )}
-                onClick={() => setFilters({ ...filters, showConnectedOnly: !filters.showConnectedOnly })}
-              >
-                <span
-                  className={cn(
-                    'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200',
-                    filters.showConnectedOnly && 'translate-x-4'
-                  )}
-                />
-              </div>
-              <span className="text-muted-foreground">Show connected only</span>
-            </label>
-          </div>
-        )}
+        <div className="flex gap-6">
+          {/* Filter Sidebar */}
+          <FilterSidebar filters={sidebarFilters} onFiltersChange={setSidebarFilters} />
 
+          {/* Content */}
+          <div className="flex-1 min-w-0">
         {/* Content based on active tab */}
         {showEmptyState ? (
           <EmptyState
@@ -583,6 +604,7 @@ export function IntegrationsTab() {
                 onManage={handleManage}
                 onViewLogs={handleViewLogs}
                 onReconnect={handleReconnect}
+                onCardClick={(id) => navigate(`/integration/${id}`)}
               />
             ))}
           </div>
@@ -622,6 +644,8 @@ export function IntegrationsTab() {
             </div>
           </>
         )}
+          </div>
+        </div>
       </main>
 
       {/* Custom Connector Modal */}
