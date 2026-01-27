@@ -17,14 +17,13 @@ import {
   Eye,
   LayoutGrid,
   List,
-  Archive,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
-import { formatDateTime, formatFileChange } from '../../../../utils/formatting';
+import { formatDateTime, formatFileChange, formatNumber } from '../../../../utils/formatting';
 import { useCompressionData } from '../CompressionTab/hooks';
 import { CompressionProgress } from '../CompressionTab/CompressionProgress';
 import { CompressionStats } from '../CompressionTab/CompressionStats';
-import { CompressionFileLists } from '../CompressionTab/CompressionFileLists';
 import type { IngestionEntry, IngestionSourceType } from '../../../../types/contextInspector';
 
 function getSourceIcon(sourceType?: IngestionSourceType) {
@@ -66,111 +65,148 @@ interface IngestionCardProps {
   entry: IngestionEntry;
   isSelected?: boolean;
   cardRef?: React.Ref<HTMLDivElement>;
+  onDelete?: (number: number) => void;
 }
 
-function IngestionCard({ entry, isSelected, cardRef }: IngestionCardProps) {
+function TokenInfo({ entry }: { entry: IngestionEntry }) {
+  const currentTokens = entry.compressed && entry.compressedTokens != null
+    ? entry.compressedTokens
+    : entry.tokens;
+  return (
+    <span className="text-[11px] text-gray-500 tabular-nums">
+      {entry.compressed && entry.compressedTokens != null ? (
+        <>
+          <span className="text-gray-600 line-through">{formatNumber(entry.tokens)}</span>
+          {' '}
+          <span className="text-blue-400">{formatNumber(currentTokens)}</span>
+          <span className="text-gray-600"> tokens</span>
+        </>
+      ) : (
+        <>{formatNumber(entry.tokens)} tokens</>
+      )}
+    </span>
+  );
+}
+
+function IngestionCard({ entry, isSelected, cardRef, onDelete }: IngestionCardProps) {
   const { Icon, color, bg, bgSelected } = getSourceIcon(entry.sourceType);
   return (
     <div
       ref={cardRef}
       className={cn(
-        "py-3 px-4 rounded-lg transition-colors border",
+        "group py-2.5 px-3 rounded-md transition-colors border",
         isSelected
-          ? "bg-blue-600/15 border-blue-500/40 ring-1 ring-blue-500/20"
-          : "bg-slate-800/30 hover:bg-slate-800/50 border-white/5 hover:border-white/10"
+          ? "bg-blue-600/10 border-blue-500/30"
+          : "bg-transparent hover:bg-white/[0.03] border-white/[0.04] hover:border-white/[0.08]"
       )}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2.5">
-          <div className={cn(
-            "w-7 h-7 rounded-md flex items-center justify-center",
-            isSelected ? bgSelected : bg
-          )}>
-            <Icon size={14} className={color} />
-          </div>
-          <div>
-            <span className="text-sm font-semibold text-white font-mono">#{entry.number}</span>
+      <div className="flex items-center gap-2.5">
+        <div className={cn(
+          "w-6 h-6 rounded flex-shrink-0 flex items-center justify-center",
+          isSelected ? bgSelected : bg
+        )}>
+          <Icon size={12} className={color} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
             {entry.displayName && (
-              <span className="ml-2 text-sm text-gray-300">{entry.displayName}</span>
+              <span className="text-xs font-medium text-gray-300 truncate">{entry.displayName}</span>
+            )}
+            {entry.neverCompress && (
+              <Shield size={10} className="text-amber-400 flex-shrink-0" />
+            )}
+            {entry.compressed && !entry.neverCompress && (
+              <Eye size={10} className="text-blue-400 flex-shrink-0" />
             )}
           </div>
-          {entry.neverCompress && (
-            <div className="w-5 h-5 rounded flex items-center justify-center bg-amber-500/15" title="Never compress">
-              <Shield size={12} className="text-amber-400" />
-            </div>
-          )}
-          {entry.compressed && !entry.neverCompress && (
-            <div className="w-5 h-5 rounded flex items-center justify-center bg-emerald-500/15" title="Compressed">
-              <Eye size={12} className="text-emerald-400" />
-            </div>
+          <div className="flex items-center gap-3 mt-0.5">
+            {entry.filesAdded > 0 && (
+              <span className="flex items-center gap-0.5 text-[11px] text-emerald-400/70">
+                <Plus size={9} />
+                {formatFileChange(entry.filesAdded, true)}
+              </span>
+            )}
+            {entry.filesRemoved > 0 && (
+              <span className="flex items-center gap-0.5 text-[11px] text-red-400/70">
+                <Minus size={9} />
+                {formatFileChange(entry.filesRemoved, false)}
+              </span>
+            )}
+            <TokenInfo entry={entry} />
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-[10px] text-gray-600">{formatDateTime(entry.timestamp)}</span>
+          {onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(entry.number); }}
+              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/15 text-gray-600 hover:text-red-400 transition-all"
+              title="Delete ingestion"
+              aria-label="Delete ingestion"
+            >
+              <Trash2 size={12} />
+            </button>
           )}
         </div>
-        <span className="text-xs text-gray-500">{formatDateTime(entry.timestamp)}</span>
-      </div>
-      <div className="flex items-center gap-4 text-xs ml-[38px]">
-        {entry.filesAdded > 0 && (
-          <span className="flex items-center gap-1 text-emerald-400">
-            <Plus size={11} />
-            {formatFileChange(entry.filesAdded, true)}
-          </span>
-        )}
-        {entry.filesRemoved > 0 && (
-          <span className="flex items-center gap-1 text-red-400">
-            <Minus size={11} />
-            {formatFileChange(entry.filesRemoved, false)}
-          </span>
-        )}
-        {entry.filesAdded === 0 && entry.filesRemoved === 0 && (
-          <span className="text-gray-500">No changes</span>
-        )}
       </div>
     </div>
   );
 }
 
-function IngestionGridCard({ entry, isSelected, cardRef }: IngestionCardProps) {
+function IngestionGridCard({ entry, isSelected, cardRef, onDelete }: IngestionCardProps) {
   const { Icon, color, bg, bgSelected } = getSourceIcon(entry.sourceType);
   return (
     <div
       ref={cardRef}
       className={cn(
-        "aspect-square p-2.5 rounded-lg transition-colors border flex flex-col items-center justify-center text-center gap-1.5",
+        "group relative aspect-square p-2.5 rounded-md transition-colors border flex flex-col items-center justify-center text-center gap-1",
         isSelected
-          ? "bg-blue-600/15 border-blue-500/40 ring-1 ring-blue-500/20"
-          : "bg-slate-800/30 hover:bg-slate-800/50 border-white/5 hover:border-white/10"
+          ? "bg-blue-600/10 border-blue-500/30"
+          : "bg-transparent hover:bg-white/[0.03] border-white/[0.04] hover:border-white/[0.08]"
       )}
     >
+      {onDelete && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(entry.number); }}
+          className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-500/15 text-gray-600 hover:text-red-400 transition-all"
+          title="Delete ingestion"
+          aria-label="Delete ingestion"
+        >
+          <Trash2 size={10} />
+        </button>
+      )}
       <div className={cn(
-        "w-8 h-8 rounded-md flex items-center justify-center",
+        "w-7 h-7 rounded flex items-center justify-center",
         isSelected ? bgSelected : bg
       )}>
-        <Icon size={16} className={color} />
+        <Icon size={14} className={color} />
       </div>
       <div className="flex items-center gap-1">
-        <span className="text-xs font-semibold text-white font-mono">#{entry.number}</span>
+        {entry.displayName && (
+          <span className="text-[10px] font-medium text-gray-300 truncate">{entry.displayName}</span>
+        )}
         {entry.neverCompress && (
-          <Shield size={10} className="text-amber-400" />
+          <Shield size={9} className="text-amber-400 flex-shrink-0" />
         )}
         {entry.compressed && !entry.neverCompress && (
-          <Eye size={10} className="text-emerald-400" />
+          <Eye size={9} className="text-blue-400 flex-shrink-0" />
         )}
       </div>
-      {entry.displayName && (
-        <p className="text-[10px] text-gray-300 truncate w-full leading-tight">{entry.displayName}</p>
-      )}
-      <span className="text-[9px] text-gray-500 leading-tight">{formatDateTime(entry.timestamp)}</span>
-      <div className="flex items-center gap-2 text-[9px]">
+      <span className="text-[8px] text-gray-600 leading-tight">{formatDateTime(entry.timestamp)}</span>
+      <div className="flex items-center gap-1.5 text-[8px]">
         {entry.filesAdded > 0 && (
-          <span className="flex items-center gap-0.5 text-emerald-400">
-            <Plus size={8} />+{entry.filesAdded}
-          </span>
+          <span className="text-emerald-400/70">+{entry.filesAdded}</span>
         )}
         {entry.filesRemoved > 0 && (
-          <span className="flex items-center gap-0.5 text-red-400">
-            <Minus size={8} />-{entry.filesRemoved}
-          </span>
+          <span className="text-red-400/70">-{entry.filesRemoved}</span>
         )}
       </div>
+      <span className="text-[8px] text-gray-600 tabular-nums">
+        {entry.compressed && entry.compressedTokens != null
+          ? `${formatNumber(entry.compressedTokens)} tok`
+          : `${formatNumber(entry.tokens)} tok`
+        }
+      </span>
     </div>
   );
 }
@@ -187,6 +223,7 @@ interface SectionProps {
   selectedIngestionNumbers: number[];
   selectedCardRef: React.RefObject<HTMLDivElement>;
   accentColor: string;
+  onDelete?: (number: number) => void;
 }
 
 function IngestionSection({
@@ -201,6 +238,7 @@ function IngestionSection({
   selectedIngestionNumbers,
   selectedCardRef,
   accentColor,
+  onDelete,
 }: SectionProps) {
   return (
     <div className="mb-1">
@@ -224,7 +262,7 @@ function IngestionSection({
       {isOpen && entries.length > 0 && (
         <div className={cn(
           "mt-1 ml-1",
-          viewMode === 'grid' ? 'grid grid-cols-3 gap-2' : 'space-y-2'
+          viewMode === 'grid' ? 'grid grid-cols-3 gap-1.5' : 'space-y-0.5'
         )}>
           {entries.map((entry) => {
             const cardProps = {
@@ -232,6 +270,7 @@ function IngestionSection({
               entry,
               isSelected: selectedSet.has(entry.number),
               cardRef: selectedIngestionNumbers.length === 1 && selectedIngestionNumbers[0] === entry.number ? selectedCardRef : undefined,
+              onDelete,
             };
             return viewMode === 'grid'
               ? <IngestionGridCard {...cardProps} />
@@ -250,12 +289,10 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
   const {
     metrics,
     history,
-    compressedFiles,
-    pendingFiles,
-    neverCompressFiles,
     isLoading,
     error,
     refresh,
+    deleteIngestion,
   } = useCompressionData(contextId);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -360,6 +397,7 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
     selectedSet,
     selectedIngestionNumbers,
     selectedCardRef: selectedCardRef as React.RefObject<HTMLDivElement>,
+    onDelete: deleteIngestion,
   };
 
   return (
@@ -473,11 +511,6 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
               costSavings={metrics.costSavings}
             />
             <CompressionStats metrics={metrics} tokensSaved={metrics.originalTokens - metrics.compressedTokens} />
-            <CompressionFileLists
-              compressedFiles={compressedFiles}
-              pendingFiles={pendingFiles}
-              neverCompressFiles={neverCompressFiles}
-            />
           </div>
         )}
 
@@ -493,22 +526,22 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
           <>
             <IngestionSection
               title="Compressed"
-              icon={<Archive size={13} className="text-emerald-400" />}
+              icon={<Eye size={13} className="text-blue-400" />}
               count={compressed.length}
               entries={compressed}
               isOpen={openSections.compressed}
               onToggle={() => toggleSection('compressed')}
-              accentColor="bg-emerald-500/15 text-emerald-400"
+              accentColor="bg-blue-500/15 text-blue-400"
               {...sectionSharedProps}
             />
             <IngestionSection
               title="Not Compressed"
-              icon={<Clock size={13} className="text-blue-400" />}
+              icon={<Eye size={13} className="text-gray-400" />}
               count={notCompressed.length}
               entries={notCompressed}
               isOpen={openSections.notCompressed}
               onToggle={() => toggleSection('notCompressed')}
-              accentColor="bg-blue-500/15 text-blue-400"
+              accentColor="bg-gray-500/15 text-gray-400"
               {...sectionSharedProps}
             />
             <IngestionSection

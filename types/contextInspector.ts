@@ -98,6 +98,7 @@ export interface IngestionEntry {
   filesAdded: number;
   filesRemoved: number;
   tokens: number;
+  compressedTokens?: number;
   displayName?: string;
   tags?: string[];
   compressed?: boolean;

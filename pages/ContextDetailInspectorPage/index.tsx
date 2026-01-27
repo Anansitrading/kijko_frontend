@@ -23,7 +23,7 @@ import { LayoutProvider, useLayout } from '../../contexts/LayoutContext';
 import { HeaderLayoutControls } from '../../components/HeaderLayoutControls';
 import { cn } from '../../utils/cn';
 import { tabConfig } from '../../styles/contextInspector';
-import { Loader2, AlertCircle, Share2, ArrowLeft, ChevronDown, Check, GitBranch, FolderOpen } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, ChevronDown, Check, GitBranch, FolderOpen } from 'lucide-react';
 import type { TabType } from '../../types/contextInspector';
 import type { Notification, SettingsSection } from '../../types/settings';
 
@@ -524,22 +524,7 @@ function ProjectDetailPageContent() {
             {/* Right actions: Layout Controls + Share + Bell + Avatar */}
             <div className="flex items-center gap-3 flex-shrink-0">
               {/* Layout Toggle Controls */}
-              <HeaderLayoutControls projectId={project.id} />
-
-              <button
-                onClick={() => setIsShareModalOpen(true)}
-                className={cn(
-                  'flex items-center justify-center w-8 h-8 rounded-lg',
-                  'text-gray-300 hover:text-white',
-                  'bg-white/5 hover:bg-white/10 border border-white/10',
-                  'transition-colors duration-150',
-                  'focus:outline-none focus:ring-2 focus:ring-blue-500/50'
-                )}
-                title="Share project"
-                aria-label="Share project"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
+              <HeaderLayoutControls projectId={project.id} onShare={() => setIsShareModalOpen(true)} />
 
               {/* Notification Bell with Panel */}
               <div className="relative z-50">

@@ -8,6 +8,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Globe,
+  Share2,
 } from 'lucide-react';
 import { useLayout } from '../../contexts/LayoutContext';
 import { LayoutCustomizePopover } from './LayoutCustomizePopover';
@@ -18,9 +19,10 @@ const btnBase =
 
 interface HeaderLayoutControlsProps {
   projectId?: string;
+  onShare?: () => void;
 }
 
-export function HeaderLayoutControls({ projectId }: HeaderLayoutControlsProps) {
+export function HeaderLayoutControls({ projectId, onShare }: HeaderLayoutControlsProps) {
   const { state, toggleLeftSidebar, toggleChatInput, toggleRightSidebar } = useLayout();
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const customizeRef = useRef<HTMLDivElement>(null);
@@ -63,7 +65,19 @@ export function HeaderLayoutControls({ projectId }: HeaderLayoutControlsProps) {
 
   return (
     <div className="flex items-center gap-0.5">
-      {/* 0. Preview in browser */}
+      {/* 0. Share */}
+      {onShare && (
+        <button
+          onClick={onShare}
+          className={cn(btnBase, 'text-gray-400 hover:text-white hover:bg-white/10')}
+          title="Share project"
+          aria-label="Share project"
+        >
+          <Share2 className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* 1. Preview in browser */}
       <button
         onClick={handleOpenPreview}
         disabled={!projectId}
