@@ -539,7 +539,7 @@ function IngestionEntryRow({ entry, isSelected, onSelect, onRename, onDelete, on
     onDelete?.();
   }, [onDelete]);
 
-  const totalChanges = entry.filesAdded + entry.filesRemoved;
+
 
   return (
     <>
@@ -598,22 +598,6 @@ function IngestionEntryRow({ entry, isSelected, onSelect, onRename, onDelete, on
           <Eye size={12} className="flex-shrink-0 text-emerald-400" title="Compressed" />
         )}
 
-        {/* Compact change indicator */}
-        {!isRenaming && totalChanges > 0 && (
-          <span className={cn(
-            "text-[10px] flex-shrink-0 tabular-nums",
-            entry.filesAdded > 0 && entry.filesRemoved === 0 && "text-emerald-500",
-            entry.filesRemoved > 0 && entry.filesAdded === 0 && "text-red-400",
-            entry.filesAdded > 0 && entry.filesRemoved > 0 && "text-slate-500"
-          )}>
-            {entry.filesAdded > 0 && entry.filesRemoved > 0
-              ? `±${totalChanges}`
-              : entry.filesAdded > 0
-                ? `+${entry.filesAdded}`
-                : `-${entry.filesRemoved}`
-            }
-          </span>
-        )}
       </div>
 
       {/* Inline tag editor (shown below the row) */}
@@ -885,12 +869,32 @@ export function RightSidebar({
   });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]);
 
   const chatHistory = chatState.historyItems;
   const currentActiveChatId = chatState.activeChatId;
 
   // Debounced search
   const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Collect all unique tags from ingestions for filter chips
+  const allUniqueTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    ingestionHistory.forEach(entry => {
+      entry.tags?.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [ingestionHistory]);
+
+  const handleToggleTagFilter = useCallback((tag: string) => {
+    setSelectedTagFilters(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  }, []);
+
+  const handleClearTagFilters = useCallback(() => {
+    setSelectedTagFilters([]);
+  }, []);
 
   // Persist collapse state (only when using internal state)
   useEffect(() => {
@@ -910,9 +914,10 @@ export function RightSidebar({
     onWidthChange?.(isCollapsed ? COLLAPSED_WIDTH : (expandedWidth ?? EXPANDED_WIDTH));
   }, []);
 
-  // Clear search when switching tabs
+  // Clear search and tag filters when switching tabs
   useEffect(() => {
     setSearchQuery('');
+    setSelectedTagFilters([]);
   }, [activeTab]);
 
   const handleToggleCollapse = useCallback(() => {
@@ -969,7 +974,7 @@ export function RightSidebar({
     let filtered = ingestionHistory;
     if (debouncedSearch.trim()) {
       const searchLower = debouncedSearch.toLowerCase();
-      filtered = ingestionHistory.filter(entry => {
+      filtered = filtered.filter(entry => {
         const numStr = `#${entry.number}`;
         const dateStr = formatDateTime(entry.timestamp).toLowerCase();
         const nameStr = entry.displayName?.toLowerCase() || '';
@@ -977,11 +982,18 @@ export function RightSidebar({
       });
     }
 
+    // Filter by selected tags
+    if (selectedTagFilters.length > 0) {
+      filtered = filtered.filter(entry =>
+        entry.tags?.some(tag => selectedTagFilters.includes(tag))
+      );
+    }
+
     // Sort by number (newest first)
     const sorted = [...filtered].sort((a, b) => b.number - a.number);
 
     return { filteredIngestions: sorted, hasIngestionsResults: sorted.length > 0 };
-  }, [ingestionHistory, debouncedSearch]);
+  }, [ingestionHistory, debouncedSearch, selectedTagFilters]);
 
   // Chat handlers
   const handleSelectChat = useCallback((id: string) => {
@@ -1221,13 +1233,50 @@ export function RightSidebar({
                   </button>
                 </div>
 
+                {/* Tag Filter Chips */}
+                {allUniqueTags.length > 0 && (
+                  <div className="shrink-0 px-2 pb-1">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Tag size={10} className="text-slate-500 flex-shrink-0" />
+                      <span className="text-[10px] text-slate-500 font-medium">Filter by tag</span>
+                      {selectedTagFilters.length > 0 && (
+                        <button
+                          onClick={handleClearTagFilters}
+                          className="ml-auto text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {allUniqueTags.map(tag => {
+                        const isActive = selectedTagFilters.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            onClick={() => handleToggleTagFilter(tag)}
+                            className={cn(
+                              "text-[10px] px-2 py-0.5 rounded-full border transition-colors",
+                              isActive
+                                ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
+                                : "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+                            )}
+                          >
+                            {tag}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Ingestion List */}
                 {ingestionLoading ? (
                   <div className="flex-1 flex items-center justify-center">
                     <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
                   </div>
                 ) : !hasIngestionsResults ? (
-                  <EmptyState type="ingestions" hasSearch={debouncedSearch.trim().length > 0} />
+                  <EmptyState type="ingestions" hasSearch={debouncedSearch.trim().length > 0 || selectedTagFilters.length > 0} />
                 ) : (
                   <div className="flex-1 overflow-y-auto">
                     <div className="py-1">

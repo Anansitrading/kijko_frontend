@@ -18,7 +18,7 @@ import {
   List,
 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
-import { formatDateTime } from '../../../../utils/formatting';
+import { formatDateTime, formatFileChange } from '../../../../utils/formatting';
 import { useCompressionData } from '../CompressionTab/hooks';
 import type { IngestionEntry, IngestionSourceType } from '../../../../types/contextInspector';
 
@@ -75,7 +75,7 @@ function IngestionCard({ entry, isSelected, cardRef }: IngestionCardProps) {
           : "bg-slate-800/30 hover:bg-slate-800/50 border-white/5 hover:border-white/10"
       )}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2.5">
           <div className={cn(
             "w-7 h-7 rounded-md flex items-center justify-center",
@@ -101,6 +101,23 @@ function IngestionCard({ entry, isSelected, cardRef }: IngestionCardProps) {
           )}
         </div>
         <span className="text-xs text-gray-500">{formatDateTime(entry.timestamp)}</span>
+      </div>
+      <div className="flex items-center gap-4 text-xs ml-[38px]">
+        {entry.filesAdded > 0 && (
+          <span className="flex items-center gap-1 text-emerald-400">
+            <Plus size={11} />
+            {formatFileChange(entry.filesAdded, true)}
+          </span>
+        )}
+        {entry.filesRemoved > 0 && (
+          <span className="flex items-center gap-1 text-red-400">
+            <Minus size={11} />
+            {formatFileChange(entry.filesRemoved, false)}
+          </span>
+        )}
+        {entry.filesAdded === 0 && entry.filesRemoved === 0 && (
+          <span className="text-gray-500">No changes</span>
+        )}
       </div>
     </div>
   );
