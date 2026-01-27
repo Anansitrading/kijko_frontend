@@ -1,14 +1,13 @@
 import { useEffect, useRef } from 'react';
 import {
   FolderPlus,
-  Archive,
   Pencil,
   Trash2,
 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 
 export interface ContextMenuAction {
-  id: 'new-folder' | 'compress' | 'rename' | 'delete';
+  id: 'new-folder' | 'rename' | 'delete';
   label: string;
   icon: typeof FolderPlus;
   shortcut?: string;
@@ -17,7 +16,6 @@ export interface ContextMenuAction {
 
 const CONTEXT_MENU_ACTIONS: ContextMenuAction[] = [
   { id: 'new-folder', label: 'New Folder...', icon: FolderPlus, shortcut: 'Ctrl+Shift+N' },
-  { id: 'compress', label: 'Compress', icon: Archive },
   { id: 'rename', label: 'Rename', icon: Pencil, shortcut: 'F2' },
   { id: 'delete', label: 'Delete', icon: Trash2, shortcut: 'Del', danger: true },
 ];
@@ -103,8 +101,7 @@ export function FileContextMenu({
       {availableActions.map((action, index) => {
         const Icon = action.icon;
         const showDivider =
-          index > 0 &&
-          (action.id === 'compress' || action.id === 'delete');
+          index > 0 && action.id === 'delete';
 
         return (
           <div key={action.id}>

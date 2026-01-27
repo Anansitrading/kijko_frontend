@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Clock, MessageSquare, Search, X, Pencil, Trash2, Loader2, Plus, FileUp, Tag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, MessageSquare, Search, X, Pencil, Trash2, Loader2, Plus, FileUp, Tag, Archive, Shield } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import { useChatHistory } from '../../../../contexts/ChatHistoryContext';
 import { useIngestion, formatFileSizeFromBytes } from '../../../../contexts/IngestionContext';
@@ -161,16 +161,17 @@ function InlineEdit({ value, onSave, onCancel }: InlineEditProps) {
 // Ingestion Context Menu
 // ==========================================
 
-type IngestionMenuAction = 'rename' | 'edit-tags' | 'delete';
+type IngestionMenuAction = 'rename' | 'edit-tags' | 'compress' | 'delete';
 
 interface IngestionContextMenuProps {
   x: number;
   y: number;
+  showCompress?: boolean;
   onAction: (action: IngestionMenuAction) => void;
   onClose: () => void;
 }
 
-function IngestionContextMenu({ x, y, onAction, onClose }: IngestionContextMenuProps) {
+function IngestionContextMenu({ x, y, showCompress, onAction, onClose }: IngestionContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -205,6 +206,7 @@ function IngestionContextMenu({ x, y, onAction, onClose }: IngestionContextMenuP
   const actions: Array<{ id: IngestionMenuAction; label: string; icon: typeof Pencil; danger?: boolean }> = [
     { id: 'rename', label: 'Rename', icon: Pencil },
     { id: 'edit-tags', label: 'Edit Tags', icon: Tag },
+    ...(showCompress ? [{ id: 'compress' as const, label: 'Compress', icon: Archive }] : []),
     { id: 'delete', label: 'Delete', icon: Trash2, danger: true },
   ];
 
@@ -434,9 +436,10 @@ interface IngestionEntryRowProps {
   onRename?: (newName: string) => void;
   onDelete?: () => void;
   onUpdateTags?: (tags: string[]) => void;
+  onCompress?: () => void;
 }
 
-function IngestionEntryRow({ entry, isSelected, onSelect, onRename, onDelete, onUpdateTags }: IngestionEntryRowProps) {
+function IngestionEntryRow({ entry, isSelected, onSelect, onRename, onDelete, onUpdateTags, onCompress }: IngestionEntryRowProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
@@ -497,11 +500,14 @@ function IngestionEntryRow({ entry, isSelected, onSelect, onRename, onDelete, on
       case 'edit-tags':
         setIsEditingTags(true);
         break;
+      case 'compress':
+        onCompress?.();
+        break;
       case 'delete':
         setShowDeleteConfirm(true);
         break;
     }
-  }, []);
+  }, [onCompress]);
 
   const handleRename = useCallback((newName: string) => {
     setIsRenaming(false);
@@ -567,6 +573,11 @@ function IngestionEntryRow({ entry, isSelected, onSelect, onRename, onDelete, on
           <span className="flex-1 text-xs text-slate-300 truncate">
             {entry.displayName || `Ingestion #${entry.number}`}
           </span>
+        )}
+
+        {/* Never compress shield */}
+        {!isRenaming && entry.neverCompress && (
+          <Shield size={12} className="flex-shrink-0 text-amber-400" title="Never compress" />
         )}
 
         {/* Compact change indicator */}
@@ -666,6 +677,7 @@ function IngestionEntryRow({ entry, isSelected, onSelect, onRename, onDelete, on
         <IngestionContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
+          showCompress={!entry.compressed && !entry.neverCompress}
           onAction={handleContextMenuAction}
           onClose={() => setContextMenu(null)}
         />
@@ -815,6 +827,7 @@ export function RightSidebar({
     renameIngestion,
     deleteIngestion,
     updateIngestionTags,
+    compressIngestion,
   } = useCompressionData(projectId);
   const { openIngestionModal, openIngestionModalEmpty } = useIngestion();
 
@@ -1222,6 +1235,7 @@ export function RightSidebar({
                           onRename={(newName) => renameIngestion(entry.number, newName)}
                           onDelete={() => deleteIngestion(entry.number)}
                           onUpdateTags={(tags) => updateIngestionTags(entry.number, tags)}
+                          onCompress={() => compressIngestion(entry.number)}
                         />
                       ))}
                     </div>

@@ -10,6 +10,9 @@ import {
   Package,
   Plus,
   Minus,
+  Shield,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import { formatDateTime, formatFileChange } from '../../../../utils/formatting';
@@ -70,10 +73,65 @@ function IngestionCard({ entry, isSelected, cardRef }: IngestionCardProps) {
               <span className="ml-2 text-sm text-gray-300">{entry.displayName}</span>
             )}
           </div>
+          {entry.neverCompress && (
+            <div className="w-5 h-5 rounded flex items-center justify-center bg-amber-500/15" title="Never compress">
+              <Shield size={12} className="text-amber-400" />
+            </div>
+          )}
         </div>
         <span className="text-xs text-gray-500">{formatDateTime(entry.timestamp)}</span>
       </div>
       <div className="flex items-center gap-4 text-xs ml-[38px]">
+        {entry.filesAdded > 0 && (
+          <span className="flex items-center gap-1 text-emerald-400">
+            <Plus size={11} />
+            {formatFileChange(entry.filesAdded, true)}
+          </span>
+        )}
+        {entry.filesRemoved > 0 && (
+          <span className="flex items-center gap-1 text-red-400">
+            <Minus size={11} />
+            {formatFileChange(entry.filesRemoved, false)}
+          </span>
+        )}
+        {entry.filesAdded === 0 && entry.filesRemoved === 0 && (
+          <span className="text-gray-500">No changes</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function IngestionGridCard({ entry, isSelected, cardRef }: IngestionCardProps) {
+  return (
+    <div
+      ref={cardRef}
+      className={cn(
+        "p-4 rounded-lg transition-colors border flex flex-col gap-2",
+        isSelected
+          ? "bg-blue-600/15 border-blue-500/40 ring-1 ring-blue-500/20"
+          : "bg-slate-800/30 hover:bg-slate-800/50 border-white/5 hover:border-white/10"
+      )}
+    >
+      <div className="flex items-center gap-2.5">
+        <div className={cn(
+          "w-7 h-7 rounded-md flex items-center justify-center shrink-0",
+          isSelected ? "bg-blue-500/25" : "bg-blue-500/15"
+        )}>
+          <Package size={14} className="text-blue-400" />
+        </div>
+        <span className="text-sm font-semibold text-white font-mono">#{entry.number}</span>
+        {entry.neverCompress && (
+          <div className="w-5 h-5 rounded flex items-center justify-center bg-amber-500/15" title="Never compress">
+            <Shield size={12} className="text-amber-400" />
+          </div>
+        )}
+      </div>
+      {entry.displayName && (
+        <p className="text-sm text-gray-300 truncate">{entry.displayName}</p>
+      )}
+      <span className="text-xs text-gray-500">{formatDateTime(entry.timestamp)}</span>
+      <div className="flex items-center gap-3 text-xs mt-auto">
         {entry.filesAdded > 0 && (
           <span className="flex items-center gap-1 text-emerald-400">
             <Plus size={11} />
@@ -106,6 +164,7 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('number');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const selectedSet = useMemo(() => new Set(selectedIngestionNumbers), [selectedIngestionNumbers]);
   const selectedCardRef = useRef<HTMLDivElement>(null);

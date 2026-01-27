@@ -14,6 +14,7 @@ import {
   renameIngestion as renameIngestionService,
   deleteIngestion as deleteIngestionService,
   updateIngestionTags as updateIngestionTagsService,
+  compressIngestion as compressIngestionService,
 } from '../../../../../services/compressionService';
 
 export interface UseCompressionDataReturn {
@@ -33,6 +34,7 @@ export interface UseCompressionDataReturn {
   renameIngestion: (ingestionNumber: number, newName: string) => Promise<void>;
   deleteIngestion: (ingestionNumber: number) => Promise<void>;
   updateIngestionTags: (ingestionNumber: number, tags: string[]) => Promise<void>;
+  compressIngestion: (ingestionNumber: number) => Promise<void>;
 }
 
 export function useCompressionData(contextId: string): UseCompressionDataReturn {
@@ -157,6 +159,10 @@ export function useCompressionData(contextId: string): UseCompressionDataReturn 
     await updateIngestionTagsService(contextId, ingestionNumber, tags);
   }, [contextId]);
 
+  const compressIngestion = useCallback(async (ingestionNumber: number) => {
+    await compressIngestionService(contextId, ingestionNumber);
+  }, [contextId]);
+
   return {
     metrics,
     history,
@@ -174,5 +180,6 @@ export function useCompressionData(contextId: string): UseCompressionDataReturn 
     renameIngestion,
     deleteIngestion,
     updateIngestionTags,
+    compressIngestion,
   };
 }

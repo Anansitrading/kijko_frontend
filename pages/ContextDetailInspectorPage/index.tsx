@@ -304,8 +304,8 @@ function ProjectDetailPageContent() {
       <div className="h-screen w-full bg-[#0a0e1a] flex flex-col overflow-hidden">
         {/* Unified Top Bar (Row 1 - h-12) spanning full width */}
         <header className="h-12 shrink-0 flex items-center border-b border-[#1e293b] bg-[#0d1220]">
-          {/* Left section - Back + Project name (same width as left sidebar) */}
-          <div className="shrink-0 h-full flex items-center gap-2 px-3 border-r border-[#1e293b]" style={{ width: leftWidth }}>
+          {/* Left section - Back + Project name */}
+          <div className="shrink-0 h-full flex items-center gap-2 px-3">
             <button
               onClick={() => navigate('/')}
               className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors duration-150"
@@ -314,9 +314,8 @@ function ProjectDetailPageContent() {
               <ArrowLeft className="w-5 h-5" />
             </button>
 
-            {/* Project switcher dropdown - hidden when collapsed */}
-            {!layoutState.leftSidebarCollapsed && (
-              <div ref={projectSwitcherRef} className="relative flex-1 min-w-0">
+            {/* Project switcher dropdown */}
+            <div ref={projectSwitcherRef} className="relative min-w-0">
                 <button
                   onClick={() => setIsProjectSwitcherOpen(!isProjectSwitcherOpen)}
                   className={cn(
@@ -379,7 +378,6 @@ function ProjectDetailPageContent() {
                   </div>
                 )}
               </div>
-            )}
           </div>
 
           {/* Center + Right section - Tabs + Layout Controls + Share + Live + Bell + Avatar */}

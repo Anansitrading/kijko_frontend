@@ -97,6 +97,8 @@ export interface IngestionEntry {
   tokens: number;
   displayName?: string;
   tags?: string[];
+  compressed?: boolean;
+  neverCompress?: boolean;
 }
 
 // Compression algorithm details

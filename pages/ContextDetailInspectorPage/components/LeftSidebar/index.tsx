@@ -452,10 +452,6 @@ export function LeftSidebar({ className, style, projectName = 'Project', project
           removeFile(fileId);
         }
         break;
-      case 'compress':
-        // TODO: Implement compress functionality
-        console.log('Compress:', fileId);
-        break;
     }
   }, [contextMenu.file, createFolder, files, removeFile]);
 
