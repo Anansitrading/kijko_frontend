@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, KeyboardEvent, ClipboardEvent } from 'react';
 import {
-  Send,
-  Loader2,
+  ArrowUp,
+  Square,
   AtSign,
   Crosshair,
   ChevronDown,
@@ -75,6 +75,7 @@ interface TokenUsage {
 
 interface ChatInputProps {
   onSend: (message: string) => void;
+  onStop?: () => void;
   isLoading: boolean;
   disabled?: boolean;
   tokenUsage?: TokenUsage;
@@ -89,6 +90,7 @@ function formatNumber(num: number): string {
 
 export function ChatInput({
   onSend,
+  onStop,
   isLoading,
   disabled = false,
   tokenUsage,
@@ -752,25 +754,35 @@ export function ChatInput({
                   className="hidden"
                 />
 
-                {/* Send Button */}
-                <button
-                  onClick={handleSubmit}
-                  disabled={isDisabled}
-                  className={cn(
-                    'p-1.5 rounded-md transition-all duration-200',
-                    isDisabled
-                      ? 'text-gray-600 cursor-not-allowed'
-                      : 'text-blue-400 hover:text-blue-300 hover:bg-blue-500/10'
-                  )}
-                  title="Send message"
-                  aria-label="Send message"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </button>
+                {/* Send / Stop Button */}
+                {isLoading ? (
+                  <button
+                    onClick={onStop}
+                    className={cn(
+                      'p-1.5 rounded-lg transition-all duration-200',
+                      'bg-gray-600 hover:bg-gray-500 text-white'
+                    )}
+                    title="Stop generating"
+                    aria-label="Stop generating"
+                  >
+                    <Square className="w-4 h-4 fill-current" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isDisabled}
+                    className={cn(
+                      'p-1.5 rounded-lg transition-all duration-200',
+                      isDisabled
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-orange-500 hover:bg-orange-400 text-white'
+                    )}
+                    title="Send message"
+                    aria-label="Send message"
+                  >
+                    <ArrowUp className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -602,15 +602,15 @@ export function LeftSidebar({ className, style, projectName = 'Project', project
         {/* Search Toggle/Input */}
         {isSearchOpen ? (
           <div className="flex items-center gap-2 w-full">
-            <div className="flex-1 relative">
-              <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500" />
+            <div className="flex-1 flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-md px-2 py-1 focus-within:border-blue-500">
+              <Search size={14} className="text-slate-500 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search files..."
                 autoFocus
-                className="w-full bg-slate-800 border border-slate-700 rounded-md pl-7 pr-2 py-1 text-xs text-slate-200 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
+                className="w-full bg-transparent text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none"
               />
             </div>
             <button

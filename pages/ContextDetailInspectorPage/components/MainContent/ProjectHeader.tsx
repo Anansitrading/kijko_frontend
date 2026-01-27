@@ -7,7 +7,6 @@ interface ProjectHeaderProps {
   projectName: string;
   onNameChange?: (newName: string) => void;
   onShare?: () => void;
-  isLive?: boolean;
   activeTab?: TabType;
   onTabChange?: (tab: TabType) => void;
   className?: string;
@@ -16,7 +15,6 @@ interface ProjectHeaderProps {
 
 export function ProjectHeader({
   onShare,
-  isLive = true,
   activeTab = 'overview',
   onTabChange,
   className,
@@ -73,18 +71,7 @@ export function ProjectHeader({
             aria-label="Share project"
           >
             <Share2 className="w-4 h-4" />
-            <span className="text-sm font-medium">Share</span>
           </button>
-        )}
-
-        {isLive && (
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
-            </span>
-            <span className="text-sm font-medium text-green-400">Live</span>
-          </div>
         )}
 
         {rightActions}

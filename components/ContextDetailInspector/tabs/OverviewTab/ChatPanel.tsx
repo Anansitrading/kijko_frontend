@@ -20,6 +20,7 @@ interface ChatPanelProps {
   summaryLoading: boolean;
   summary: AISummary | null;
   onSendMessage: (content: string) => void;
+  onStop?: () => void;
   tokenUsage?: TokenUsage;
 }
 
@@ -38,6 +39,7 @@ export function ChatPanel({
   summaryLoading,
   summary,
   onSendMessage,
+  onStop,
   tokenUsage,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -336,6 +338,7 @@ export function ChatPanel({
       ) : (
         <ChatInput
           onSend={onSendMessage}
+          onStop={onStop}
           isLoading={isLoading}
           disabled={false}
           tokenUsage={tokenUsage}

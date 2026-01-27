@@ -1,6 +1,6 @@
 import { FileCode, FileJson, FileText, FileType, File, Braces } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { SourceFile, formatFileSize } from '../../contexts/SourceFilesContext';
+import { SourceFile } from '../../contexts/SourceFilesContext';
 
 interface SourceFileItemProps {
   file: SourceFile;
@@ -67,11 +67,6 @@ export function SourceFileItem({ file, isSelected, onToggle }: SourceFileItemPro
         title={file.name}
       >
         {file.name}
-      </span>
-
-      {/* File Size */}
-      <span className="text-xs text-muted-foreground font-mono flex-shrink-0">
-        {formatFileSize(file.size)}
       </span>
     </label>
   );

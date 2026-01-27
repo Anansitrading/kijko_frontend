@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { Clock, Search, X, Pencil, Trash2, Loader2, Plus, FileText, GitBranch, AlignLeft, Tag, Archive, Shield, Eye } from 'lucide-react';
+import { Clock, Search, X, Pencil, Trash2, Loader2, Plus, FileText, GitBranch, AlignLeft, Tag, Archive, Shield, Eye, Filter } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import { useIngestion, formatFileSizeFromBytes } from '../../../../contexts/IngestionContext';
 import { useCompressionData } from '../../../../components/ContextDetailInspector/tabs/CompressionTab/hooks';
@@ -607,6 +607,8 @@ export function RightSidebar({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedTagFilters, setSelectedTagFilters] = useState<string[]>([]);
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const filterMenuRef = useRef<HTMLDivElement>(null);
 
   // Debounced search
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -634,6 +636,18 @@ export function RightSidebar({
   useEffect(() => {
     onWidthChange?.(expandedWidth ?? EXPANDED_WIDTH);
   }, [expandedWidth, onWidthChange]);
+
+  // Close filter menu on click outside
+  useEffect(() => {
+    if (!isFilterMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) {
+        setIsFilterMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isFilterMenuOpen]);
 
   // Filter ingestions
   const { filteredIngestions, hasIngestionsResults } = useMemo(() => {
@@ -744,11 +758,11 @@ export function RightSidebar({
           />
 
           {/* Header with Search Toggle */}
-          <div className="px-3 h-10 border-b border-[#1e293b] flex items-center shrink-0">
+          <div className="px-3 h-10 border-b border-[#1e293b] flex items-center shrink-0 relative">
             {isSearchOpen ? (
               <div className="flex items-center gap-2 w-full">
-                <div className="flex-1 relative">
-                  <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500" />
+                <div className="flex-1 flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-md px-2 py-1 focus-within:border-blue-500">
+                  <Search size={14} className="text-slate-500 shrink-0" />
                   <input
                     type="text"
                     value={searchQuery}
@@ -756,7 +770,7 @@ export function RightSidebar({
                     placeholder="Search ingestions..."
                     aria-label="Search ingestions"
                     autoFocus
-                    className="w-full bg-slate-800 border border-slate-700 rounded-md pl-7 pr-2 py-1 text-xs text-slate-200 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
+                    className="w-full bg-transparent text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none"
                   />
                 </div>
                 <button
@@ -769,12 +783,75 @@ export function RightSidebar({
             ) : (
               <div className="flex items-center justify-between w-full">
                 <span className="text-xs text-slate-400 font-medium">Ingestions</span>
-                <button
-                  onClick={() => setIsSearchOpen(true)}
-                  className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  <Search size={14} />
-                </button>
+                <div className="flex items-center gap-0.5">
+                  {allUniqueTags.length > 0 && (
+                    <button
+                      onClick={() => setIsFilterMenuOpen(prev => !prev)}
+                      className={cn(
+                        "p-1 transition-colors relative",
+                        isFilterMenuOpen || selectedTagFilters.length > 0
+                          ? "text-blue-400 hover:text-blue-300"
+                          : "text-slate-500 hover:text-slate-300"
+                      )}
+                      title="Filter by tag"
+                    >
+                      <Filter size={14} />
+                      {selectedTagFilters.length > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-blue-500 text-[8px] text-white flex items-center justify-center font-bold">
+                          {selectedTagFilters.length}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsSearchOpen(true)}
+                    className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    <Search size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Filter Dropdown Menu */}
+            {isFilterMenuOpen && allUniqueTags.length > 0 && (
+              <div
+                ref={filterMenuRef}
+                className="absolute top-full right-2 z-50 mt-1 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-2"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                    <Tag size={10} className="text-slate-500" />
+                    Filter by tag
+                  </span>
+                  {selectedTagFilters.length > 0 && (
+                    <button
+                      onClick={handleClearTagFilters}
+                      className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {allUniqueTags.map(tag => {
+                    const isActive = selectedTagFilters.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => handleToggleTagFilter(tag)}
+                        className={cn(
+                          "text-[10px] px-2 py-0.5 rounded-full border transition-colors",
+                          isActive
+                            ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
+                            : "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+                        )}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -800,43 +877,6 @@ export function RightSidebar({
                   <span>New Ingestion</span>
                 </button>
               </div>
-
-              {/* Tag Filter Chips */}
-              {allUniqueTags.length > 0 && (
-                <div className="shrink-0 px-2 pb-1">
-                  <div className="flex items-center gap-1 mb-1">
-                    <Tag size={10} className="text-slate-500 flex-shrink-0" />
-                    <span className="text-[10px] text-slate-500 font-medium">Filter by tag</span>
-                    {selectedTagFilters.length > 0 && (
-                      <button
-                        onClick={handleClearTagFilters}
-                        className="ml-auto text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {allUniqueTags.map(tag => {
-                      const isActive = selectedTagFilters.includes(tag);
-                      return (
-                        <button
-                          key={tag}
-                          onClick={() => handleToggleTagFilter(tag)}
-                          className={cn(
-                            "text-[10px] px-2 py-0.5 rounded-full border transition-colors",
-                            isActive
-                              ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
-                              : "bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
-                          )}
-                        >
-                          {tag}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               {/* Ingestion List */}
               {ingestionLoading ? (

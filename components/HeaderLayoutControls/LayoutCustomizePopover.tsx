@@ -31,6 +31,16 @@ export function LayoutCustomizePopover({ onClose }: LayoutCustomizePopoverProps)
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
+  // Local preview order: drives the popover visuals during drag
+  const [previewOrder, setPreviewOrder] = useState(state.panelOrder);
+
+  // Sync preview with actual order when not dragging
+  useEffect(() => {
+    if (dragIndex === null) {
+      setPreviewOrder(state.panelOrder);
+    }
+  }, [state.panelOrder, dragIndex]);
+
   // Close on outside click
   useEffect(() => {
     const handle = (e: MouseEvent) => {
@@ -51,26 +61,39 @@ export function LayoutCustomizePopover({ onClose }: LayoutCustomizePopoverProps)
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDragOverIndex(index);
-  }, []);
 
-  const handleDrop = useCallback((targetIndex: number) => {
-    if (dragIndex === null || dragIndex === targetIndex) {
-      setDragIndex(null);
-      setDragOverIndex(null);
-      return;
+    // Live preview reorder: only moves blocks in the popover
+    if (dragIndex !== null && dragIndex !== index) {
+      setPreviewOrder(prev => {
+        const newOrder = [...prev] as [PanelPosition, PanelPosition, PanelPosition];
+        const [moved] = newOrder.splice(dragIndex, 1);
+        newOrder.splice(index, 0, moved);
+        return newOrder;
+      });
+      setDragIndex(index);
     }
-    const newOrder = [...state.panelOrder] as [PanelPosition, PanelPosition, PanelPosition];
-    const [moved] = newOrder.splice(dragIndex, 1);
-    newOrder.splice(targetIndex, 0, moved);
-    setPanelOrder(newOrder);
+  }, [dragIndex]);
+
+  // Ref to track whether a successful drop occurred (read synchronously in dragEnd)
+  const didDropRef = useRef(false);
+
+  const handleDrop = useCallback(() => {
+    // Commit preview order to actual layout
+    didDropRef.current = true;
+    setPanelOrder(previewOrder);
     setDragIndex(null);
     setDragOverIndex(null);
-  }, [dragIndex, state.panelOrder, setPanelOrder]);
+  }, [previewOrder, setPanelOrder]);
 
   const handleDragEnd = useCallback(() => {
+    if (!didDropRef.current) {
+      // Cancelled drag: revert preview to actual order
+      setPreviewOrder(state.panelOrder);
+    }
+    didDropRef.current = false;
     setDragIndex(null);
     setDragOverIndex(null);
-  }, []);
+  }, [state.panelOrder]);
 
   const handleReset = useCallback(() => {
     setPanelOrder(['left', 'center', 'right']);
@@ -93,13 +116,13 @@ export function LayoutCustomizePopover({ onClose }: LayoutCustomizePopoverProps)
 
       {/* Horizontal panel blocks */}
       <div className="flex items-stretch gap-1.5">
-        {state.panelOrder.map((panel, index) => (
+        {previewOrder.map((panel, index) => (
           <div
             key={panel}
             draggable
             onDragStart={(e) => handleDragStart(e, index)}
             onDragOver={(e) => handleDragOver(e, index)}
-            onDrop={() => handleDrop(index)}
+            onDrop={handleDrop}
             onDragEnd={handleDragEnd}
             className={cn(
               'flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-md border cursor-grab active:cursor-grabbing',
