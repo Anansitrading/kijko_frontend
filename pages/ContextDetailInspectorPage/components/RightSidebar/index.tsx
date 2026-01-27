@@ -590,12 +590,15 @@ function IngestionEntryRow({ entry, isSelected, onSelect, onRename, onDelete, on
 
         {/* Never compress shield */}
         {!isRenaming && entry.neverCompress && (
-          <Shield size={12} className="flex-shrink-0 text-amber-400" title="Never compress" />
+          <Shield size={12} className="flex-shrink-0 text-amber-400" />
         )}
 
-        {/* Compressed eye */}
-        {!isRenaming && entry.compressed && !entry.neverCompress && (
-          <Eye size={12} className="flex-shrink-0 text-emerald-400" title="Compressed" />
+        {/* Compression status eye */}
+        {!isRenaming && !entry.neverCompress && (
+          <Eye size={12} className={cn(
+            "flex-shrink-0",
+            entry.compressed ? "text-blue-400" : "text-gray-600"
+          )} />
         )}
 
       </div>

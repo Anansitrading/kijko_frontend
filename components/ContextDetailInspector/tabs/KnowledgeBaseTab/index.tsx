@@ -5,6 +5,7 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Search,
   RefreshCw,
   FileText,
@@ -16,6 +17,7 @@ import {
   Eye,
   LayoutGrid,
   List,
+  Archive,
 } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import { formatDateTime, formatFileChange } from '../../../../utils/formatting';
@@ -170,6 +172,77 @@ function IngestionGridCard({ entry, isSelected, cardRef }: IngestionCardProps) {
   );
 }
 
+interface SectionProps {
+  title: string;
+  icon: React.ReactNode;
+  count: number;
+  entries: IngestionEntry[];
+  isOpen: boolean;
+  onToggle: () => void;
+  viewMode: 'list' | 'grid';
+  selectedSet: Set<number>;
+  selectedIngestionNumbers: number[];
+  selectedCardRef: React.RefObject<HTMLDivElement>;
+  accentColor: string;
+}
+
+function IngestionSection({
+  title,
+  icon,
+  count,
+  entries,
+  isOpen,
+  onToggle,
+  viewMode,
+  selectedSet,
+  selectedIngestionNumbers,
+  selectedCardRef,
+  accentColor,
+}: SectionProps) {
+  return (
+    <div className="mb-1">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-white/5 transition-colors group"
+      >
+        <ChevronRight
+          size={14}
+          className={cn(
+            "text-gray-500 transition-transform duration-200",
+            isOpen && "rotate-90"
+          )}
+        />
+        {icon}
+        <span className="text-xs font-semibold text-gray-300 uppercase tracking-wider">{title}</span>
+        <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full", accentColor)}>
+          {count}
+        </span>
+      </button>
+      {isOpen && entries.length > 0 && (
+        <div className={cn(
+          "mt-1 ml-1",
+          viewMode === 'grid' ? 'grid grid-cols-3 gap-2' : 'space-y-2'
+        )}>
+          {entries.map((entry) => {
+            const cardProps = {
+              key: entry.number,
+              entry,
+              isSelected: selectedSet.has(entry.number),
+              cardRef: selectedIngestionNumbers.length === 1 && selectedIngestionNumbers[0] === entry.number ? selectedCardRef : undefined,
+            };
+            return viewMode === 'grid'
+              ? <IngestionGridCard {...cardProps} />
+              : <IngestionCard {...cardProps} />;
+          })}
+        </div>
+      )}
+      {isOpen && entries.length === 0 && (
+        <p className="text-xs text-gray-600 ml-7 py-2">No ingestions in this category</p>
+      )}
+    </div>
+  );
+}
+
 export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: KnowledgeBaseTabProps) {
   const {
     metrics,
@@ -183,6 +256,11 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
   const [sortField, setSortField] = useState<SortField>('number');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [openSections, setOpenSections] = useState({
+    compressed: true,
+    notCompressed: true,
+    neverCompress: true,
+  });
 
   const selectedSet = useMemo(() => new Set(selectedIngestionNumbers), [selectedIngestionNumbers]);
   const selectedCardRef = useRef<HTMLDivElement>(null);
@@ -203,8 +281,12 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
     }
   };
 
-  // Filter and sort ingestions
-  const filteredIngestions = useMemo(() => {
+  const toggleSection = (section: keyof typeof openSections) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  // Filter, sort, and split into sections
+  const { compressed, notCompressed, neverCompress } = useMemo(() => {
     let filtered = history;
 
     if (searchQuery.trim()) {
@@ -231,8 +313,14 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
       }
     });
 
-    return sorted;
+    return {
+      compressed: sorted.filter(e => e.compressed && !e.neverCompress),
+      notCompressed: sorted.filter(e => !e.compressed && !e.neverCompress),
+      neverCompress: sorted.filter(e => e.neverCompress),
+    };
   }, [history, searchQuery, sortField, sortDirection]);
+
+  const totalFiltered = compressed.length + notCompressed.length + neverCompress.length;
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -259,6 +347,13 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
     return sortDirection === 'desc'
       ? <ChevronDown size={12} className="text-blue-400" />
       : <ChevronUp size={12} className="text-blue-400" />;
+  };
+
+  const sectionSharedProps = {
+    viewMode,
+    selectedSet,
+    selectedIngestionNumbers,
+    selectedCardRef: selectedCardRef as React.RefObject<HTMLDivElement>,
   };
 
   return (
@@ -328,7 +423,7 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
             </button>
           ))}
           <span className="ml-auto text-[11px] text-gray-600">
-            {filteredIngestions.length} of {history.length} ingestions
+            {totalFiltered} of {history.length} ingestions
           </span>
           <div className="flex items-center gap-0.5 ml-2">
             <button
@@ -361,9 +456,9 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
         </div>
       </div>
 
-      {/* Ingestion List / Grid */}
+      {/* Ingestion Sections */}
       <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-3">
-        {filteredIngestions.length === 0 ? (
+        {totalFiltered === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Clock className="w-8 h-8 text-gray-600 mb-2" />
             <p className="text-sm text-gray-500">
@@ -371,19 +466,38 @@ export function KnowledgeBaseTab({ contextId, selectedIngestionNumbers = [] }: K
             </p>
           </div>
         ) : (
-          <div className={viewMode === 'grid' ? 'grid grid-cols-3 gap-2' : 'space-y-2'}>
-            {filteredIngestions.map((entry) => {
-              const cardProps = {
-                key: entry.number,
-                entry,
-                isSelected: selectedSet.has(entry.number),
-                cardRef: selectedIngestionNumbers.length === 1 && selectedIngestionNumbers[0] === entry.number ? selectedCardRef : undefined,
-              };
-              return viewMode === 'grid'
-                ? <IngestionGridCard {...cardProps} />
-                : <IngestionCard {...cardProps} />;
-            })}
-          </div>
+          <>
+            <IngestionSection
+              title="Compressed"
+              icon={<Archive size={13} className="text-emerald-400" />}
+              count={compressed.length}
+              entries={compressed}
+              isOpen={openSections.compressed}
+              onToggle={() => toggleSection('compressed')}
+              accentColor="bg-emerald-500/15 text-emerald-400"
+              {...sectionSharedProps}
+            />
+            <IngestionSection
+              title="Not Compressed"
+              icon={<Clock size={13} className="text-blue-400" />}
+              count={notCompressed.length}
+              entries={notCompressed}
+              isOpen={openSections.notCompressed}
+              onToggle={() => toggleSection('notCompressed')}
+              accentColor="bg-blue-500/15 text-blue-400"
+              {...sectionSharedProps}
+            />
+            <IngestionSection
+              title="Never Compress"
+              icon={<Shield size={13} className="text-amber-400" />}
+              count={neverCompress.length}
+              entries={neverCompress}
+              isOpen={openSections.neverCompress}
+              onToggle={() => toggleSection('neverCompress')}
+              accentColor="bg-amber-500/15 text-amber-400"
+              {...sectionSharedProps}
+            />
+          </>
         )}
       </div>
     </div>
