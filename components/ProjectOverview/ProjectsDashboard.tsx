@@ -17,6 +17,7 @@ import { ProjectsFilterSidebar, DEFAULT_PROJECT_SIDEBAR_FILTERS } from './Projec
 import type { ProjectSidebarFilters, DropTarget } from './ProjectsFilterSidebar';
 import type { ProjectCreationForm } from '../../types/project';
 import { RepoMindmap } from './RepoMindmap';
+import { RepoListView } from './RepoListView';
 import { getWorktreesForProject } from './repoMindmapData';
 
 interface ProjectsDashboardProps {
@@ -335,18 +336,33 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
           {/* Repo Mindmap or Empty State */}
           <div className="flex-1 min-w-0">
             {selectedProject ? (
-              <RepoMindmap
-                project={selectedProject}
-                worktrees={getWorktrees(selectedProject.id)}
-                onBranchClick={(projectId) => navigate(`/project/${projectId}`)}
-                onDuplicateWorktree={(worktreeId) => handleDuplicateWorktree(selectedProject.id, worktreeId)}
-                onRenameWorktree={(worktreeId, newName) => handleRenameWorktree(selectedProject.id, worktreeId, newName)}
-                onBranchOpen={() => navigate(`/project/${selectedProject.id}`)}
-                onBranchNewIngestion={() => navigate(`/project/${selectedProject.id}`)}
-                onBranchDetails={() => navigate(`/project/${selectedProject.id}`)}
-                onRenameBranch={(worktreeId, oldName, newName) => handleRenameBranch(selectedProject.id, worktreeId, oldName, newName)}
-                onAddBranch={(worktreeId) => handleAddBranch(selectedProject.id, worktreeId)}
-              />
+              viewMode === 'grid' ? (
+                <RepoMindmap
+                  project={selectedProject}
+                  worktrees={getWorktrees(selectedProject.id)}
+                  onBranchClick={(projectId) => navigate(`/project/${projectId}`)}
+                  onDuplicateWorktree={(worktreeId) => handleDuplicateWorktree(selectedProject.id, worktreeId)}
+                  onRenameWorktree={(worktreeId, newName) => handleRenameWorktree(selectedProject.id, worktreeId, newName)}
+                  onBranchOpen={() => navigate(`/project/${selectedProject.id}`)}
+                  onBranchNewIngestion={() => navigate(`/project/${selectedProject.id}`)}
+                  onBranchDetails={() => navigate(`/project/${selectedProject.id}`)}
+                  onRenameBranch={(worktreeId, oldName, newName) => handleRenameBranch(selectedProject.id, worktreeId, oldName, newName)}
+                  onAddBranch={(worktreeId) => handleAddBranch(selectedProject.id, worktreeId)}
+                />
+              ) : (
+                <RepoListView
+                  project={selectedProject}
+                  worktrees={getWorktrees(selectedProject.id)}
+                  onBranchClick={(projectId) => navigate(`/project/${projectId}`)}
+                  onDuplicateWorktree={(worktreeId) => handleDuplicateWorktree(selectedProject.id, worktreeId)}
+                  onRenameWorktree={(worktreeId, newName) => handleRenameWorktree(selectedProject.id, worktreeId, newName)}
+                  onBranchOpen={() => navigate(`/project/${selectedProject.id}`)}
+                  onBranchNewIngestion={() => navigate(`/project/${selectedProject.id}`)}
+                  onBranchDetails={() => navigate(`/project/${selectedProject.id}`)}
+                  onRenameBranch={(worktreeId, oldName, newName) => handleRenameBranch(selectedProject.id, worktreeId, oldName, newName)}
+                  onAddBranch={(worktreeId) => handleAddBranch(selectedProject.id, worktreeId)}
+                />
+              )
             ) : (
               <div className="flex flex-col items-center justify-center h-[60vh] text-center">
                 <div className="p-4 bg-muted/50 rounded-xl border border-border mb-4">
