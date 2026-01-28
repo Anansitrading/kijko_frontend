@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { Copy, Pencil, ExternalLink, FileUp, Info, GitBranchPlus, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { Copy, Pencil, ExternalLink, FileUp, GitBranchPlus, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import type { Project, WorktreeWithBranches, Branch } from '../../types';
 
 // Layout constants
@@ -149,15 +149,16 @@ interface RepoMindmapProps {
   onWorktreeNewIngestion?: (worktreeId: string) => void;
   onBranchOpen?: (worktreeId: string, branchName: string) => void;
   onBranchNewIngestion?: (worktreeId: string, branchName: string) => void;
-  onBranchDetails?: (worktreeId: string, branchName: string) => void;
   onRenameBranch?: (worktreeId: string, oldName: string, newName: string) => void;
   onAddBranch?: (worktreeId: string) => void;
+  onBranchHover?: (worktreeId: string, branchName: string) => void;
 }
 
 export function RepoMindmap({
   project, worktrees, onBranchClick,
   onDuplicateWorktree, onRenameWorktree, onWorktreeNewIngestion,
-  onBranchOpen, onBranchNewIngestion, onBranchDetails, onRenameBranch, onAddBranch,
+  onBranchOpen, onBranchNewIngestion, onRenameBranch, onAddBranch,
+  onBranchHover,
 }: RepoMindmapProps) {
   const layout = useMemo(() => computeLayout(worktrees), [worktrees]);
   const [hoveredBranch, setHoveredBranch] = useState<string | null>(null);
@@ -432,7 +433,10 @@ export function RepoMindmap({
                           y: e.clientY - rect.top + container.scrollTop,
                         });
                       }}
-                      onMouseEnter={() => setHoveredBranch(brKey)}
+                      onMouseEnter={() => {
+                        setHoveredBranch(brKey);
+                        onBranchHover?.(wt.id, br.name);
+                      }}
                       onMouseLeave={() => setHoveredBranch(null)}
                       style={{ cursor: 'pointer' }}
                     >
@@ -615,16 +619,6 @@ export function RepoMindmap({
                 >
                   <FileUp size={14} className="shrink-0 opacity-60" />
                   New Ingestion
-                </button>
-                <button
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
-                  onClick={() => {
-                    onBranchDetails?.(ctxMenu.worktreeId, ctxMenu.branchName);
-                    setCtxMenu(null);
-                  }}
-                >
-                  <Info size={14} className="shrink-0 opacity-60" />
-                  Details
                 </button>
                 <div className="my-1 border-t border-border" />
                 <button

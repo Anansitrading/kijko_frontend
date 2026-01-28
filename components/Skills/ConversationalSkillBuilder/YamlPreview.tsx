@@ -1,4 +1,4 @@
-// YAML Frontmatter Preview Component
+// YAML Formatter Preview Component
 // Shows live YAML preview of the skill being built
 
 import { Copy, Check } from 'lucide-react';
@@ -37,7 +37,7 @@ export function YamlPreview({ draft, className }: YamlPreviewProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-secondary/50">
         <h3 className="text-sm font-medium text-foreground">
-          YAML Frontmatter Preview
+          YAML Formatter Preview
         </h3>
         <div className="flex items-center gap-2">
           <span className="text-[10px] px-2 py-0.5 rounded bg-muted text-muted-foreground">

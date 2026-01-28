@@ -36,6 +36,9 @@ export { CustomSkillWizard } from './CustomSkillWizard';
 // Conversational Skill Builder (new 3-panel layout)
 export { ConversationalSkillBuilder } from './ConversationalSkillBuilder';
 
+// Inline Skill Editor Panel (embedded 3-panel layout for viewing/editing skills)
+export { SkillEditorPanel } from './SkillEditorPanel';
+
 // Task 2_3: Create Skill Form Components
 export { CreateSkillModal } from './CreateSkillModal';
 export { SkillForm } from './SkillForm';

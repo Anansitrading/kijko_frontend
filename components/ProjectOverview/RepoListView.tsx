@@ -4,7 +4,6 @@ import {
   Pencil,
   ExternalLink,
   FileUp,
-  Info,
   GitBranchPlus,
   GitBranch,
   FolderOpen,
@@ -35,9 +34,9 @@ interface RepoListViewProps {
   onWorktreeNewIngestion?: (worktreeId: string) => void;
   onBranchOpen?: (worktreeId: string, branchName: string) => void;
   onBranchNewIngestion?: (worktreeId: string, branchName: string) => void;
-  onBranchDetails?: (worktreeId: string, branchName: string) => void;
   onRenameBranch?: (worktreeId: string, oldName: string, newName: string) => void;
   onAddBranch?: (worktreeId: string) => void;
+  onBranchHover?: (worktreeId: string, branchName: string) => void;
 }
 
 export function RepoListView({
@@ -49,9 +48,9 @@ export function RepoListView({
   onWorktreeNewIngestion,
   onBranchOpen,
   onBranchNewIngestion,
-  onBranchDetails,
   onRenameBranch,
   onAddBranch,
+  onBranchHover,
 }: RepoListViewProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(worktrees.map((wt) => [wt.id, true])),
@@ -199,6 +198,7 @@ export function RepoListView({
                         key={br.name}
                         className="flex items-center gap-3 px-4 py-2.5 border-t border-border/40 hover:bg-white/[0.03] transition-colors cursor-pointer group"
                         onClick={() => onBranchClick(project.id, wt.id, br.name)}
+                        onMouseEnter={() => onBranchHover?.(wt.id, br.name)}
                         onContextMenu={(e) => {
                           e.preventDefault();
                           setCtxMenu({
@@ -319,16 +319,6 @@ export function RepoListView({
                 >
                   <FileUp size={14} className="shrink-0 opacity-60" />
                   New Ingestion
-                </button>
-                <button
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
-                  onClick={() => {
-                    onBranchDetails?.(ctxMenu.worktreeId, ctxMenu.branchName);
-                    setCtxMenu(null);
-                  }}
-                >
-                  <Info size={14} className="shrink-0 opacity-60" />
-                  Details
                 </button>
                 <div className="my-1 border-t border-border" />
                 <button

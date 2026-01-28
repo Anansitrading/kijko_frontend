@@ -18,6 +18,8 @@ interface SkillChatProps {
   onApproveConfig: (messageId: string, modifications?: Partial<ProposedSkillConfig>) => void;
   onRejectConfig: (messageId: string) => void;
   className?: string;
+  mode?: 'create' | 'edit';
+  skillName?: string;
 }
 
 export function SkillChat({
@@ -29,6 +31,8 @@ export function SkillChat({
   onApproveConfig,
   onRejectConfig,
   className,
+  mode = 'create',
+  skillName,
 }: SkillChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -64,8 +68,12 @@ export function SkillChat({
           <Bot size={16} className="text-primary" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-foreground">Create New Skill</h3>
-          <p className="text-xs text-muted-foreground">Build your skill through conversation</p>
+          <h3 className="text-sm font-semibold text-foreground">
+            {mode === 'edit' ? `Edit: ${skillName || 'Skill'}` : 'Create New Skill'}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {mode === 'edit' ? 'Modify your skill through conversation' : 'Build your skill through conversation'}
+          </p>
         </div>
       </div>
 
@@ -110,7 +118,7 @@ export function SkillChat({
       <SkillChatInput
         onSend={onSendMessage}
         disabled={isLoading || isStreaming}
-        placeholder="Describe what you want the skill to do..."
+        placeholder={mode === 'edit' ? 'Ask me to modify this skill...' : 'Describe what you want the skill to do...'}
       />
     </div>
   );

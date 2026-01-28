@@ -188,6 +188,27 @@ function skillBuilderReducer(
         ],
       };
 
+    case 'LOAD_SKILL': {
+      const loadedDraft: SkillDraft = {
+        ...initialSkillDraft,
+        ...action.draft,
+      };
+
+      // Create initial message for editing mode
+      const editMessage: SkillBuilderMessage = {
+        id: generateMessageId(),
+        role: 'assistant',
+        content: `I've loaded **${loadedDraft.name || 'this skill'}** for editing.\n\nYou can ask me to:\n- Modify the instructions or behavior\n- Add new capabilities\n- Change trigger timing or scope\n- Update the description\n\nWhat would you like to change?`,
+        timestamp: new Date(),
+      };
+
+      return {
+        ...initialState,
+        draft: loadedDraft,
+        messages: [editMessage],
+      };
+    }
+
     default:
       return state;
   }
@@ -212,6 +233,7 @@ export interface UseSkillBuilderReturn {
   updateDraft: (updates: Partial<SkillDraft>) => void;
   createSkill: () => CreatePlaybookSkillRequest | null;
   reset: () => void;
+  loadSkill: (draft: Partial<SkillDraft>) => void;
   canCreateSkill: boolean;
 }
 
@@ -365,6 +387,11 @@ export function useSkillBuilder(
     dispatch({ type: 'RESET' });
   }, []);
 
+  const loadSkill = useCallback((draft: Partial<SkillDraft>) => {
+    abortControllerRef.current?.abort();
+    dispatch({ type: 'LOAD_SKILL', draft });
+  }, []);
+
   // Check if we have enough data to create a skill
   const canCreateSkill = Boolean(state.draft.name && state.draft.description);
 
@@ -376,6 +403,7 @@ export function useSkillBuilder(
     updateDraft,
     createSkill,
     reset,
+    loadSkill,
     canCreateSkill,
   };
 }

@@ -1,14 +1,17 @@
 // Conversational Skill Builder
 // Main container with 3-panel layout for building skills through conversation
 
-import { useEffect, useCallback } from 'react';
-import { X, Sparkles, Loader2 } from 'lucide-react';
+import { useEffect, useCallback, useState } from 'react';
+import { X, Sparkles, Loader2, Code, Workflow } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { useSkillBuilder } from '../../../hooks/useSkillBuilder';
 import { SkillChat } from './SkillChat';
 import { YamlPreview } from './YamlPreview';
 import { MarkdownPreview } from './MarkdownPreview';
+import { SkillFlowDiagram } from './SkillFlowDiagram';
 import type { Skill } from '../../../types/skills';
+
+type PreviewTab = 'code' | 'flow';
 
 interface ConversationalSkillBuilderProps {
   isOpen: boolean;
@@ -21,6 +24,7 @@ export function ConversationalSkillBuilder({
   onClose,
   onCreated,
 }: ConversationalSkillBuilderProps) {
+  const [activeTab, setActiveTab] = useState<PreviewTab>('code');
   const {
     state,
     sendMessage,
@@ -121,6 +125,34 @@ export function ConversationalSkillBuilder({
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Preview Tab Switcher */}
+            <div className="flex items-center rounded-lg border border-border bg-secondary/50 p-0.5">
+              <button
+                onClick={() => setActiveTab('code')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                  activeTab === 'code'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Code size={14} />
+                Code
+              </button>
+              <button
+                onClick={() => setActiveTab('flow')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                  activeTab === 'flow'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Workflow size={14} />
+                Flow
+              </button>
+            </div>
+
             {/* Create Skill Button */}
             <button
               onClick={handleCreateSkill}
@@ -175,11 +207,20 @@ export function ConversationalSkillBuilder({
 
           {/* Right Panel - Previews (40%) */}
           <div className="w-[40%] h-full flex flex-col p-4 gap-4">
-            {/* YAML Preview (Top) */}
-            <YamlPreview draft={state.draft} className="flex-1" />
+            {activeTab === 'code' ? (
+              <>
+                {/* YAML Preview (Top) */}
+                <YamlPreview draft={state.draft} className="flex-1" />
 
-            {/* Markdown Preview (Bottom) */}
-            <MarkdownPreview draft={state.draft} className="flex-1" />
+                {/* Markdown Preview (Bottom) */}
+                <MarkdownPreview draft={state.draft} className="flex-1" />
+              </>
+            ) : (
+              /* Flow Diagram - Full height */
+              <div className="flex-1 border border-border rounded-lg overflow-hidden">
+                <SkillFlowDiagram draft={state.draft} className="h-full" />
+              </div>
+            )}
           </div>
         </div>
       </div>

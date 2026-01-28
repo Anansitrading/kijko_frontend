@@ -3,15 +3,15 @@
 // Task 2_3: Create Skill Form
 // Task 3_5: Analytics & Polish - Added onboarding
 // Layout Redesign: Skills shown in sidebar grouped by category
+// New: Inline skill editor with chat interface
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { Plus, Search, Pencil, Trash2, Zap } from 'lucide-react';
+import { Plus, Search, Filter } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { SkillsCategorySidebar } from '../Skills/SkillsCategorySidebar';
-import { SkillOverviewTab } from '../Skills/SkillOverviewTab';
+import { SkillEditorPanel } from '../Skills/SkillEditorPanel';
 import { CommunitySkillsView } from '../Skills/CommunitySkillsView';
 import { ExecuteSkillModal } from '../Skills/ExecuteSkillModal';
-import { SkillDetailModal } from '../Skills/SkillDetailModal';
 import { ConversationalSkillBuilder, OnboardingModal, useSkillsOnboarding } from '../Skills';
 import { useSkills } from '../../hooks/useSkills';
 import { useSkillsSubNavigation, type SkillsSubTabType } from '../../hooks/useSkillsSubNavigation';
@@ -26,23 +26,19 @@ const SUB_TABS: { id: SkillsSubTabType; label: string }[] = [
 
 export function SkillsTab() {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const { skills, loading, deleteSkill, refetch } = useSkills();
+  const { skills, loading, refetch } = useSkills();
   const { activeSubTab, setActiveSubTab } = useSkillsSubNavigation();
   const { showOnboarding, dismissOnboarding } = useSkillsOnboarding();
 
   // Selected skill and modal states
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [executeModalSkill, setExecuteModalSkill] = useState<Skill | null>(null);
-  const [editModalSkill, setEditModalSkill] = useState<Skill | null>(null);
   const [search, setSearch] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Filter skills based on search and active tab
   const filteredSkills = useMemo(() => {
     let result = [...skills];
-
-    // For now, all tabs show all user skills (Community is a placeholder)
-    // In the future, 'all-skills' might include marketplace skills
 
     // Filter by search
     if (search.trim()) {
@@ -92,31 +88,11 @@ export function SkillsTab() {
     setExecuteModalSkill(skill);
   }, []);
 
-  const handleEditSkill = useCallback((skill: Skill) => {
-    setEditModalSkill(skill);
-  }, []);
-
-  const handleDeleteSkill = useCallback(async (skill: Skill) => {
-    if (isDeleting) return;
-
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${skill.name}"? This action cannot be undone.`
-    );
-
-    if (confirmed) {
-      setIsDeleting(true);
-      try {
-        await deleteSkill(skill.id);
-        if (selectedSkill?.id === skill.id) {
-          setSelectedSkill(null);
-        }
-      } catch (err) {
-        console.error('Failed to delete skill:', err);
-      } finally {
-        setIsDeleting(false);
-      }
-    }
-  }, [deleteSkill, isDeleting, selectedSkill?.id]);
+  const handleSaveSkill = useCallback((skill: Skill) => {
+    // TODO: Call API to save skill
+    console.log('Saving skill:', skill);
+    refetch();
+  }, [refetch]);
 
   const handleCloseExecuteModal = useCallback(() => {
     setExecuteModalSkill(null);
@@ -125,23 +101,6 @@ export function SkillsTab() {
   const handleExecutionComplete = useCallback(() => {
     refetch();
   }, [refetch]);
-
-  const handleCloseEditModal = useCallback(() => {
-    setEditModalSkill(null);
-  }, []);
-
-  const handleSkillUpdated = useCallback((updatedSkill: Skill) => {
-    setEditModalSkill(updatedSkill);
-    refetch();
-  }, [refetch]);
-
-  const handleSkillDeleted = useCallback(() => {
-    setEditModalSkill(null);
-    if (selectedSkill?.id === editModalSkill?.id) {
-      setSelectedSkill(null);
-    }
-    refetch();
-  }, [refetch, selectedSkill?.id, editModalSkill?.id]);
 
   const handleOnboardingClose = useCallback(() => {
     dismissOnboarding();
@@ -187,14 +146,19 @@ export function SkillsTab() {
               ))}
             </div>
 
-            {/* Action Button */}
-            <button
-              onClick={handleCreateSkill}
-              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
-            >
-              <Plus size={18} />
-              <span>Create new skill</span>
-            </button>
+            {/* Search */}
+            <div className="relative w-64 hidden md:block">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <Search size={16} className="text-muted-foreground" />
+              </div>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search skills..."
+                className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+              />
+            </div>
           </div>
         </div>
 
@@ -242,30 +206,18 @@ export function SkillsTab() {
             ))}
           </div>
 
-          {/* View Controls */}
-          <div className="flex items-center gap-3">
-            {/* Search */}
-            <div className="relative w-64 hidden md:block">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                <Search size={16} className="text-muted-foreground" />
-              </div>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search skills..."
-                className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
-              />
+          {/* Search */}
+          <div className="relative w-64 hidden md:block">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <Search size={16} className="text-muted-foreground" />
             </div>
-
-            {/* Action Button */}
-            <button
-              onClick={handleCreateSkill}
-              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
-            >
-              <Plus size={18} />
-              <span>Create new skill</span>
-            </button>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search skills..."
+              className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+            />
           </div>
         </div>
       </div>
@@ -273,90 +225,75 @@ export function SkillsTab() {
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden">
         <div className="flex h-full">
-          {/* Sidebar with skills grouped by category */}
-          <div className="shrink-0 p-4 overflow-y-auto border-r border-border">
-            <SkillsCategorySidebar
-              skills={filteredSkills}
-              selectedSkillId={selectedSkill?.id ?? null}
-              onSelectSkill={handleSelectSkill}
-              onRunSkill={handleRunSkill}
-              loading={loading}
-            />
+          {/* Sidebar with Create button, Filter, and skills grouped by category */}
+          <div className="shrink-0 w-72 flex flex-col border-r border-border bg-card/30">
+            {/* Create & Filter buttons */}
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCreateSkill}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+                >
+                  <Plus size={18} />
+                  <span>Create new skill</span>
+                </button>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={cn(
+                    'p-2 rounded-lg border transition-colors',
+                    showFilters
+                      ? 'bg-primary/10 border-primary/30 text-primary'
+                      : 'bg-muted/50 border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+                  )}
+                  title="Toggle filters"
+                >
+                  <Filter size={18} />
+                </button>
+              </div>
+
+              {/* Filter Panel (collapsible) */}
+              {showFilters && (
+                <div className="mt-3 p-3 bg-muted/30 rounded-lg border border-border">
+                  <p className="text-xs text-muted-foreground mb-2">Filter by category</p>
+                  <div className="flex flex-wrap gap-1">
+                    {['Analysis', 'Generation', 'Transformation', 'Communication', 'Automation'].map((cat) => (
+                      <button
+                        key={cat}
+                        className="px-2 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Skills List */}
+            <div className="flex-1 overflow-y-auto p-2">
+              <SkillsCategorySidebar
+                skills={filteredSkills}
+                selectedSkillId={selectedSkill?.id ?? null}
+                onSelectSkill={handleSelectSkill}
+                onRunSkill={handleRunSkill}
+                loading={loading}
+              />
+            </div>
           </div>
 
-          {/* Main content - Skill details or empty state */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {selectedSkill ? (
-              <div className="max-w-4xl">
-                {/* Skill Header */}
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl">
-                      <Zap size={24} className="text-primary" />
-                    </div>
-                    <div>
-                      <h1 className="text-2xl font-bold text-foreground">
-                        {selectedSkill.name}
-                      </h1>
-                      {!selectedSkill.isActive && (
-                        <span className="text-sm text-muted-foreground">(Inactive)</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleEditSkill(selectedSkill)}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                    >
-                      <Pencil size={16} />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSkill(selectedSkill)}
-                      disabled={isDeleting}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      <Trash2 size={16} />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                {/* Skill Overview */}
-                <SkillOverviewTab
-                  skill={selectedSkill}
-                  onRun={() => handleRunSkill(selectedSkill)}
-                />
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="p-4 bg-muted/50 rounded-2xl mb-4">
-                  <Zap size={48} className="text-muted-foreground" />
-                </div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">
-                  Select a skill
-                </h2>
-                <p className="text-muted-foreground max-w-md">
-                  Choose a skill from the sidebar to view its details, run it, or make changes.
-                </p>
-                {filteredSkills.length === 0 && !loading && (
-                  <button
-                    onClick={handleCreateSkill}
-                    className="mt-6 flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
-                  >
-                    <Plus size={18} />
-                    Create your first skill
-                  </button>
-                )}
-              </div>
-            )}
+          {/* Main content - Skill Editor Panel */}
+          <div className="flex-1 overflow-hidden">
+            <SkillEditorPanel
+              skill={selectedSkill}
+              onSave={handleSaveSkill}
+              onRun={handleRunSkill}
+              className="h-full"
+            />
           </div>
         </div>
       </main>
 
-      {/* Conversational Skill Builder */}
+      {/* Conversational Skill Builder (for new skills) */}
       <ConversationalSkillBuilder
         isOpen={isWizardOpen}
         onClose={() => setIsWizardOpen(false)}
@@ -370,18 +307,6 @@ export function SkillsTab() {
           isOpen={true}
           onClose={handleCloseExecuteModal}
           onExecutionComplete={handleExecutionComplete}
-        />
-      )}
-
-      {/* Skill Detail/Edit Modal */}
-      {editModalSkill && (
-        <SkillDetailModal
-          skill={editModalSkill}
-          isOpen={true}
-          onClose={handleCloseEditModal}
-          onUpdated={handleSkillUpdated}
-          onDeleted={handleSkillDeleted}
-          onRun={handleRunSkill}
         />
       )}
 

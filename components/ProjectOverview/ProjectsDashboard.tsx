@@ -75,7 +75,7 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [userManagementProject, setUserManagementProject] = useState<Project | null>(null);
-  const [branchDetails, setBranchDetails] = useState<{ worktreeId: string; branchName: string } | null>(null);
+  const [hoveredBranch, setHoveredBranch] = useState<{ worktreeId: string; branchName: string } | null>(null);
 
   // Derive unique tags from all projects
   const allTags = useMemo(
@@ -202,16 +202,25 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
     [openIngestionModalEmpty],
   );
 
-  const handleBranchDetails = useCallback(
+
+  const handleBranchHover = useCallback(
     (worktreeId: string, branchName: string) => {
-      setBranchDetails({ worktreeId, branchName });
+      setHoveredBranch({ worktreeId, branchName });
     },
     [],
   );
 
-  const handleCloseBranchDetails = useCallback(() => {
-    setBranchDetails(null);
-  }, []);
+  // Compute displayed branch: hovered takes priority, otherwise show first branch as default
+  const displayedBranch = useMemo(() => {
+    if (hoveredBranch) return hoveredBranch;
+    if (selectedProject) {
+      const worktrees = getWorktrees(selectedProject.id);
+      if (worktrees.length > 0 && worktrees[0].branches.length > 0) {
+        return { worktreeId: worktrees[0].id, branchName: worktrees[0].branches[0].name };
+      }
+    }
+    return null;
+  }, [hoveredBranch, selectedProject, getWorktrees]);
 
   const handleCreateProject = (data: ProjectCreationForm) => {
     const newProject = createProject(data.name);
@@ -386,7 +395,7 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
 
           {/* Repo Mindmap or Empty State */}
           <div className="flex-1 min-w-0 flex gap-0">
-            <div className={cn("flex-1 min-w-0", branchDetails && "pr-0")}>
+            <div className="flex-1 min-w-0">
             {selectedProject ? (
               viewMode === 'grid' ? (
                 <RepoMindmap
@@ -398,9 +407,9 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
                   onWorktreeNewIngestion={handleWorktreeNewIngestion}
                   onBranchOpen={() => navigate(`/project/${selectedProject.id}`)}
                   onBranchNewIngestion={() => openIngestionModalEmpty()}
-                  onBranchDetails={handleBranchDetails}
                   onRenameBranch={(worktreeId, oldName, newName) => handleRenameBranch(selectedProject.id, worktreeId, oldName, newName)}
                   onAddBranch={(worktreeId) => handleAddBranch(selectedProject.id, worktreeId)}
+                  onBranchHover={handleBranchHover}
                 />
               ) : (
                 <RepoListView
@@ -412,9 +421,9 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
                   onWorktreeNewIngestion={handleWorktreeNewIngestion}
                   onBranchOpen={() => navigate(`/project/${selectedProject.id}`)}
                   onBranchNewIngestion={() => openIngestionModalEmpty()}
-                  onBranchDetails={handleBranchDetails}
                   onRenameBranch={(worktreeId, oldName, newName) => handleRenameBranch(selectedProject.id, worktreeId, oldName, newName)}
                   onAddBranch={(worktreeId) => handleAddBranch(selectedProject.id, worktreeId)}
+                  onBranchHover={handleBranchHover}
                 />
               )
             ) : (
@@ -468,12 +477,11 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
             )}
             </div>
 
-            {/* Branch Details Panel */}
-            {branchDetails && (
+            {/* Branch Details Panel - always visible when project selected */}
+            {selectedProject && displayedBranch && (
               <BranchDetailsPanel
-                branchName={branchDetails.branchName}
-                worktreeId={branchDetails.worktreeId}
-                onClose={handleCloseBranchDetails}
+                branchName={displayedBranch.branchName}
+                worktreeId={displayedBranch.worktreeId}
               />
             )}
           </div>

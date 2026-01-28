@@ -2,7 +2,7 @@
 // Shows skills in collapsible category sections
 
 import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight, Zap, Play } from 'lucide-react';
+import { ChevronDown, ChevronRight, Zap } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import type { Skill, SkillCategory } from '../../types/skills';
 
@@ -37,7 +37,6 @@ interface CategorySectionProps {
   skills: Skill[];
   selectedSkillId: string | null;
   onSelectSkill: (skill: Skill) => void;
-  onRunSkill: (skill: Skill) => void;
   defaultExpanded?: boolean;
 }
 
@@ -46,7 +45,6 @@ function CategorySection({
   skills,
   selectedSkillId,
   onSelectSkill,
-  onRunSkill,
   defaultExpanded = true,
 }: CategorySectionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
@@ -78,7 +76,6 @@ function CategorySection({
               skill={skill}
               isSelected={selectedSkillId === skill.id}
               onSelect={onSelectSkill}
-              onRun={onRunSkill}
             />
           ))}
         </div>
@@ -91,10 +88,9 @@ interface SkillItemProps {
   skill: Skill;
   isSelected: boolean;
   onSelect: (skill: Skill) => void;
-  onRun: (skill: Skill) => void;
 }
 
-function SkillItem({ skill, isSelected, onSelect, onRun }: SkillItemProps) {
+function SkillItem({ skill, isSelected, onSelect }: SkillItemProps) {
   return (
     <div
       className={cn(
@@ -108,30 +104,6 @@ function SkillItem({ skill, isSelected, onSelect, onRun }: SkillItemProps) {
     >
       <Zap size={14} className={cn('shrink-0', isSelected ? 'text-primary' : 'text-muted-foreground')} />
       <span className="flex-1 text-sm truncate">{skill.name}</span>
-
-      {/* Quick run button on hover */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onRun(skill);
-        }}
-        className={cn(
-          'p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity',
-          'hover:bg-primary hover:text-primary-foreground',
-          isSelected ? 'text-primary' : 'text-muted-foreground'
-        )}
-        title="Run skill"
-      >
-        <Play size={12} />
-      </button>
-
-      {/* Execution count */}
-      <span className={cn(
-        'text-xs tabular-nums group-hover:hidden',
-        isSelected ? 'text-primary/70' : 'text-muted-foreground/60'
-      )}>
-        {skill.executionCount > 0 && `${skill.executionCount}`}
-      </span>
     </div>
   );
 }
@@ -149,9 +121,11 @@ export function SkillsCategorySidebar({
   skills,
   selectedSkillId,
   onSelectSkill,
-  onRunSkill,
+  onRunSkill: _onRunSkill,
   loading = false,
 }: SkillsCategorySidebarProps) {
+  // Note: onRunSkill kept in props for API compatibility but not used in sidebar
+  void _onRunSkill;
   // Group skills by category
   const skillsByCategory = useMemo(() => {
     const grouped: Partial<Record<SkillCategory, Skill[]>> = {};
@@ -227,7 +201,6 @@ export function SkillsCategorySidebar({
             skills={skillsByCategory[category] || []}
             selectedSkillId={selectedSkillId}
             onSelectSkill={onSelectSkill}
-            onRunSkill={onRunSkill}
           />
         ))}
       </div>

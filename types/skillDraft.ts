@@ -132,7 +132,8 @@ export type SkillBuilderAction =
   | { type: 'SET_LOADING'; loading: boolean }
   | { type: 'SET_STREAMING'; streaming: boolean }
   | { type: 'SET_ERROR'; error: string | null }
-  | { type: 'RESET' };
+  | { type: 'RESET' }
+  | { type: 'LOAD_SKILL'; draft: Partial<SkillDraft> };
 
 /**
  * Request to create a playbook skill
