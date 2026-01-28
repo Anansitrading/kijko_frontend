@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { Copy, Pencil, ExternalLink, FileUp, Info, GitBranchPlus } from 'lucide-react';
+import { Copy, Pencil, ExternalLink, FileUp, Info, GitBranchPlus, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import type { Project, WorktreeWithBranches, Branch } from '../../types';
 
 // Layout constants
@@ -12,6 +12,11 @@ const BR_GAP = 50;
 const H_GAP = 120;
 const L_MARGIN = 80;
 const T_MARGIN = 52;
+
+// Zoom constraints
+const MIN_ZOOM = 0.3;
+const MAX_ZOOM = 2.5;
+const ZOOM_SENSITIVITY = 0.001;
 
 // Folder tab dimensions
 const TAB_H = 14;
@@ -144,16 +149,23 @@ interface RepoMindmapProps {
   onBranchOpen?: (worktreeId: string, branchName: string) => void;
   onBranchNewIngestion?: (worktreeId: string, branchName: string) => void;
   onBranchDetails?: (worktreeId: string, branchName: string) => void;
+  onRenameBranch?: (worktreeId: string, oldName: string, newName: string) => void;
   onAddBranch?: (worktreeId: string) => void;
 }
 
-export function RepoMindmap({ project, worktrees, onBranchClick, onDuplicateWorktree, onRenameWorktree }: RepoMindmapProps) {
+export function RepoMindmap({
+  project, worktrees, onBranchClick,
+  onDuplicateWorktree, onRenameWorktree,
+  onBranchOpen, onBranchNewIngestion, onBranchDetails, onRenameBranch, onAddBranch,
+}: RepoMindmapProps) {
   const layout = useMemo(() => computeLayout(worktrees), [worktrees]);
   const [hoveredBranch, setHoveredBranch] = useState<string | null>(null);
   const [ctxMenu, setCtxMenu] = useState<ContextMenu | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [renamingBranch, setRenamingBranch] = useState<{ worktreeId: string; branchName: string } | null>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const branchRenameInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -161,6 +173,10 @@ export function RepoMindmap({ project, worktrees, onBranchClick, onDuplicateWork
   useEffect(() => {
     if (renamingId) renameInputRef.current?.focus();
   }, [renamingId]);
+
+  useEffect(() => {
+    if (renamingBranch) branchRenameInputRef.current?.focus();
+  }, [renamingBranch]);
 
   const commitRename = useCallback(() => {
     if (renamingId && renameValue.trim()) {
@@ -172,6 +188,105 @@ export function RepoMindmap({ project, worktrees, onBranchClick, onDuplicateWork
     setRenamingId(null);
   }, [renamingId, renameValue, worktrees, onRenameWorktree]);
 
+  const commitBranchRename = useCallback(() => {
+    if (renamingBranch && renameValue.trim() && renameValue.trim() !== renamingBranch.branchName) {
+      onRenameBranch?.(renamingBranch.worktreeId, renamingBranch.branchName, renameValue.trim());
+    }
+    setRenamingBranch(null);
+  }, [renamingBranch, renameValue, onRenameBranch]);
+
+  // Pan & zoom
+  const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const isPanning = useRef(false);
+  const panStart = useRef({ x: 0, y: 0 });
+  const panOrigin = useRef({ x: 0, y: 0 });
+
+  const clampScale = (s: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, s));
+
+  // Attach non-passive wheel listener for zoom (React onWheel is passive)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+
+      setScale((prev) => {
+        const next = clampScale(prev * (1 - e.deltaY * ZOOM_SENSITIVITY));
+        const ratio = next / prev;
+        setPan((p) => ({
+          x: cx - (cx - p.x) * ratio,
+          y: cy - (cy - p.y) * ratio,
+        }));
+        return next;
+      });
+    };
+    container.addEventListener('wheel', onWheel, { passive: false });
+    return () => container.removeEventListener('wheel', onWheel);
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    // Only pan on left button on empty area or middle button anywhere
+    if (e.button === 1 || (e.button === 0 && (e.target as Element).tagName === 'svg')) {
+      isPanning.current = true;
+      panStart.current = { x: e.clientX, y: e.clientY };
+      panOrigin.current = { ...pan };
+      (e.target as Element).setPointerCapture(e.pointerId);
+      e.preventDefault();
+    }
+  }, [pan]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isPanning.current) return;
+    setPan({
+      x: panOrigin.current.x + (e.clientX - panStart.current.x),
+      y: panOrigin.current.y + (e.clientY - panStart.current.y),
+    });
+  }, []);
+
+  const handlePointerUp = useCallback(() => {
+    isPanning.current = false;
+  }, []);
+
+  const fitToView = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    const padding = 32;
+    const s = clampScale(Math.min(
+      (cw - padding) / layout.totalWidth,
+      (ch - padding) / layout.totalHeight,
+    ));
+    setPan({
+      x: (cw - layout.totalWidth * s) / 2,
+      y: (ch - layout.totalHeight * s) / 2,
+    });
+    setScale(s);
+  }, [layout]);
+
+  const zoomBy = useCallback((delta: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    const cx = cw / 2;
+    const cy = ch / 2;
+
+    setScale((prev) => {
+      const next = clampScale(prev + delta);
+      const ratio = next / prev;
+      setPan((p) => ({
+        x: cx - (cx - p.x) * ratio,
+        y: cy - (cy - p.y) * ratio,
+      }));
+      return next;
+    });
+  }, []);
+
   // Close context menu on outside click or scroll
   const closeMenu = useCallback(() => setCtxMenu(null), []);
 
@@ -180,11 +295,9 @@ export function RepoMindmap({ project, worktrees, onBranchClick, onDuplicateWork
     const handleClose = () => closeMenu();
     window.addEventListener('click', handleClose);
     window.addEventListener('contextmenu', handleClose);
-    containerRef.current?.addEventListener('scroll', handleClose);
     return () => {
       window.removeEventListener('click', handleClose);
       window.removeEventListener('contextmenu', handleClose);
-      containerRef.current?.removeEventListener('scroll', handleClose);
     };
   }, [ctxMenu, closeMenu]);
 
@@ -207,13 +320,18 @@ export function RepoMindmap({ project, worktrees, onBranchClick, onDuplicateWork
         <h2 className="text-lg font-semibold text-foreground">{project.name}</h2>
       </div>
 
-      {/* SVG Canvas */}
-      <div ref={containerRef} className="flex-1 overflow-auto rounded-xl border border-border bg-[#0a0e1a]/60 relative">
-        <svg
-          width={layout.totalWidth}
-          height={layout.totalHeight}
-          className="min-w-full min-h-full"
-        >
+      {/* SVG Canvas – fixed frame with pan & zoom */}
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-hidden rounded-xl border border-border bg-[#0a0e1a]/60 relative"
+        style={{ cursor: 'grab' }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+      >
+        <svg width="100%" height="100%">
+          <g transform={`translate(${pan.x},${pan.y}) scale(${scale})`}>
           {/* Vertical connectors between worktrees */}
           {layout.connectors.map((conn, i) => (
             <line
@@ -250,8 +368,8 @@ export function RepoMindmap({ project, worktrees, onBranchClick, onDuplicateWork
                     setCtxMenu({
                       type: 'worktree',
                       worktreeId: wt.id,
-                      x: e.clientX - rect.left + container.scrollLeft,
-                      y: e.clientY - rect.top + container.scrollTop,
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top,
                     });
                   }}
                 />
@@ -299,6 +417,20 @@ export function RepoMindmap({ project, worktrees, onBranchClick, onDuplicateWork
                     <g
                       key={br.name}
                       onClick={() => onBranchClick(project.id, wt.id, br.name)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const container = containerRef.current;
+                        if (!container) return;
+                        const rect = container.getBoundingClientRect();
+                        setCtxMenu({
+                          type: 'branch',
+                          worktreeId: wt.id,
+                          branchName: br.name,
+                          x: e.clientX - rect.left + container.scrollLeft,
+                          y: e.clientY - rect.top + container.scrollTop,
+                        });
+                      }}
                       onMouseEnter={() => setHoveredBranch(brKey)}
                       onMouseLeave={() => setHoveredBranch(null)}
                       style={{ cursor: 'pointer' }}
@@ -346,24 +478,75 @@ export function RepoMindmap({ project, worktrees, onBranchClick, onDuplicateWork
                       )}
 
                       {/* Branch name */}
-                      <text
-                        x={br.x + (br.isCurrent ? 26 : 12)}
-                        y={br.y + BR_H / 2}
-                        dominantBaseline="central"
-                        fill={isHovered ? '#f1f5f9' : '#cbd5e1'}
-                        fontSize={12}
-                        fontFamily="inherit"
-                        style={{ transition: 'fill 150ms ease' }}
-                      >
-                        {br.name.length > 18 ? br.name.slice(0, 18) + '...' : br.name}
-                      </text>
+                      {renamingBranch?.worktreeId === wt.id && renamingBranch?.branchName === br.name ? (
+                        <foreignObject
+                          x={br.x + 4}
+                          y={br.y + BR_H / 2 - 12}
+                          width={BR_W - 8}
+                          height={24}
+                        >
+                          <input
+                            ref={branchRenameInputRef}
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') commitBranchRename();
+                              if (e.key === 'Escape') setRenamingBranch(null);
+                            }}
+                            onBlur={commitBranchRename}
+                            className="w-full h-full bg-[#0f1420] border border-blue-500/60 rounded px-2 text-xs text-slate-100 outline-none"
+                          />
+                        </foreignObject>
+                      ) : (
+                        <text
+                          x={br.x + (br.isCurrent ? 26 : 12)}
+                          y={br.y + BR_H / 2}
+                          dominantBaseline="central"
+                          fill={isHovered ? '#f1f5f9' : '#cbd5e1'}
+                          fontSize={12}
+                          fontFamily="inherit"
+                          style={{ transition: 'fill 150ms ease', pointerEvents: 'none' }}
+                        >
+                          {br.name.length > 18 ? br.name.slice(0, 18) + '...' : br.name}
+                        </text>
+                      )}
                     </g>
                   );
                 })}
               </g>
             );
           })}
+          </g>
         </svg>
+
+        {/* Zoom controls */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg border border-border bg-[#1a1f2e]/90 p-1 backdrop-blur-sm">
+          <button
+            onClick={() => zoomBy(-0.15)}
+            className="rounded p-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+            title="Zoom out"
+          >
+            <ZoomOut size={15} />
+          </button>
+          <span className="min-w-[40px] text-center text-xs text-slate-400 select-none">
+            {Math.round(scale * 100)}%
+          </span>
+          <button
+            onClick={() => zoomBy(0.15)}
+            className="rounded p-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+            title="Zoom in"
+          >
+            <ZoomIn size={15} />
+          </button>
+          <div className="mx-0.5 h-4 w-px bg-border" />
+          <button
+            onClick={fitToView}
+            className="rounded p-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+            title="Fit to view"
+          >
+            <Maximize2 size={15} />
+          </button>
+        </div>
 
         {/* Right-click context menu */}
         {ctxMenu && (
@@ -374,28 +557,87 @@ export function RepoMindmap({ project, worktrees, onBranchClick, onDuplicateWork
             onClick={(e) => e.stopPropagation()}
             onContextMenu={(e) => e.preventDefault()}
           >
-            <button
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
-              onClick={() => {
-                const wt = worktrees.find((w) => w.id === ctxMenu.worktreeId);
-                setRenameValue(wt?.name ?? '');
-                setRenamingId(ctxMenu.worktreeId);
-                setCtxMenu(null);
-              }}
-            >
-              <Pencil size={14} className="shrink-0 opacity-60" />
-              Rename
-            </button>
-            <button
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
-              onClick={() => {
-                onDuplicateWorktree?.(ctxMenu.worktreeId);
-                setCtxMenu(null);
-              }}
-            >
-              <Copy size={14} className="shrink-0 opacity-60" />
-              Duplicate
-            </button>
+            {ctxMenu.type === 'worktree' ? (
+              <>
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
+                  onClick={() => {
+                    const wt = worktrees.find((w) => w.id === ctxMenu.worktreeId);
+                    setRenameValue(wt?.name ?? '');
+                    setRenamingId(ctxMenu.worktreeId);
+                    setCtxMenu(null);
+                  }}
+                >
+                  <Pencil size={14} className="shrink-0 opacity-60" />
+                  Rename
+                </button>
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
+                  onClick={() => {
+                    onDuplicateWorktree?.(ctxMenu.worktreeId);
+                    setCtxMenu(null);
+                  }}
+                >
+                  <Copy size={14} className="shrink-0 opacity-60" />
+                  Duplicate
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
+                  onClick={() => {
+                    onBranchOpen?.(ctxMenu.worktreeId, ctxMenu.branchName);
+                    setCtxMenu(null);
+                  }}
+                >
+                  <ExternalLink size={14} className="shrink-0 opacity-60" />
+                  Open
+                </button>
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
+                  onClick={() => {
+                    onBranchNewIngestion?.(ctxMenu.worktreeId, ctxMenu.branchName);
+                    setCtxMenu(null);
+                  }}
+                >
+                  <FileUp size={14} className="shrink-0 opacity-60" />
+                  New Ingestion
+                </button>
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
+                  onClick={() => {
+                    onBranchDetails?.(ctxMenu.worktreeId, ctxMenu.branchName);
+                    setCtxMenu(null);
+                  }}
+                >
+                  <Info size={14} className="shrink-0 opacity-60" />
+                  Details
+                </button>
+                <div className="my-1 border-t border-border" />
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
+                  onClick={() => {
+                    setRenameValue(ctxMenu.branchName);
+                    setRenamingBranch({ worktreeId: ctxMenu.worktreeId, branchName: ctxMenu.branchName });
+                    setCtxMenu(null);
+                  }}
+                >
+                  <Pencil size={14} className="shrink-0 opacity-60" />
+                  Rename
+                </button>
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
+                  onClick={() => {
+                    onAddBranch?.(ctxMenu.worktreeId);
+                    setCtxMenu(null);
+                  }}
+                >
+                  <GitBranchPlus size={14} className="shrink-0 opacity-60" />
+                  + Branch
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -106,6 +106,51 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
     [],
   );
 
+  const handleAddBranch = useCallback(
+    (projectId: string, worktreeId: string) => {
+      setWorktreesOverrides((prev) => {
+        const current = prev[projectId] ?? getWorktreesForProject(projectId);
+        return {
+          ...prev,
+          [projectId]: current.map((wt) => {
+            if (wt.id !== worktreeId) return wt;
+            const newName = `branch-${wt.branches.length + 1}`;
+            return {
+              ...wt,
+              branches: [
+                ...wt.branches,
+                { name: newName, isDefault: false, isCurrent: false, lastCommit: 'just now' },
+              ],
+            };
+          }),
+        };
+      });
+    },
+    [],
+  );
+
+  const handleRenameBranch = useCallback(
+    (projectId: string, worktreeId: string, oldName: string, newName: string) => {
+      setWorktreesOverrides((prev) => {
+        const current = prev[projectId] ?? getWorktreesForProject(projectId);
+        return {
+          ...prev,
+          [projectId]: current.map((wt) => {
+            if (wt.id !== worktreeId) return wt;
+            return {
+              ...wt,
+              currentBranch: wt.currentBranch === oldName ? newName : wt.currentBranch,
+              branches: wt.branches.map((br) =>
+                br.name === oldName ? { ...br, name: newName } : br,
+              ),
+            };
+          }),
+        };
+      });
+    },
+    [],
+  );
+
   // Show repo mindmap in main content area
   const handleSidebarProjectClick = (project: Project) => {
     selectProject(project);
@@ -275,8 +320,8 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
       </div>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto p-6">
-        <div className="flex gap-6">
+      <main className="flex-1 min-h-0 overflow-hidden p-6">
+        <div className="flex gap-6 h-full">
           {/* Filter Sidebar */}
           <ProjectsFilterSidebar
             filters={sidebarFilters}
@@ -296,6 +341,11 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
                 onBranchClick={(projectId) => navigate(`/project/${projectId}`)}
                 onDuplicateWorktree={(worktreeId) => handleDuplicateWorktree(selectedProject.id, worktreeId)}
                 onRenameWorktree={(worktreeId, newName) => handleRenameWorktree(selectedProject.id, worktreeId, newName)}
+                onBranchOpen={() => navigate(`/project/${selectedProject.id}`)}
+                onBranchNewIngestion={() => navigate(`/project/${selectedProject.id}`)}
+                onBranchDetails={() => navigate(`/project/${selectedProject.id}`)}
+                onRenameBranch={(worktreeId, oldName, newName) => handleRenameBranch(selectedProject.id, worktreeId, oldName, newName)}
+                onAddBranch={(worktreeId) => handleAddBranch(selectedProject.id, worktreeId)}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-[60vh] text-center">
