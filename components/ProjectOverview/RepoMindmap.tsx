@@ -1,16 +1,49 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { Copy, Pencil, ExternalLink, FileUp, Info, GitBranchPlus } from 'lucide-react';
 import type { Project, WorktreeWithBranches, Branch } from '../../types';
 
 // Layout constants
-const WT_W = 200;
-const WT_H = 56;
+const WT_W = 140;
+const WT_H = 76;
 const BR_W = 180;
 const BR_H = 40;
 const WT_GAP = 100;
 const BR_GAP = 50;
 const H_GAP = 120;
 const L_MARGIN = 80;
-const T_MARGIN = 40;
+const T_MARGIN = 52;
+
+// Folder tab dimensions
+const TAB_H = 14;
+const TAB_W = 50;
+const TAB_R = 6;
+const BODY_R = 10;
+
+/** SVG path for a folder shape: tab on top-left, rounded corners. */
+function folderPath(x: number, y: number, w: number, h: number): string {
+  return [
+    // start left side, below bottom-left corner radius
+    `M ${x},${y + BODY_R}`,
+    // up left side to tab top-left corner
+    `L ${x},${y - TAB_H + TAB_R}`,
+    `Q ${x},${y - TAB_H} ${x + TAB_R},${y - TAB_H}`,
+    // across tab top
+    `L ${x + TAB_W - TAB_R},${y - TAB_H}`,
+    `Q ${x + TAB_W},${y - TAB_H} ${x + TAB_W},${y - TAB_H + TAB_R}`,
+    // down tab right side to main body top
+    `L ${x + TAB_W},${y}`,
+    // across main body top to top-right corner
+    `L ${x + w - BODY_R},${y}`,
+    `Q ${x + w},${y} ${x + w},${y + BODY_R}`,
+    // down right side
+    `L ${x + w},${y + h - BODY_R}`,
+    `Q ${x + w},${y + h} ${x + w - BODY_R},${y + h}`,
+    // across bottom
+    `L ${x + BODY_R},${y + h}`,
+    `Q ${x},${y + h} ${x},${y + h - BODY_R}`,
+    'Z',
+  ].join(' ');
+}
 
 // Color palette per worktree
 const COLORS = [
@@ -98,15 +131,62 @@ function computeLayout(worktrees: WorktreeWithBranches[]): LayoutResult {
   };
 }
 
+type ContextMenu =
+  | { type: 'worktree'; worktreeId: string; x: number; y: number }
+  | { type: 'branch'; worktreeId: string; branchName: string; x: number; y: number };
+
 interface RepoMindmapProps {
   project: Project;
   worktrees: WorktreeWithBranches[];
   onBranchClick: (projectId: string, worktreeId: string, branchName: string) => void;
+  onDuplicateWorktree?: (worktreeId: string) => void;
+  onRenameWorktree?: (worktreeId: string, newName: string) => void;
+  onBranchOpen?: (worktreeId: string, branchName: string) => void;
+  onBranchNewIngestion?: (worktreeId: string, branchName: string) => void;
+  onBranchDetails?: (worktreeId: string, branchName: string) => void;
+  onAddBranch?: (worktreeId: string) => void;
 }
 
-export function RepoMindmap({ project, worktrees, onBranchClick }: RepoMindmapProps) {
+export function RepoMindmap({ project, worktrees, onBranchClick, onDuplicateWorktree, onRenameWorktree }: RepoMindmapProps) {
   const layout = useMemo(() => computeLayout(worktrees), [worktrees]);
   const [hoveredBranch, setHoveredBranch] = useState<string | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<ContextMenu | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const renameInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Auto-focus rename input when it appears
+  useEffect(() => {
+    if (renamingId) renameInputRef.current?.focus();
+  }, [renamingId]);
+
+  const commitRename = useCallback(() => {
+    if (renamingId && renameValue.trim()) {
+      const current = worktrees.find((w) => w.id === renamingId);
+      if (current && renameValue.trim() !== current.name) {
+        onRenameWorktree?.(renamingId, renameValue.trim());
+      }
+    }
+    setRenamingId(null);
+  }, [renamingId, renameValue, worktrees, onRenameWorktree]);
+
+  // Close context menu on outside click or scroll
+  const closeMenu = useCallback(() => setCtxMenu(null), []);
+
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const handleClose = () => closeMenu();
+    window.addEventListener('click', handleClose);
+    window.addEventListener('contextmenu', handleClose);
+    containerRef.current?.addEventListener('scroll', handleClose);
+    return () => {
+      window.removeEventListener('click', handleClose);
+      window.removeEventListener('contextmenu', handleClose);
+      containerRef.current?.removeEventListener('scroll', handleClose);
+    };
+  }, [ctxMenu, closeMenu]);
 
   const iconBg = project.icon.backgroundColor || '#3b82f6';
   const iconContent =
@@ -128,25 +208,12 @@ export function RepoMindmap({ project, worktrees, onBranchClick }: RepoMindmapPr
       </div>
 
       {/* SVG Canvas */}
-      <div className="flex-1 overflow-auto rounded-xl border border-border bg-[#0a0e1a]/60">
+      <div ref={containerRef} className="flex-1 overflow-auto rounded-xl border border-border bg-[#0a0e1a]/60 relative">
         <svg
           width={layout.totalWidth}
           height={layout.totalHeight}
           className="min-w-full min-h-full"
         >
-          <defs>
-            <marker
-              id="arrowhead"
-              markerWidth="8"
-              markerHeight="6"
-              refX="8"
-              refY="3"
-              orient="auto"
-            >
-              <path d="M0,0 L8,3 L0,6 Z" fill="#4b5563" />
-            </marker>
-          </defs>
-
           {/* Vertical connectors between worktrees */}
           {layout.connectors.map((conn, i) => (
             <line
@@ -167,29 +234,61 @@ export function RepoMindmap({ project, worktrees, onBranchClick }: RepoMindmapPr
 
             return (
               <g key={wt.id}>
-                {/* Worktree node */}
-                <rect
-                  x={wt.x}
-                  y={wt.y}
-                  width={WT_W}
-                  height={WT_H}
-                  rx={12}
+                {/* Worktree node (folder shape) */}
+                <path
+                  d={folderPath(wt.x, wt.y, WT_W, WT_H)}
                   fill="#141a2a"
                   stroke={color.border}
                   strokeWidth={1.5}
+                  style={{ cursor: 'context-menu' }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const container = containerRef.current;
+                    if (!container) return;
+                    const rect = container.getBoundingClientRect();
+                    setCtxMenu({
+                      type: 'worktree',
+                      worktreeId: wt.id,
+                      x: e.clientX - rect.left + container.scrollLeft,
+                      y: e.clientY - rect.top + container.scrollTop,
+                    });
+                  }}
                 />
-                <text
-                  x={wt.x + WT_W / 2}
-                  y={wt.y + WT_H / 2}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill="#e2e8f0"
-                  fontSize={14}
-                  fontWeight={600}
-                  fontFamily="inherit"
-                >
-                  /{wt.name}
-                </text>
+                {renamingId === wt.id ? (
+                  <foreignObject
+                    x={wt.x + 4}
+                    y={wt.y + WT_H / 2 - 14}
+                    width={WT_W - 8}
+                    height={28}
+                  >
+                    <input
+                      ref={renameInputRef}
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') commitRename();
+                        if (e.key === 'Escape') setRenamingId(null);
+                      }}
+                      onBlur={commitRename}
+                      className="w-full h-full bg-[#0f1420] border border-blue-500/60 rounded px-2 text-sm text-slate-100 font-semibold outline-none text-center"
+                    />
+                  </foreignObject>
+                ) : (
+                  <text
+                    x={wt.x + WT_W / 2}
+                    y={wt.y + WT_H / 2}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="#e2e8f0"
+                    fontSize={14}
+                    fontWeight={600}
+                    fontFamily="inherit"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    /{wt.name}
+                  </text>
+                )}
 
                 {/* Branches */}
                 {wt.branches.map((br) => {
@@ -211,8 +310,16 @@ export function RepoMindmap({ project, worktrees, onBranchClick }: RepoMindmapPr
                         stroke={color.accent}
                         strokeWidth={1.5}
                         strokeOpacity={isHovered ? 0.7 : 0.3}
-                        markerEnd="url(#arrowhead)"
                         style={{ transition: 'stroke-opacity 150ms ease' }}
+                      />
+                      {/* Colored dot at branch endpoint */}
+                      <circle
+                        cx={br.x}
+                        cy={br.y + BR_H / 2}
+                        r={4.5}
+                        fill={color.accent}
+                        fillOpacity={isHovered ? 0.9 : 0.6}
+                        style={{ transition: 'fill-opacity 150ms ease' }}
                       />
 
                       {/* Branch rect */}
@@ -257,6 +364,40 @@ export function RepoMindmap({ project, worktrees, onBranchClick }: RepoMindmapPr
             );
           })}
         </svg>
+
+        {/* Right-click context menu */}
+        {ctxMenu && (
+          <div
+            ref={menuRef}
+            className="absolute z-50 min-w-[160px] rounded-lg border border-border bg-[#1a1f2e] py-1 shadow-xl"
+            style={{ left: ctxMenu.x, top: ctxMenu.y }}
+            onClick={(e) => e.stopPropagation()}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <button
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
+              onClick={() => {
+                const wt = worktrees.find((w) => w.id === ctxMenu.worktreeId);
+                setRenameValue(wt?.name ?? '');
+                setRenamingId(ctxMenu.worktreeId);
+                setCtxMenu(null);
+              }}
+            >
+              <Pencil size={14} className="shrink-0 opacity-60" />
+              Rename
+            </button>
+            <button
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
+              onClick={() => {
+                onDuplicateWorktree?.(ctxMenu.worktreeId);
+                setCtxMenu(null);
+              }}
+            >
+              <Copy size={14} className="shrink-0 opacity-60" />
+              Duplicate
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

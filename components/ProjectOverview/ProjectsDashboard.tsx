@@ -1,16 +1,15 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
   LayoutGrid,
   List,
-  Plus,
   ChevronDown,
   FolderOpen,
 } from 'lucide-react';
 import { UserAvatar } from '../Dashboard/UserAvatar';
 import { useProjects } from '../../contexts/ProjectsContext';
-import { Project, ProjectFilter, ProjectSort } from '../../types';
+import { Project, ProjectFilter, ProjectSort, WorktreeWithBranches } from '../../types';
 import { cn } from '../../utils/cn';
 import { ProjectCreationModal } from './ProjectCreationModal';
 import { UserManagementModal } from './UserManagementModal';
@@ -61,6 +60,51 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [userManagementProject, setUserManagementProject] = useState<Project | null>(null);
+
+  // Worktrees state – seeded from static data, mutated by context-menu actions
+  const [worktreesOverrides, setWorktreesOverrides] = useState<Record<string, WorktreeWithBranches[]>>({});
+
+  const getWorktrees = useCallback(
+    (projectId: string): WorktreeWithBranches[] =>
+      worktreesOverrides[projectId] ?? getWorktreesForProject(projectId),
+    [worktreesOverrides],
+  );
+
+  const handleDuplicateWorktree = useCallback(
+    (projectId: string, worktreeId: string) => {
+      setWorktreesOverrides((prev) => {
+        const current = prev[projectId] ?? getWorktreesForProject(projectId);
+        const original = current.find((wt) => wt.id === worktreeId);
+        if (!original) return prev;
+
+        const copy: WorktreeWithBranches = {
+          id: `${worktreeId}-copy-${Date.now()}`,
+          name: `${original.name}-copy`,
+          path: `/${original.name}-copy`,
+          isActive: false,
+          currentBranch: 'main',
+          branches: [{ name: 'main', isDefault: true, isCurrent: true, lastCommit: 'just now' }],
+        };
+        return { ...prev, [projectId]: [...current, copy] };
+      });
+    },
+    [],
+  );
+
+  const handleRenameWorktree = useCallback(
+    (projectId: string, worktreeId: string, newName: string) => {
+      setWorktreesOverrides((prev) => {
+        const current = prev[projectId] ?? getWorktreesForProject(projectId);
+        return {
+          ...prev,
+          [projectId]: current.map((wt) =>
+            wt.id === worktreeId ? { ...wt, name: newName, path: `/${newName}` } : wt,
+          ),
+        };
+      });
+    },
+    [],
+  );
 
   // Show repo mindmap in main content area
   const handleSidebarProjectClick = (project: Project) => {
@@ -226,14 +270,6 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
               )}
             </div>
 
-            {/* New Project Button */}
-            <button
-              onClick={() => setIsNewProjectModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
-            >
-              <Plus size={18} />
-              <span>Create new</span>
-            </button>
           </div>
         </div>
       </div>
@@ -248,6 +284,7 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
             projects={filteredProjects}
             onDropProject={handleDropProject}
             onProjectClick={handleSidebarProjectClick}
+            onCreateNew={() => setIsNewProjectModalOpen(true)}
           />
 
           {/* Repo Mindmap or Empty State */}
@@ -255,8 +292,10 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
             {selectedProject ? (
               <RepoMindmap
                 project={selectedProject}
-                worktrees={getWorktreesForProject(selectedProject.id)}
+                worktrees={getWorktrees(selectedProject.id)}
                 onBranchClick={(projectId) => navigate(`/project/${projectId}`)}
+                onDuplicateWorktree={(worktreeId) => handleDuplicateWorktree(selectedProject.id, worktreeId)}
+                onRenameWorktree={(worktreeId, newName) => handleRenameWorktree(selectedProject.id, worktreeId, newName)}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-[60vh] text-center">

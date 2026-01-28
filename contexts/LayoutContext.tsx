@@ -32,19 +32,12 @@ const DEFAULT_STATE: LayoutState = {
   panelOrder: ['left', 'center', 'right'],
 };
 
-function ensureRightLast(order: [PanelPosition, PanelPosition, PanelPosition]): [PanelPosition, PanelPosition, PanelPosition] {
-  if (order[2] === 'right') return order;
-  const others = order.filter((p) => p !== 'right') as [PanelPosition, PanelPosition];
-  return [...others, 'right'];
-}
-
 function loadState(): LayoutState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       const state = { ...DEFAULT_STATE, ...parsed };
-      if (state.panelOrder) state.panelOrder = ensureRightLast(state.panelOrder);
       return state;
     }
     // Migrate old right sidebar collapsed state
@@ -84,29 +77,17 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleRightSidebar = useCallback(() => {
-    setState((prev) => {
-      const willCollapse = !prev.rightSidebarCollapsed;
-      return {
-        ...prev,
-        rightSidebarCollapsed: willCollapse,
-        // Reset to ingestions when collapsing
-        rightSidebarTab: willCollapse ? 'ingestions' : prev.rightSidebarTab,
-      };
-    });
+    setState((prev) => ({
+      ...prev,
+      rightSidebarCollapsed: !prev.rightSidebarCollapsed,
+    }));
   }, []);
 
   const openChatHistory = useCallback(() => {
-    setState((prev) => {
-      // Ensure 'right' panel is at the rightmost position
-      const others = prev.panelOrder.filter((p) => p !== 'right') as [PanelPosition, PanelPosition];
-      const panelOrder: [PanelPosition, PanelPosition, PanelPosition] = [...others, 'right'];
-      return {
-        ...prev,
-        rightSidebarCollapsed: false,
-        rightSidebarTab: 'chats',
-        panelOrder,
-      };
-    });
+    setState((prev) => ({
+      ...prev,
+      rightSidebarTab: 'chats',
+    }));
   }, []);
 
   const closeChatHistory = useCallback(() => {
@@ -117,7 +98,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setPanelOrder = useCallback((order: [PanelPosition, PanelPosition, PanelPosition]) => {
-    setState((prev) => ({ ...prev, panelOrder: ensureRightLast(order) }));
+    setState((prev) => ({ ...prev, panelOrder: order }));
   }, []);
 
   return (

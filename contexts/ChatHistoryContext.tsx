@@ -30,6 +30,8 @@ import {
   deleteChatSession as deleteSessionFromStorage,
   generateChatTitle,
   generateChatPreview,
+  extractUsedContexts,
+  extractUsedSkills,
   isLocalStorageAvailable,
 } from '../utils/chatHistoryStorage';
 
@@ -121,20 +123,31 @@ function chatHistoryReducer(
       };
     }
 
-    case 'SET_ACTIVE_CHAT':
+    case 'SET_ACTIVE_CHAT': {
+      const loadedSession = action.payload.session;
+      const enrichedMetadata: ChatHistoryItem = {
+        ...loadedSession.metadata,
+        usedContexts: extractUsedContexts(loadedSession.messages),
+        usedSkills: extractUsedSkills(loadedSession.messages),
+      };
+      const enrichedSession: ChatSession = { ...loadedSession, metadata: enrichedMetadata };
       return {
         ...state,
         activeChatId: action.payload.id,
-        activeSession: action.payload.session,
+        activeSession: enrichedSession,
+        historyItems: state.historyItems.map((item) =>
+          item.id === action.payload.id ? enrichedMetadata : item
+        ),
         openTabIds: state.openTabIds.includes(action.payload.id)
           ? state.openTabIds
           : [...state.openTabIds, action.payload.id],
         openTabSessions: {
           ...state.openTabSessions,
-          [action.payload.id]: action.payload.session,
+          [action.payload.id]: enrichedSession,
         },
         hasUnsavedChanges: false,
       };
+    }
 
     case 'CLEAR_ACTIVE_CHAT':
       return {
@@ -166,6 +179,8 @@ function chatHistoryReducer(
         preview,
         messageCount: messages.length,
         lastActivity: now,
+        usedContexts: extractUsedContexts(messages),
+        usedSkills: extractUsedSkills(messages),
       };
 
       const updatedSession: ChatSession = {
@@ -200,6 +215,8 @@ function chatHistoryReducer(
         preview,
         messageCount: action.payload.length,
         lastActivity: now,
+        usedContexts: extractUsedContexts(action.payload),
+        usedSkills: extractUsedSkills(action.payload),
       };
 
       const updatedMsgSession: ChatSession = {

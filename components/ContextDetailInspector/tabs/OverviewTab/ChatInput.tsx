@@ -215,6 +215,10 @@ export function ChatInput({
       setAttachments([]);
       setPreviewUrls([]);
       setExpandedPreview(null);
+      // Keep focus on the textarea after sending
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+      });
     }
   }, [value, isLoading, disabled, onSend, previewUrls]);
 
@@ -428,6 +432,13 @@ export function ChatInput({
     setIsSkillSelectorOpen(false);
   }, [insertTextAtCursor]);
 
+  // Refocus textarea when agent finishes responding
+  useEffect(() => {
+    if (!isLoading && !disabled) {
+      textareaRef.current?.focus();
+    }
+  }, [isLoading, disabled]);
+
   // Load saved model on mount
   useEffect(() => {
     const savedModel = localStorage.getItem('kijko_selected_model') as AIModel | null;
@@ -563,7 +574,7 @@ export function ChatInput({
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder="Message Kijko — @ to include context, / for commands"
+              placeholder="Ask Kijko — Drop or use @ to include context, click 🔧 or use / for commands"
               disabled={isLoading || disabled}
               rows={isExpanded ? 10 : 2}
               className={cn(

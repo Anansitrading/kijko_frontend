@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { MessageSquare, Search, X, Pencil, Trash2, Loader2, ListChecks } from 'lucide-react';
+import { MessageSquare, Search, X, Pencil, Trash2, Loader2, ListChecks, AtSign, Wrench } from 'lucide-react';
 import { cn } from '../../../../utils/cn';
 import { useChatHistory } from '../../../../contexts/ChatHistoryContext';
 import { formatRelativeTime } from '../../../../utils/chatHistoryStorage';
@@ -256,12 +256,46 @@ function ChatHistoryItemComponent({
           {item.preview}
         </p>
 
-        {/* Message count badge */}
-        <div className="flex items-center gap-1 mt-1.5">
+        {/* Message count + context/skill badges */}
+        <div className="flex items-center gap-2 mt-1.5">
           <div className="flex items-center gap-1 text-[10px] text-gray-500">
             <MessageSquare size={10} />
             <span>{item.messageCount}</span>
           </div>
+
+          {item.usedContexts && item.usedContexts.length > 0 && (
+            <div className="relative group/ctx">
+              <div className="flex items-center gap-0.5 text-[10px] text-blue-400/70 cursor-default">
+                <AtSign size={10} />
+                <span>{item.usedContexts.length}</span>
+              </div>
+              <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover/ctx:block z-50">
+                <div className="bg-[#1a2035] border border-white/15 rounded-md px-2.5 py-1.5 shadow-xl min-w-[120px] max-w-[200px]">
+                  <div className="text-[10px] font-medium text-gray-400 mb-1">Context used</div>
+                  {item.usedContexts.map((ctx, i) => (
+                    <div key={i} className="text-[10px] text-blue-400 truncate">@{ctx}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {item.usedSkills && item.usedSkills.length > 0 && (
+            <div className="relative group/skill">
+              <div className="flex items-center gap-0.5 text-[10px] text-purple-400/70 cursor-default">
+                <Wrench size={10} />
+                <span>{item.usedSkills.length}</span>
+              </div>
+              <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover/skill:block z-50">
+                <div className="bg-[#1a2035] border border-white/15 rounded-md px-2.5 py-1.5 shadow-xl min-w-[120px] max-w-[200px]">
+                  <div className="text-[10px] font-medium text-gray-400 mb-1">Skills used</div>
+                  {item.usedSkills.map((skill, i) => (
+                    <div key={i} className="text-[10px] text-purple-400 truncate">/{skill}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -186,6 +186,33 @@ function ProjectDetailPageContent() {
     document.addEventListener('mouseup', onMouseUp);
   }, [rightSidebarWidth, layoutState.panelOrder]);
 
+  // Chat History panel resizing (always far-right, independent of panelOrder)
+  const [chatHistoryWidth, setChatHistoryWidth] = useState(280);
+  const chatHistoryResizeStartRef = useRef({ x: 0, width: 280 });
+
+  const handleChatHistoryResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    chatHistoryResizeStartRef.current = { x: e.clientX, width: chatHistoryWidth };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (ev: MouseEvent) => {
+      const delta = chatHistoryResizeStartRef.current.x - ev.clientX;
+      const newWidth = Math.min(Math.max(chatHistoryResizeStartRef.current.width + delta, 180), 500);
+      setChatHistoryWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [chatHistoryWidth]);
+
   // Notifications
   const {
     notifications,
@@ -614,20 +641,13 @@ function ProjectDetailPageContent() {
           )}
           {layoutState.panelOrder[0] === 'right' && !layoutState.rightSidebarCollapsed && (
             <PanelErrorBoundary key="right-panel" panelName="Right Panel">
-              {layoutState.rightSidebarTab === 'chats' ? (
-                <ChatHistoryPanel
-                  className="flex-shrink-0"
-                  expandedWidth={rightSidebarWidth}
-                />
-              ) : (
-                <RightSidebar
-                  className="flex-shrink-0"
-                  projectId={project.id}
-                  selectedIngestionNumbers={selectedIngestionNumbers}
-                  onSelectIngestion={handleSelectIngestion}
-                  expandedWidth={rightSidebarWidth}
-                />
-              )}
+              <RightSidebar
+                className="flex-shrink-0"
+                projectId={project.id}
+                selectedIngestionNumbers={selectedIngestionNumbers}
+                onSelectIngestion={handleSelectIngestion}
+                expandedWidth={rightSidebarWidth}
+              />
             </PanelErrorBoundary>
           )}
 
@@ -687,20 +707,13 @@ function ProjectDetailPageContent() {
           )}
           {layoutState.panelOrder[1] === 'right' && !layoutState.rightSidebarCollapsed && (
             <PanelErrorBoundary key="right-panel" panelName="Right Panel">
-              {layoutState.rightSidebarTab === 'chats' ? (
-                <ChatHistoryPanel
-                  className="flex-shrink-0"
-                  expandedWidth={rightSidebarWidth}
-                />
-              ) : (
-                <RightSidebar
-                  className="flex-shrink-0"
-                  projectId={project.id}
-                  selectedIngestionNumbers={selectedIngestionNumbers}
-                  onSelectIngestion={handleSelectIngestion}
-                  expandedWidth={rightSidebarWidth}
-                />
-              )}
+              <RightSidebar
+                className="flex-shrink-0"
+                projectId={project.id}
+                selectedIngestionNumbers={selectedIngestionNumbers}
+                onSelectIngestion={handleSelectIngestion}
+                expandedWidth={rightSidebarWidth}
+              />
             </PanelErrorBoundary>
           )}
 
@@ -760,21 +773,28 @@ function ProjectDetailPageContent() {
           )}
           {layoutState.panelOrder[2] === 'right' && !layoutState.rightSidebarCollapsed && (
             <PanelErrorBoundary key="right-panel" panelName="Right Panel">
-              {layoutState.rightSidebarTab === 'chats' ? (
-                <ChatHistoryPanel
-                  className="flex-shrink-0"
-                  expandedWidth={rightSidebarWidth}
-                />
-              ) : (
-                <RightSidebar
-                  className="flex-shrink-0"
-                  projectId={project.id}
-                  selectedIngestionNumbers={selectedIngestionNumbers}
-                  onSelectIngestion={handleSelectIngestion}
-                  expandedWidth={rightSidebarWidth}
-                />
-              )}
+              <RightSidebar
+                className="flex-shrink-0"
+                projectId={project.id}
+                selectedIngestionNumbers={selectedIngestionNumbers}
+                onSelectIngestion={handleSelectIngestion}
+                expandedWidth={rightSidebarWidth}
+              />
             </PanelErrorBoundary>
+          )}
+
+          {/* Chat History - always on the far right, independent of panelOrder */}
+          {layoutState.rightSidebarTab === 'chats' && (
+            <>
+              <div
+                onMouseDown={handleChatHistoryResizeMouseDown}
+                className="w-1 flex-shrink-0 cursor-col-resize bg-[#1e293b] hover:bg-blue-500/50 active:bg-blue-500 transition-colors"
+              />
+              <ChatHistoryPanel
+                className="flex-shrink-0"
+                expandedWidth={chatHistoryWidth}
+              />
+            </>
           )}
         </div>
       </div>

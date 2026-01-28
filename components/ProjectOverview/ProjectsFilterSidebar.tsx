@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { Filter, Clock, Star, Archive, ChevronRight, ChevronDown } from 'lucide-react';
+import { Plus, Clock, Star, Archive, ChevronRight, ChevronDown } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import type { Project } from '../../types';
 
@@ -30,6 +30,7 @@ interface ProjectsFilterSidebarProps {
   projects: Project[];
   onDropProject?: (projectId: string, target: DropTarget) => void;
   onProjectClick?: (project: Project) => void;
+  onCreateNew?: () => void;
 }
 
 const QUICK_FILTERS: { value: QuickFilter; label: string; icon: React.ElementType; droppable?: boolean }[] = [
@@ -76,9 +77,10 @@ export function ProjectsFilterSidebar({
   projects,
   onDropProject,
   onProjectClick,
+  onCreateNew,
 }: ProjectsFilterSidebarProps) {
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['quick-recent']));
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['quick-recent', 'section-tags']));
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
   const isResizing = useRef(false);
   const startX = useRef(0);
@@ -170,12 +172,15 @@ export function ProjectsFilterSidebar({
         className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10"
       />
       <div className="pr-4 border-r border-border h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Filter size={14} />
-          Projects
-        </div>
+      {/* Create New Button */}
+      <div className="mb-5">
+        <button
+          onClick={onCreateNew}
+          className="flex items-center justify-center gap-2 w-full px-3 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+        >
+          <Plus size={16} />
+          <span>New</span>
+        </button>
       </div>
 
       {/* Category Tree */}
@@ -264,10 +269,20 @@ export function ProjectsFilterSidebar({
       {/* Tags Section */}
       {allTags.length > 0 && (
         <div className="mb-5">
-          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-2">
-            Tags
-          </h4>
-          <div className="flex flex-col gap-0.5">
+          <button
+            onClick={() => toggleExpanded('section-tags')}
+            className="flex items-center gap-2 w-full text-left mb-2"
+          >
+            {expandedCategories.has('section-tags') ? (
+              <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronRight size={12} className="shrink-0 text-muted-foreground" />
+            )}
+            <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
+              Tags
+            </span>
+          </button>
+          {expandedCategories.has('section-tags') && <div className="flex flex-col gap-0.5">
             {allTags.map((tag) => {
               const categoryKey = `tag-${tag}`;
               const isExpanded = expandedCategories.has(categoryKey);
@@ -338,7 +353,7 @@ export function ProjectsFilterSidebar({
                 </div>
               );
             })}
-          </div>
+          </div>}
         </div>
       )}
       </div>

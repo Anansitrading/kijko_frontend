@@ -28,6 +28,8 @@ export interface ChatHistoryItem {
   preview: string;
   messageCount: number;
   lastActivity: Date;
+  usedContexts?: string[];
+  usedSkills?: string[];
 }
 
 // Full chat session with all data

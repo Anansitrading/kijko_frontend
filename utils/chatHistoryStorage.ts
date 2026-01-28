@@ -255,6 +255,34 @@ export function generateChatPreview(lastMessage: string): string {
   return preview;
 }
 
+/**
+ * Extract unique @context references from all messages
+ */
+export function extractUsedContexts(messages: Array<{ content: string }>): string[] {
+  const contexts = new Set<string>();
+  for (const msg of messages) {
+    const matches = msg.content.matchAll(/@(\S+)/g);
+    for (const match of matches) {
+      contexts.add(match[1]);
+    }
+  }
+  return Array.from(contexts);
+}
+
+/**
+ * Extract unique /skill: commands from all messages
+ */
+export function extractUsedSkills(messages: Array<{ content: string }>): string[] {
+  const skills = new Set<string>();
+  for (const msg of messages) {
+    const matches = msg.content.matchAll(/\/skill:(\S+)/g);
+    for (const match of matches) {
+      skills.add(match[1]);
+    }
+  }
+  return Array.from(skills);
+}
+
 // ==========================================
 // Utility Functions
 // ==========================================
