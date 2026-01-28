@@ -32,6 +32,7 @@ interface RepoListViewProps {
   onBranchClick: (projectId: string, worktreeId: string, branchName: string) => void;
   onDuplicateWorktree?: (worktreeId: string) => void;
   onRenameWorktree?: (worktreeId: string, newName: string) => void;
+  onWorktreeNewIngestion?: (worktreeId: string) => void;
   onBranchOpen?: (worktreeId: string, branchName: string) => void;
   onBranchNewIngestion?: (worktreeId: string, branchName: string) => void;
   onBranchDetails?: (worktreeId: string, branchName: string) => void;
@@ -45,6 +46,7 @@ export function RepoListView({
   onBranchClick,
   onDuplicateWorktree,
   onRenameWorktree,
+  onWorktreeNewIngestion,
   onBranchOpen,
   onBranchNewIngestion,
   onBranchDetails,
@@ -262,6 +264,17 @@ export function RepoListView({
           >
             {ctxMenu.type === 'worktree' ? (
               <>
+                <button
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
+                  onClick={() => {
+                    onWorktreeNewIngestion?.(ctxMenu.worktreeId);
+                    setCtxMenu(null);
+                  }}
+                >
+                  <FileUp size={14} className="shrink-0 opacity-60" />
+                  New Ingestion
+                </button>
+                <div className="my-1 border-t border-border" />
                 <button
                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-slate-100 transition-colors"
                   onClick={() => {

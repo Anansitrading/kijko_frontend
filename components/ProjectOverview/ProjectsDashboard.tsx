@@ -19,6 +19,7 @@ import type { ProjectCreationForm } from '../../types/project';
 import { RepoMindmap } from './RepoMindmap';
 import { RepoListView } from './RepoListView';
 import { getWorktreesForProject } from './repoMindmapData';
+import { IngestionWizard } from '../Hypervisa/IngestionWizard';
 
 interface ProjectsDashboardProps {
   onProjectSelect: (project: Project) => void;
@@ -72,6 +73,7 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [userManagementProject, setUserManagementProject] = useState<Project | null>(null);
+  const [ingestionWorktreeId, setIngestionWorktreeId] = useState<string | null>(null);
 
   // Worktrees state – seeded from static data, mutated by context-menu actions
   const [worktreesOverrides, setWorktreesOverrides] = useState<Record<string, WorktreeWithBranches[]>>({});
@@ -159,6 +161,13 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
           }),
         };
       });
+    },
+    [],
+  );
+
+  const handleWorktreeNewIngestion = useCallback(
+    (worktreeId: string) => {
+      setIngestionWorktreeId(worktreeId);
     },
     [],
   );
@@ -354,6 +363,7 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
                   onBranchClick={(projectId) => navigate(`/project/${projectId}`)}
                   onDuplicateWorktree={(worktreeId) => handleDuplicateWorktree(selectedProject.id, worktreeId)}
                   onRenameWorktree={(worktreeId, newName) => handleRenameWorktree(selectedProject.id, worktreeId, newName)}
+                  onWorktreeNewIngestion={handleWorktreeNewIngestion}
                   onBranchOpen={() => navigate(`/project/${selectedProject.id}`)}
                   onBranchNewIngestion={() => navigate(`/project/${selectedProject.id}`)}
                   onBranchDetails={() => navigate(`/project/${selectedProject.id}`)}
@@ -367,6 +377,7 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
                   onBranchClick={(projectId) => navigate(`/project/${projectId}`)}
                   onDuplicateWorktree={(worktreeId) => handleDuplicateWorktree(selectedProject.id, worktreeId)}
                   onRenameWorktree={(worktreeId, newName) => handleRenameWorktree(selectedProject.id, worktreeId, newName)}
+                  onWorktreeNewIngestion={handleWorktreeNewIngestion}
                   onBranchOpen={() => navigate(`/project/${selectedProject.id}`)}
                   onBranchNewIngestion={() => navigate(`/project/${selectedProject.id}`)}
                   onBranchDetails={() => navigate(`/project/${selectedProject.id}`)}
@@ -441,6 +452,26 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
           isOpen={!!userManagementProject}
           onClose={() => setUserManagementProject(null)}
           project={userManagementProject}
+        />
+      )}
+
+      {/* Ingestion Wizard Modal */}
+      {selectedProject && ingestionWorktreeId && (
+        <IngestionWizard
+          isOpen={!!ingestionWorktreeId}
+          onClose={() => setIngestionWorktreeId(null)}
+          file={{
+            id: `worktree-${ingestionWorktreeId}`,
+            name: worktreesOverrides[selectedProject.id]?.find(wt => wt.id === ingestionWorktreeId)?.name
+              ?? getWorktreesForProject(selectedProject.id).find(wt => wt.id === ingestionWorktreeId)?.name
+              ?? 'New Ingestion',
+            size: '',
+          }}
+          projectName={selectedProject.name}
+          onSubmit={async (config) => {
+            console.log('Ingestion config submitted for worktree:', ingestionWorktreeId, config);
+            setIngestionWorktreeId(null);
+          }}
         />
       )}
     </div>
