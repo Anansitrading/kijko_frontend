@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Settings } from 'lucide-react';
 import { useTabNavigation } from '../../hooks/useTabNavigation';
 import { DashboardTabs } from './DashboardTabs';
 import { ProjectsTab } from './ProjectsTab';
@@ -8,7 +7,6 @@ import { SkillsTab } from './SkillsTab';
 import { UserAvatar } from './UserAvatar';
 import { UserDropdown } from './UserDropdown';
 import { SettingsModal } from '../SettingsModal';
-import { Footer } from '../Footer';
 import { NotificationBell } from '../Notifications/NotificationBell';
 import { NotificationPanel } from '../Notifications/NotificationPanel';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -135,20 +133,6 @@ export function Dashboard({ onProjectSelect }: DashboardProps) {
         initialSection={settingsInitialSection}
       />
 
-      {/* Settings Button - Bottom Left */}
-      <button
-        onClick={() => setIsSettingsOpen(true)}
-        className="fixed bottom-6 left-6 flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur-sm border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-card transition-all shadow-lg group z-50"
-      >
-        <Settings
-          size={16}
-          className="transition-transform duration-500 group-hover:rotate-90"
-        />
-        <span>Settings</span>
-      </button>
-
-      {/* Global Footer */}
-      <Footer />
     </div>
   );
 }
