@@ -32,14 +32,21 @@ const getIntegrationIcon = (iconName: string): React.ReactNode => {
 function SidebarIntegrationItem({
   integration,
   onClick,
+  isSelected,
 }: {
   integration: IntegrationCardData;
   onClick: () => void;
+  isSelected?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors group"
+      className={cn(
+        'flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors group',
+        isSelected
+          ? 'bg-primary/10 text-primary'
+          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+      )}
     >
       <span className="w-6 h-6 rounded flex items-center justify-center text-xs shrink-0 bg-muted/50 text-muted-foreground group-hover:text-foreground">
         {integration.iconUrl ? (
@@ -91,6 +98,7 @@ interface FilterSidebarProps {
   onSearchChange: (query: string) => void;
   integrations: IntegrationCardData[];
   onIntegrationClick?: (id: string) => void;
+  selectedIntegrationId?: string | null;
 }
 
 // Filter section definitions
@@ -125,6 +133,7 @@ export function FilterSidebar({
   onSearchChange,
   integrations,
   onIntegrationClick,
+  selectedIntegrationId,
 }: FilterSidebarProps) {
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
@@ -433,6 +442,7 @@ export function FilterSidebar({
                 key={integration.id}
                 integration={integration}
                 onClick={() => onIntegrationClick?.(integration.id)}
+                isSelected={selectedIntegrationId === integration.id}
               />
             ))}
             {integrations.length === 0 && (

@@ -8,3 +8,4 @@ export { DEFAULT_SIDEBAR_FILTERS } from './FilterSidebar';
 export { IntegrationCard, CreateCustomCard } from './IntegrationCard';
 export { CustomConnectorModal } from './CustomConnectorModal';
 export { EmptyState } from './EmptyState';
+export { IntegrationDetailPanel } from './IntegrationDetailPanel';

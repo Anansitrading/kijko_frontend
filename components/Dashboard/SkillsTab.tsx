@@ -31,6 +31,7 @@ export function SkillsTab() {
 
   // Selected skill and modal states
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [executeModalSkill, setExecuteModalSkill] = useState<Skill | null>(null);
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -111,17 +112,24 @@ export function SkillsTab() {
   }, [skills, selectedSkill?.id]);
 
   const handleCreateSkill = useCallback(() => {
-    setIsWizardOpen(true);
+    setSelectedSkill(null);
+    setIsCreatingNew(true);
   }, []);
 
   const handleSkillCreated = useCallback((skill: Skill) => {
     console.log('Skill created:', skill);
     refetch();
     setSelectedSkill(skill);
+    setIsCreatingNew(false);
   }, [refetch]);
+
+  const handleCancelCreate = useCallback(() => {
+    setIsCreatingNew(false);
+  }, []);
 
   const handleSelectSkill = useCallback((skill: Skill) => {
     setSelectedSkill(skill);
+    setIsCreatingNew(false);
   }, []);
 
   const handleRunSkill = useCallback((skill: Skill) => {
@@ -227,9 +235,14 @@ export function SkillsTab() {
         <div className="flex h-full">
           {/* Sidebar with Create button, Filter, and skills grouped by category */}
           <div
-            className="shrink-0 flex flex-col bg-card/30 relative"
+            className="shrink-0 flex flex-col border-r border-border bg-card/30 relative"
             style={{ width: sidebarWidth }}
           >
+            {/* Resize Handle */}
+            <div
+              onMouseDown={handleMouseDown}
+              className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10"
+            />
             {/* Create, Search & Filter buttons */}
             <div className="p-4">
               <div className="flex items-center gap-2">
@@ -306,14 +319,10 @@ export function SkillsTab() {
                 onSelectSkill={handleSelectSkill}
                 onRunSkill={handleRunSkill}
                 loading={loading}
+                isCreatingDraft={isCreatingNew}
+                onSelectDraft={() => setIsCreatingNew(true)}
               />
             </div>
-
-            {/* Resize Handle */}
-            <div
-              onMouseDown={handleMouseDown}
-              className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/50 active:bg-primary transition-colors"
-            />
           </div>
 
           {/* Main content - Skill Editor Panel */}
@@ -322,18 +331,14 @@ export function SkillsTab() {
               skill={selectedSkill}
               onSave={handleSaveSkill}
               onRun={handleRunSkill}
+              onCreated={handleSkillCreated}
+              onCancelCreate={handleCancelCreate}
+              isCreatingNew={isCreatingNew}
               className="h-full"
             />
           </div>
         </div>
       </main>
-
-      {/* Conversational Skill Builder (for new skills) */}
-      <ConversationalSkillBuilder
-        isOpen={isWizardOpen}
-        onClose={() => setIsWizardOpen(false)}
-        onCreated={handleSkillCreated}
-      />
 
       {/* Execute Skill Modal */}
       {executeModalSkill && (

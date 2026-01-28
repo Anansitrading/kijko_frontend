@@ -2,7 +2,7 @@
 // Shows skills in collapsible category sections
 
 import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight, Zap } from 'lucide-react';
+import { ChevronDown, ChevronRight, Zap, FileEdit } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import type { Skill, SkillCategory } from '../../types/skills';
 
@@ -30,6 +30,8 @@ interface SkillsCategorySidebarProps {
   onSelectSkill: (skill: Skill) => void;
   onRunSkill: (skill: Skill) => void;
   loading?: boolean;
+  isCreatingDraft?: boolean;
+  onSelectDraft?: () => void;
 }
 
 interface CategorySectionProps {
@@ -123,6 +125,8 @@ export function SkillsCategorySidebar({
   onSelectSkill,
   onRunSkill: _onRunSkill,
   loading = false,
+  isCreatingDraft = false,
+  onSelectDraft,
 }: SkillsCategorySidebarProps) {
   // Note: onRunSkill kept in props for API compatibility but not used in sidebar
   void _onRunSkill;
@@ -186,6 +190,23 @@ export function SkillsCategorySidebar({
   return (
     <aside className="w-64 shrink-0 h-full overflow-y-auto pr-4 border-r border-border">
       <div className="py-2">
+        {/* Draft/Concept item when creating new skill */}
+        {isCreatingDraft && (
+          <div className="px-2 mb-3">
+            <div
+              onClick={onSelectDraft}
+              className={cn(
+                'flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all',
+                'bg-amber-500/10 text-amber-500 border border-amber-500/30'
+              )}
+            >
+              <FileEdit size={14} className="shrink-0" />
+              <span className="flex-1 text-sm font-medium">Concept</span>
+              <span className="text-xs opacity-70">draft</span>
+            </div>
+          </div>
+        )}
+
         {/* Skills count header */}
         <div className="px-2 py-1.5 mb-2">
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -199,7 +220,7 @@ export function SkillsCategorySidebar({
             key={category}
             category={category}
             skills={skillsByCategory[category] || []}
-            selectedSkillId={selectedSkillId}
+            selectedSkillId={isCreatingDraft ? null : selectedSkillId}
             onSelectSkill={onSelectSkill}
           />
         ))}

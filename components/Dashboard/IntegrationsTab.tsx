@@ -3,7 +3,7 @@
 // Task 1_4: Integrations Tab Migration + Redesign
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, LayoutGrid, List, ChevronDown } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import {
@@ -12,6 +12,7 @@ import {
   EmptyState,
   FilterSidebar,
   DEFAULT_SIDEBAR_FILTERS,
+  IntegrationDetailPanel,
 } from './integrations';
 import type { SidebarFilters } from './integrations';
 import { WebhookList } from '../Settings/Integrations/WebhookList';
@@ -54,7 +55,6 @@ const DEFAULT_FILTERS: IntegrationsFilterState = {
 };
 
 export function IntegrationsTab() {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Active sub-tab from URL
@@ -158,6 +158,9 @@ export function IntegrationsTab() {
   const [editingConnector, setEditingConnector] = useState<CustomConnector | undefined>();
   const [isWebhookFormOpen, setIsWebhookFormOpen] = useState(false);
   const [editingWebhook, setEditingWebhook] = useState<Webhook | undefined>();
+
+  // Selected integration for detail panel
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | null>(null);
 
   // Reset filters when changing tabs
   useEffect(() => {
@@ -322,6 +325,12 @@ export function IntegrationsTab() {
     transformAppToCardData,
     transformConnectorToCardData,
   ]);
+
+  // Selected integration for detail panel
+  const selectedIntegration = useMemo(
+    () => filteredIntegrations.find((i) => i.id === selectedIntegrationId) || null,
+    [filteredIntegrations, selectedIntegrationId]
+  );
 
   // Handlers for connected apps
   const handleConnect = async (id: string) => {
@@ -562,92 +571,109 @@ export function IntegrationsTab() {
             searchQuery={filters.search}
             onSearchChange={(query) => setFilters({ ...filters, search: query })}
             integrations={filteredIntegrations}
-            onIntegrationClick={(id) => navigate(`/integration/${id}`)}
+            onIntegrationClick={(id) => setSelectedIntegrationId(id)}
+            selectedIntegrationId={selectedIntegrationId}
           />
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-        {/* Content based on active tab */}
-        {showEmptyState ? (
-          <EmptyState
-            variant={activeTab === 'my-integrations' ? 'no-integrations' : 'no-custom'}
-            onAction={() => {
-              if (activeTab === 'my-integrations') {
-                setActiveTab('all');
-              } else {
-                setIsCustomConnectorModalOpen(true);
+          {/* Content - Show either cards grid OR detail panel */}
+          {selectedIntegration ? (
+            /* Integration Detail Panel - Full width when selected */
+            <IntegrationDetailPanel
+              integration={selectedIntegration}
+              onClose={() => setSelectedIntegrationId(null)}
+              onConnect={handleConnect}
+              onDisconnect={
+                selectedIntegration.isCustom
+                  ? () => handleDeleteCustomConnector(selectedIntegration.id)
+                  : handleDisconnect
               }
-            }}
-          />
-        ) : filteredIntegrations.length === 0 && filters.search ? (
-          <EmptyState
-            variant="no-results"
-            searchQuery={filters.search}
-            onAction={() => setFilters(DEFAULT_FILTERS)}
-          />
-        ) : (
-          <div className={cn(
-            'gap-4',
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-              : 'flex flex-col'
-          )}>
-            {/* Integration Cards */}
-            {filteredIntegrations.map((integration) => (
-              <IntegrationCard
-                key={integration.id}
-                integration={integration}
-                viewMode={viewMode}
-                onConnect={handleConnect}
-                onDisconnect={
-                  integration.isCustom
-                    ? () => handleDeleteCustomConnector(integration.id)
-                    : handleDisconnect
-                }
-                onManage={handleManage}
-                onViewLogs={handleViewLogs}
-                onReconnect={handleReconnect}
-                onCardClick={(id) => navigate(`/integration/${id}`)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Webhooks Section (only in My Integrations tab) */}
-        {activeTab === 'my-integrations' && (
-          <>
-            <div className="border-t border-border pt-8 mt-8">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">Webhooks</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Receive real-time notifications when events occur in your account.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setEditingWebhook(undefined);
-                    setIsWebhookFormOpen(true);
+              onReconnect={handleReconnect}
+            />
+          ) : (
+            /* Cards Grid */
+            <div className="flex-1 min-w-0">
+              {/* Content based on active tab */}
+              {showEmptyState ? (
+                <EmptyState
+                  variant={activeTab === 'my-integrations' ? 'no-integrations' : 'no-custom'}
+                  onAction={() => {
+                    if (activeTab === 'my-integrations') {
+                      setActiveTab('all');
+                    } else {
+                      setIsCustomConnectorModalOpen(true);
+                    }
                   }}
-                  className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-muted text-secondary-foreground text-sm font-medium rounded-lg border border-border transition-colors"
-                >
-                  <Plus size={16} />
-                  Add Webhook
-                </button>
-              </div>
+                />
+              ) : filteredIntegrations.length === 0 && filters.search ? (
+                <EmptyState
+                  variant="no-results"
+                  searchQuery={filters.search}
+                  onAction={() => setFilters(DEFAULT_FILTERS)}
+                />
+              ) : (
+                <div className={cn(
+                  'gap-4',
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                    : 'flex flex-col'
+                )}>
+                  {/* Integration Cards */}
+                  {filteredIntegrations.map((integration) => (
+                    <IntegrationCard
+                      key={integration.id}
+                      integration={integration}
+                      viewMode={viewMode}
+                      onConnect={handleConnect}
+                      onDisconnect={
+                        integration.isCustom
+                          ? () => handleDeleteCustomConnector(integration.id)
+                          : handleDisconnect
+                      }
+                      onManage={handleManage}
+                      onViewLogs={handleViewLogs}
+                      onReconnect={handleReconnect}
+                      onCardClick={(id) => setSelectedIntegrationId(id)}
+                    />
+                  ))}
+                </div>
+              )}
 
-              <WebhookList
-                webhooks={webhooks}
-                onEdit={handleEditWebhook}
-                onDelete={handleDeleteWebhook}
-                onToggleStatus={handleToggleWebhookStatus}
-                onTest={handleTestWebhook}
-                onViewLogs={handleViewWebhookLogs}
-              />
+              {/* Webhooks Section (only in My Integrations tab) */}
+              {activeTab === 'my-integrations' && (
+                <>
+                  <div className="border-t border-border pt-8 mt-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-lg font-semibold text-foreground">Webhooks</h2>
+                        <p className="text-sm text-muted-foreground">
+                          Receive real-time notifications when events occur in your account.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setEditingWebhook(undefined);
+                          setIsWebhookFormOpen(true);
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-muted text-secondary-foreground text-sm font-medium rounded-lg border border-border transition-colors"
+                      >
+                        <Plus size={16} />
+                        Add Webhook
+                      </button>
+                    </div>
+
+                    <WebhookList
+                      webhooks={webhooks}
+                      onEdit={handleEditWebhook}
+                      onDelete={handleDeleteWebhook}
+                      onToggleStatus={handleToggleWebhookStatus}
+                      onTest={handleTestWebhook}
+                      onViewLogs={handleViewWebhookLogs}
+                    />
+                  </div>
+                </>
+              )}
             </div>
-          </>
-        )}
-          </div>
+          )}
         </div>
       </main>
 
