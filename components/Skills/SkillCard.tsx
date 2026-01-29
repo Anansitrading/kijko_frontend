@@ -3,7 +3,7 @@
 // Task 2_4: Skill Detail & Edit - Added onView for detail modal
 
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pencil, Trash2, MoreVertical, Zap, Eye } from 'lucide-react';
+import { Play, Pencil, Trash2, MoreVertical, Zap, Eye, Star } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { CATEGORY_COLORS } from '../../hooks/useSkills';
 import type { Skill } from '../../types/skills';
@@ -101,6 +101,14 @@ export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = fa
             <Play size={12} />
             <span>{formatExecutionCount(skill.executionCount)} runs</span>
           </div>
+
+          {/* Star Count */}
+          {(skill.starCount ?? 0) > 0 && (
+            <div className="flex items-center gap-1 text-xs shrink-0">
+              <Star size={12} className="text-amber-400 fill-amber-400" />
+              <span className="text-muted-foreground tabular-nums">{skill.starCount}</span>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center gap-1 shrink-0">
@@ -288,10 +296,21 @@ export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = fa
           {skill.category}
         </span>
 
-        {/* Execution Count */}
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Play size={12} />
-          <span>{formatExecutionCount(skill.executionCount)} runs</span>
+        {/* Stats */}
+        <div className="flex items-center gap-3">
+          {/* Star Count */}
+          {(skill.starCount ?? 0) > 0 && (
+            <div className="flex items-center gap-1 text-xs">
+              <Star size={12} className="text-amber-400 fill-amber-400" />
+              <span className="text-muted-foreground tabular-nums">{skill.starCount}</span>
+            </div>
+          )}
+
+          {/* Execution Count */}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Play size={12} />
+            <span>{formatExecutionCount(skill.executionCount)} runs</span>
+          </div>
         </div>
       </div>
 

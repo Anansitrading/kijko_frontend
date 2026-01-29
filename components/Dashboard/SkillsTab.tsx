@@ -2,17 +2,25 @@
 // Task 2_2: Skills Library UI
 // Task 2_3: Create Skill Form
 // Task 3_5: Analytics & Polish - Added onboarding
-// Layout Redesign: Skills shown in sidebar grouped by category
-// New: Inline skill editor with chat interface
+// Layout Redesign: Full-width header like Integrations page
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Plus, Filter } from 'lucide-react';
+import { Plus, Search, LayoutGrid, List, ChevronDown, X } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { SkillsCategorySidebar } from '../Skills/SkillsCategorySidebar';
 import { SkillEditorPanel } from '../Skills/SkillEditorPanel';
 import { ExecuteSkillModal } from '../Skills/ExecuteSkillModal';
 import { useSkills } from '../../hooks/useSkills';
 import type { Skill } from '../../types/skills';
+
+type SkillSortBy = 'popular' | 'name' | 'recent';
+
+// Sort options for skills browse view
+const SORT_OPTIONS: { id: SkillSortBy; label: string }[] = [
+  { id: 'popular', label: 'Popular' },
+  { id: 'name', label: 'Name' },
+  { id: 'recent', label: 'Most recent' },
+];
 
 export function SkillsTab() {
   const { skills, loading, refetch } = useSkills();
@@ -21,7 +29,12 @@ export function SkillsTab() {
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [executeModalSkill, setExecuteModalSkill] = useState<Skill | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
+
+  // Browse view state (lifted from SkillEditorPanel)
+  const [browseSearch, setBrowseSearch] = useState('');
+  const [browseViewMode, setBrowseViewMode] = useState<'grid' | 'list'>('grid');
+  const [browseSortBy, setBrowseSortBy] = useState<SkillSortBy>('popular');
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
 
   // Resizable sidebar
   const [sidebarWidth, setSidebarWidth] = useState(288); // 72 * 4 = 288px (w-72)
@@ -128,6 +141,12 @@ export function SkillsTab() {
     setIsCreatingNew(false);
   }, []);
 
+  // Current sort label
+  const currentSortLabel = SORT_OPTIONS.find((o) => o.id === browseSortBy)?.label || 'Sort';
+
+  // Show header controls only when browsing (no skill selected and not creating)
+  const showBrowseHeader = !selectedSkill && !isCreatingNew;
+
   // Render main skills view (All / My Skills)
   return (
     <div
@@ -136,10 +155,125 @@ export function SkillsTab() {
       aria-labelledby="tab-skills"
       className="flex flex-col h-full"
     >
+      {/* Full-width Header Bar */}
+      <div className="shrink-0 border-b border-border bg-card/30 backdrop-blur-xl">
+        <div className="flex items-center justify-between px-6 py-4">
+          {/* Left side: Title and New button */}
+          <div className="flex items-center gap-4">
+            <h1 className="text-lg font-semibold text-foreground">All Skills</h1>
+            <button
+              onClick={handleCreateSkill}
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+            >
+              <Plus size={18} />
+              <span>New</span>
+            </button>
+          </div>
+
+          {/* Right side: Search and View Controls (only when browsing) */}
+          {showBrowseHeader && (
+            <div className="flex items-center gap-3">
+              {/* Search Input */}
+              <div className="relative flex items-center">
+                <Search size={16} className="absolute left-3 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  value={browseSearch}
+                  onChange={(e) => setBrowseSearch(e.target.value)}
+                  placeholder="Search skills..."
+                  className="w-64 pl-9 pr-8 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+                />
+                {browseSearch && (
+                  <button
+                    onClick={() => setBrowseSearch('')}
+                    className="absolute right-2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* View Toggle */}
+              <div className="flex items-center bg-muted/50 border border-border rounded-lg p-1">
+                <button
+                  onClick={() => setBrowseViewMode('grid')}
+                  className={cn(
+                    'p-1.5 rounded-md transition-all',
+                    browseViewMode === 'grid'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  title="Grid view"
+                >
+                  <LayoutGrid size={18} />
+                </button>
+                <button
+                  onClick={() => setBrowseViewMode('list')}
+                  className={cn(
+                    'p-1.5 rounded-md transition-all',
+                    browseViewMode === 'list'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  title="List view"
+                >
+                  <List size={18} />
+                </button>
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span>{currentSortLabel}</span>
+                  <ChevronDown
+                    size={16}
+                    className={cn(
+                      'transition-transform',
+                      isSortDropdownOpen && 'rotate-180'
+                    )}
+                  />
+                </button>
+
+                {isSortDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsSortDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1">
+                      {SORT_OPTIONS.map((option) => (
+                        <button
+                          key={option.id}
+                          onClick={() => {
+                            setBrowseSortBy(option.id);
+                            setIsSortDropdownOpen(false);
+                          }}
+                          className={cn(
+                            'w-full px-4 py-2 text-sm text-left transition-colors',
+                            browseSortBy === option.id
+                              ? 'bg-primary/10 text-primary'
+                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden">
         <div className="flex h-full">
-          {/* Sidebar with Create button, Filter, and skills grouped by category */}
+          {/* Sidebar with skills grouped by category */}
           <div
             className="shrink-0 flex flex-col border-r border-border bg-card/30 relative"
             style={{ width: sidebarWidth }}
@@ -149,47 +283,6 @@ export function SkillsTab() {
               onMouseDown={handleMouseDown}
               className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10"
             />
-            {/* Create & Filter buttons */}
-            <div className="p-4">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCreateSkill}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
-                >
-                  <Plus size={18} />
-                  <span>New</span>
-                </button>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={cn(
-                    'p-2 rounded-lg border transition-colors',
-                    showFilters
-                      ? 'bg-primary/10 border-primary/30 text-primary'
-                      : 'bg-muted/50 border-border text-muted-foreground hover:text-foreground hover:bg-muted'
-                  )}
-                  title="Toggle filters"
-                >
-                  <Filter size={18} />
-                </button>
-              </div>
-
-              {/* Filter Panel (collapsible) */}
-              {showFilters && (
-                <div className="mt-3 p-3 bg-muted/30 rounded-lg border border-border">
-                  <p className="text-xs text-muted-foreground mb-2">Filter by category</p>
-                  <div className="flex flex-wrap gap-1">
-                    {['Analysis', 'Generation', 'Transformation', 'Communication', 'Automation'].map((cat) => (
-                      <button
-                        key={cat}
-                        className="px-2 py-1 text-xs rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* Skills List */}
             <div className="flex-1 overflow-y-auto p-2">
@@ -218,6 +311,9 @@ export function SkillsTab() {
               onSelectSkill={handleSelectSkill}
               onClose={handleCloseSkill}
               isCreatingNew={isCreatingNew}
+              browseSearch={browseSearch}
+              browseViewMode={browseViewMode}
+              browseSortBy={browseSortBy}
               className="h-full"
             />
           </div>

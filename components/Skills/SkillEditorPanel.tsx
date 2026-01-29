@@ -3,7 +3,7 @@
 // Used for both viewing/editing existing skills and creating new ones
 
 import { useEffect, useCallback, useState, useMemo } from 'react';
-import { Zap, Save, Loader2, Play, RotateCcw, Code, Workflow, X, FileEdit, Star, Search, ChevronLeft, LayoutGrid, List, ChevronDown } from 'lucide-react';
+import { Zap, Save, Loader2, Play, RotateCcw, Code, Workflow, X, FileEdit, Star, ChevronLeft } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useSkillBuilder } from '../../hooks/useSkillBuilder';
 import { useSkills } from '../../hooks/useSkills';
@@ -27,6 +27,8 @@ const SORT_OPTIONS: { id: SkillSortBy; label: string }[] = [
   { id: 'recent', label: 'Most recent' },
 ];
 
+type SkillViewMode = 'grid' | 'list';
+
 interface SkillEditorPanelProps {
   skill: Skill | null;
   onSave?: (skill: Skill) => void;
@@ -38,6 +40,10 @@ interface SkillEditorPanelProps {
   onSelectSkill?: (skill: Skill) => void;
   onClose?: () => void;
   isCreatingNew?: boolean;
+  // Browse view props (controlled by parent)
+  browseSearch?: string;
+  browseViewMode?: SkillViewMode;
+  browseSortBy?: SkillSortBy;
   className?: string;
 }
 
@@ -67,14 +73,13 @@ export function SkillEditorPanel({
   onSelectSkill,
   onClose,
   isCreatingNew = false,
+  browseSearch = '',
+  browseViewMode = 'grid',
+  browseSortBy = 'popular',
   className,
 }: SkillEditorPanelProps) {
   const [activeTab, setActiveTab] = useState<PreviewTab>('code');
   const [hasStarred, setHasStarred] = useState(false);
-  const [browseSearch, setBrowseSearch] = useState('');
-  const [browseViewMode, setBrowseViewMode] = useState<'grid' | 'list'>('grid');
-  const [browseSortBy, setBrowseSortBy] = useState<SkillSortBy>('popular');
-  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const { skills: allSkills, loading: skillsLoading, error: skillsError, refetch: refetchSkills } = useSkills();
   const {
     state,
@@ -121,9 +126,6 @@ export function SkillEditorPanel({
 
     return result;
   }, [allSkills, browseSearch, browseSortBy]);
-
-  // Current sort label
-  const currentSortLabel = SORT_OPTIONS.find((o) => o.id === browseSortBy)?.label || 'Sort';
 
   // Load skill into editor when skill changes or when entering create mode
   useEffect(() => {
@@ -223,110 +225,7 @@ export function SkillEditorPanel({
   if (!skill && !isCreatingNew) {
     return (
       <div className={cn('flex flex-col h-full', className)}>
-        {/* Header */}
-        <div className="shrink-0 px-6 py-4 border-b border-border bg-card/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">
-                All Skills
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {filteredBrowseSkills.length} {filteredBrowseSkills.length === 1 ? 'skill' : 'skills'} available
-                {browseSearch && ` matching "${browseSearch}"`}
-              </p>
-            </div>
-
-            {/* Search and View Controls */}
-            <div className="flex items-center gap-3">
-              {/* Search */}
-              <div className="relative flex items-center">
-                <Search size={16} className="absolute left-3 text-muted-foreground pointer-events-none" />
-                <input
-                  type="text"
-                  value={browseSearch}
-                  onChange={(e) => setBrowseSearch(e.target.value)}
-                  placeholder="Search skills..."
-                  className="pl-9 pr-4 py-2 w-64 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
-                />
-              </div>
-
-              {/* View Toggle */}
-              <div className="flex items-center bg-muted/50 border border-border rounded-lg p-1">
-                <button
-                  onClick={() => setBrowseViewMode('grid')}
-                  className={cn(
-                    'p-1.5 rounded-md transition-all',
-                    browseViewMode === 'grid'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                  title="Grid view"
-                >
-                  <LayoutGrid size={18} />
-                </button>
-                <button
-                  onClick={() => setBrowseViewMode('list')}
-                  className={cn(
-                    'p-1.5 rounded-md transition-all',
-                    browseViewMode === 'list'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                  title="List view"
-                >
-                  <List size={18} />
-                </button>
-              </div>
-
-              {/* Sort Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                  className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <span>{currentSortLabel}</span>
-                  <ChevronDown
-                    size={16}
-                    className={cn(
-                      'transition-transform',
-                      isSortDropdownOpen && 'rotate-180'
-                    )}
-                  />
-                </button>
-
-                {isSortDropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setIsSortDropdownOpen(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1">
-                      {SORT_OPTIONS.map((option) => (
-                        <button
-                          key={option.id}
-                          onClick={() => {
-                            setBrowseSortBy(option.id);
-                            setIsSortDropdownOpen(false);
-                          }}
-                          className={cn(
-                            'w-full px-4 py-2 text-sm text-left transition-colors',
-                            browseSortBy === option.id
-                              ? 'bg-primary/10 text-primary'
-                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                          )}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Skills Grid */}
+        {/* Skills Grid - Header is now in parent component */}
         <div className="flex-1 overflow-y-auto p-6">
           <SkillsGrid
             skills={filteredBrowseSkills}
