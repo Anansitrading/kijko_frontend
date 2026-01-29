@@ -1,9 +1,6 @@
 import {
   Plus,
-  Code2,
   ArrowRight,
-  Database,
-  Laptop,
 } from 'lucide-react';
 
 interface ProjectsOnboardingCTAProps {
@@ -26,20 +23,36 @@ export function ProjectsOnboardingCTA({ onCreateProject }: ProjectsOnboardingCTA
 
       {/* Flow Diagram */}
       <div className="flex flex-col items-center w-full max-w-4xl">
-        {/* Ingest your codebase */}
-        <div className="w-96 p-5 bg-card border border-border rounded-xl">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shrink-0">
-              <Database size={20} className="text-white" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground mb-1">
-                Ingest your codebase
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Give your agent full oversight of your codebase and documentation. Build an episodic memory system with a knowledge graph that learns and evolves.
-              </p>
-            </div>
+        {/* Top Row: Ingest + Skills + Integrations */}
+        <div className="flex gap-4 w-full items-stretch">
+          {/* Ingest your codebase - Takes more space */}
+          <div className="flex-1 p-5 bg-card border border-border rounded-xl">
+            <h3 className="text-sm font-semibold text-foreground mb-1">
+              Ingest your codebase
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Give your agent full oversight of your codebase and documentation with a Hypervisa ingestion. Build an episodic memory system with a knowledge graph that learns and evolves and save tokens.
+            </p>
+          </div>
+
+          {/* Integrations */}
+          <div className="w-52 p-5 bg-card border border-border rounded-xl">
+            <h3 className="text-sm font-semibold text-foreground mb-1">
+              Integrations
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Connect to your favorite tools and services.
+            </p>
+          </div>
+
+          {/* Skills */}
+          <div className="w-52 p-5 bg-card border border-border rounded-xl">
+            <h3 className="text-sm font-semibold text-foreground mb-1">
+              Skills
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Search, create and install your favorite skills quickly in our skills library.
+            </p>
           </div>
         </div>
 
@@ -53,42 +66,28 @@ export function ProjectsOnboardingCTA({ onCreateProject }: ProjectsOnboardingCTA
         <div className="flex gap-6 w-full justify-center">
           {/* Option 1: Work in your own IDE */}
           <div className="w-64 p-5 bg-card border-2 border-green-500/40 rounded-xl hover:border-green-500/70 transition-colors">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shrink-0">
-                <Laptop size={20} className="text-white" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-1">
-                  Work anywhere
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-                  One connection to VS Code, Cursor, IntelliJ, or Windsurf — your full setup moves with you.
-                </p>
-                <span className="text-xs text-green-400 font-semibold">
-                  Switch IDEs, keep everything
-                </span>
-              </div>
-            </div>
+            <h3 className="text-sm font-semibold text-foreground mb-1">
+              Work anywhere
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-2">
+              One connection to VS Code, Cursor, IntelliJ, or Windsurf — your full setup moves with you.
+            </p>
+            <span className="text-xs text-green-400 font-semibold">
+              Switch IDEs, keep everything
+            </span>
           </div>
 
           {/* Option 2: Kijko Editor */}
           <div className="w-64 p-5 bg-card border-2 border-orange-500/40 rounded-xl hover:border-orange-500/70 transition-colors">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shrink-0">
-                <Code2 size={20} className="text-white" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-1">
-                  AI-Powered Editor
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-                  Work directly in Kijko's intelligent editor with full context awareness.
-                </p>
-                <span className="text-xs text-orange-400 font-semibold">
-                  Stay in Kijko
-                </span>
-              </div>
-            </div>
+            <h3 className="text-sm font-semibold text-foreground mb-1">
+              AI-Powered Editor
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-2">
+              Work directly in Kijko's intelligent editor with full context awareness.
+            </p>
+            <span className="text-xs text-orange-400 font-semibold">
+              Stay in Kijko
+            </span>
           </div>
         </div>
 
