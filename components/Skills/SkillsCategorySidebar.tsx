@@ -1,7 +1,8 @@
 // SkillsCategorySidebar Component - Sidebar with skills list and category filter
 // Shows flat list of skills with category filtering via dropdown
 
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Zap, FileEdit, Plus, Filter, Check, X } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import type { Skill, SkillCategory } from '../../types/skills';
@@ -84,12 +85,30 @@ export function SkillsCategorySidebar({
   // Filter state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<SkillCategory[]>([]);
-  const filterRef = useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Calculate dropdown position when opening
+  const openFilter = useCallback(() => {
+    if (filterButtonRef.current) {
+      const rect = filterButtonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 8,
+        left: rect.left,
+      });
+    }
+    setIsFilterOpen(true);
+  }, []);
 
   // Close filter dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        filterButtonRef.current && !filterButtonRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
         setIsFilterOpen(false);
       }
     };
@@ -169,9 +188,10 @@ export function SkillsCategorySidebar({
               <Plus size={16} />
               <span>New</span>
             </button>
-            <div className="relative" ref={filterRef}>
+            <div className="relative">
               <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                ref={filterButtonRef}
+                onClick={() => isFilterOpen ? setIsFilterOpen(false) : openFilter()}
                 className={cn(
                   'flex items-center justify-center p-2 border rounded-lg transition-colors',
                   hasActiveFilters
@@ -188,9 +208,13 @@ export function SkillsCategorySidebar({
                 )}
               </button>
 
-              {/* Filter Dropdown */}
-              {isFilterOpen && (
-                <div className="absolute left-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-xl z-50 py-2">
+              {/* Filter Dropdown - rendered via portal to escape overflow */}
+              {isFilterOpen && createPortal(
+                <div
+                  ref={dropdownRef}
+                  className="fixed w-56 bg-card border border-border rounded-lg shadow-xl z-[100] py-2"
+                  style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
+                >
                   <div className="px-3 py-2 border-b border-border flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">Filter by Category</span>
                     {hasActiveFilters && (
@@ -222,7 +246,8 @@ export function SkillsCategorySidebar({
                       </button>
                     ))}
                   </div>
-                </div>
+                </div>,
+                document.body
               )}
             </div>
           </div>
