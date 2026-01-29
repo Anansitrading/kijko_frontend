@@ -444,6 +444,7 @@ export function SkillsTab() {
                 onSelectDraft={() => setIsCreatingNew(true)}
                 onCreateNew={handleCreateSkill}
                 selectedCategories={selectedCategories}
+                search={browseSearch}
               />
             </div>
           </div>

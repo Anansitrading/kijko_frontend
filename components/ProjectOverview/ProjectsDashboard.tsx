@@ -664,6 +664,7 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
                   onAddWorktree={() => handleAddWorktree(selectedProject.id)}
                   onDeleteWorktree={(worktreeId) => handleDeleteWorktree(selectedProject.id, worktreeId)}
                   onBranchHover={handleBranchHover}
+                  onRenameProject={(newName) => updateProject(selectedProject.id, { name: newName })}
                 />
               ) : (
                 <RepoListView
@@ -736,6 +737,7 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
               <BranchDetailsPanel
                 branchName={displayedBranch.branchName}
                 worktreeId={displayedBranch.worktreeId}
+                onNewIngestion={openIngestionModalEmpty}
               />
             )}
           </div>

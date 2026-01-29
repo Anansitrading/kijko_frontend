@@ -58,6 +58,7 @@ interface BranchDetailsPanelProps {
   branchName: string;
   worktreeId: string;
   onClose?: () => void;
+  onNewIngestion?: () => void;
 }
 
 // Item type icon component
@@ -211,6 +212,7 @@ export function BranchDetailsPanel({
   branchName,
   worktreeId: _worktreeId,
   onClose: _onClose,
+  onNewIngestion,
 }: BranchDetailsPanelProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('hypervisa');
   const [searchQuery, setSearchQuery] = useState('');
@@ -335,6 +337,7 @@ export function BranchDetailsPanel({
               <button
                 className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-lg transition-all shadow-lg shadow-blue-600/20"
                 title="New Ingestion"
+                onClick={onNewIngestion}
               >
                 <Plus size={14} />
                 <span>New Ingestion</span>
@@ -348,9 +351,19 @@ export function BranchDetailsPanel({
       <div className="flex-1 overflow-y-auto px-1.5">
         {viewMode === 'hypervisa' ? (
           filteredIngestions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 text-center">
-              <Database size={24} className="text-slate-600 mb-3" />
-              <p className="text-sm text-slate-500">No ingestions found</p>
+            <div className="flex flex-col items-center justify-center h-48 text-center px-4">
+              <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center mb-4">
+                <Database size={24} className="text-slate-500" />
+              </div>
+              <p className="text-sm font-medium text-slate-400 mb-1">No ingestions found</p>
+              <p className="text-xs text-slate-500 mb-4">Add context to your project by creating an ingestion</p>
+              <button
+                onClick={onNewIngestion}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-lg transition-all shadow-lg shadow-blue-600/20"
+              >
+                <Plus size={14} />
+                <span>Start Ingestion</span>
+              </button>
             </div>
           ) : (
             <HypervisaListView items={filteredIngestions} />

@@ -22,12 +22,32 @@ import {
   Slack,
   HardDrive,
   Network,
+  Activity,
+  BarChart3,
 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from 'recharts';
 import { cn } from '../../../utils/cn';
 import { INTEGRATION_APPS } from '../../../types/settings';
 import type { IntegrationCardData } from '../../../types/settings';
 
 // ─── Content Types ───────────────────────────────────────────────
+
+interface PerformanceToolRow {
+  tool: string;
+  calls: number;
+  latency: string;
+  uptime: string;
+}
 
 interface IntegrationDetailContent {
   heroSubheader: string;
@@ -39,6 +59,15 @@ interface IntegrationDetailContent {
   };
   benefits: { title: string; description: string }[];
   steps: { title: string; description: string }[];
+  performance?: {
+    tools: PerformanceToolRow[];
+    latencyData: { date: string; latency: number }[];
+    uptimeData: { date: string; uptime: number }[];
+  };
+  usage?: {
+    topClients: { name: string; sessions: number }[];
+    dailySessions: { date: string; sessions: number }[];
+  };
   requirements: {
     items: string[];
     security: string;
@@ -88,6 +117,56 @@ const INTEGRATION_CONTENT: Record<string, IntegrationDetailContent> = {
       ],
       security:
         'Kijko only requests the minimum required access permissions. Your files are never stored on Kijko servers.',
+    },
+    performance: {
+      tools: [
+        { tool: 'list_tasks', calls: 805, latency: '1.6s', uptime: '81.6%' },
+        { tool: 'list_task_lists', calls: 200, latency: '1.5s', uptime: '84.0%' },
+        { tool: 'batch_get', calls: 181, latency: '2.9s', uptime: '61.9%' },
+        { tool: 'batch_update', calls: 155, latency: '2.9s', uptime: '78.7%' },
+        { tool: 'lookup_spreadsheet...', calls: 128, latency: '2.7s', uptime: '71.1%' },
+        { tool: 'download_file', calls: 112, latency: '3.0s', uptime: '70.5%' },
+        { tool: 'insert_task', calls: 80, latency: '2.0s', uptime: '78.7%' },
+        { tool: 'find_file', calls: 74, latency: '1.6s', uptime: '68.9%' },
+        { tool: 'fetch_emails', calls: 71, latency: '2.0s', uptime: '46.5%' },
+      ],
+      latencyData: [
+        { date: 'Jan 22', latency: 1.9 },
+        { date: 'Jan 23', latency: 1.7 },
+        { date: 'Jan 24', latency: 1.5 },
+        { date: 'Jan 25', latency: 1.3 },
+        { date: 'Jan 26', latency: 2.6 },
+        { date: 'Jan 28', latency: 1.9 },
+        { date: 'Jan 29', latency: 1.9 },
+      ],
+      uptimeData: [
+        { date: 'Jan 22', uptime: 99.1 },
+        { date: 'Jan 23', uptime: 99.5 },
+        { date: 'Jan 24', uptime: 98.8 },
+        { date: 'Jan 25', uptime: 99.9 },
+        { date: 'Jan 26', uptime: 99.7 },
+        { date: 'Jan 28', uptime: 99.2 },
+        { date: 'Jan 29', uptime: 99.6 },
+      ],
+    },
+    usage: {
+      topClients: [
+        { name: 'Claude.ai', sessions: 1420 },
+        { name: 'Claude Code', sessions: 781 },
+        { name: 'Cursor', sessions: 109 },
+        { name: 'Smithery', sessions: 76 },
+        { name: 'MCP Remote Test', sessions: 68 },
+      ],
+      dailySessions: [
+        { date: 'Jan 22', sessions: 210 },
+        { date: 'Jan 23', sessions: 320 },
+        { date: 'Jan 24', sessions: 480 },
+        { date: 'Jan 25', sessions: 290 },
+        { date: 'Jan 26', sessions: 250 },
+        { date: 'Jan 27', sessions: 310 },
+        { date: 'Jan 28', sessions: 890 },
+        { date: 'Jan 29', sessions: 280 },
+      ],
     },
     faq: [
       {
@@ -161,6 +240,50 @@ function getIntegrationIcon(iconName: string, className = 'w-8 h-8') {
 // ─── Benefit Icon Map ────────────────────────────────────────────
 
 const BENEFIT_ICONS = [FolderSync, Clock, Search, Shield, Zap];
+
+// ─── Custom Chart Tooltip ────────────────────────────────────────
+
+function ChartTooltip({ active, payload, label, suffix }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-xl text-xs">
+      <p className="text-muted-foreground mb-0.5">{label}</p>
+      <p className="text-foreground font-medium">
+        {payload[0].value}
+        {suffix}
+      </p>
+    </div>
+  );
+}
+
+// ─── Performance Tab Toggle ──────────────────────────────────────
+
+function PerformanceTabs({
+  active,
+  onChange,
+}: {
+  active: 'latency' | 'uptime';
+  onChange: (tab: 'latency' | 'uptime') => void;
+}) {
+  return (
+    <div className="flex items-center gap-1 p-0.5 bg-muted/50 rounded-md w-fit">
+      {(['latency', 'uptime'] as const).map((tab) => (
+        <button
+          key={tab}
+          onClick={() => onChange(tab)}
+          className={cn(
+            'px-3 py-1 text-xs font-medium rounded transition-all capitalize',
+            active === tab
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          {tab === 'latency' ? 'Latency' : 'Uptime'}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // ─── FAQ Accordion Item ──────────────────────────────────────────
 
@@ -284,6 +407,7 @@ export function IntegrationDetailPanel({
 }: IntegrationDetailPanelProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  const [perfTab, setPerfTab] = useState<'latency' | 'uptime'>('latency');
 
   if (!integration) return null;
 
@@ -497,6 +621,205 @@ export function IntegrationDetailPanel({
               </div>
             </div>
           </div>
+
+          {/* Performance */}
+          {content.performance && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Activity size={16} className="text-primary" />
+                <h3 className="text-base font-semibold text-foreground">Performance</h3>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Tools Table */}
+                <div className="bg-card/50 border border-border rounded-xl p-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs text-muted-foreground uppercase tracking-wider">
+                        <th className="text-left pb-2 font-medium">Tool</th>
+                        <th className="text-right pb-2 font-medium">Calls</th>
+                        <th className="text-right pb-2 font-medium">Latency</th>
+                        <th className="text-right pb-2 font-medium">Uptime</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {content.performance.tools.map((row) => (
+                        <tr key={row.tool} className="hover:bg-muted/30 transition-colors">
+                          <td className="py-2 text-primary font-medium text-xs">{row.tool}</td>
+                          <td className="py-2 text-right text-foreground tabular-nums text-xs">
+                            {row.calls.toLocaleString()}
+                          </td>
+                          <td className="py-2 text-right text-foreground tabular-nums text-xs">
+                            {row.latency}
+                          </td>
+                          <td className="py-2 text-right text-foreground tabular-nums text-xs">
+                            {row.uptime}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t border-border text-xs text-muted-foreground">
+                        <td className="pt-2 font-semibold text-foreground">
+                          {content.performance.tools.reduce((sum, t) => sum + t.calls, 0).toLocaleString()}
+                        </td>
+                        <td className="pt-2 text-right font-semibold text-foreground tabular-nums">
+                          {(content.performance.tools.reduce((sum, t) => sum + parseFloat(t.latency), 0) / content.performance.tools.length).toFixed(1)}s
+                        </td>
+                        <td className="pt-2 text-right tabular-nums">
+                          {(content.performance.tools.reduce((sum, t) => sum + parseFloat(t.uptime), 0) / content.performance.tools.length).toFixed(1)}%
+                        </td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* Latency / Uptime Chart */}
+                <div className="bg-card/50 border border-border rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <PerformanceTabs active={perfTab} onChange={setPerfTab} />
+                    <span className="text-xs text-muted-foreground">{content.performance.tools[0]?.tool}</span>
+                  </div>
+                  <div className="h-44">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={
+                          perfTab === 'latency'
+                            ? content.performance.latencyData
+                            : content.performance.uptimeData
+                        }
+                      >
+                        <defs>
+                          <linearGradient id="perfGradientPanel" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                          axisLine={false}
+                          tickLine={false}
+                          domain={perfTab === 'uptime' ? [97, 100] : ['auto', 'auto']}
+                          tickFormatter={(v: number) =>
+                            perfTab === 'uptime' ? `${v}%` : `${v}s`
+                          }
+                          width={40}
+                        />
+                        <Tooltip
+                          content={
+                            <ChartTooltip suffix={perfTab === 'uptime' ? '%' : 's'} />
+                          }
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey={perfTab}
+                          stroke="#f97316"
+                          strokeWidth={2}
+                          fill="url(#perfGradientPanel)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Usage */}
+          {content.usage && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 size={16} className="text-primary" />
+                <h3 className="text-base font-semibold text-foreground">Usage</h3>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Top Clients */}
+                <div className="bg-card/50 border border-border rounded-xl p-4">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">Top Clients</h4>
+                  <div className="space-y-2.5">
+                    {content.usage.topClients.map((client, i) => {
+                      const maxSessions = Math.max(...content.usage!.topClients.map((c) => c.sessions));
+                      return (
+                        <div key={client.name} className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground w-4 tabular-nums">
+                            {i + 1}.
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium text-foreground truncate">
+                                {client.name}
+                              </span>
+                              <span className="text-xs text-muted-foreground tabular-nums ml-2">
+                                {client.sessions.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="h-1 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-primary rounded-full transition-all"
+                                style={{
+                                  width: `${(client.sessions / maxSessions) * 100}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-border flex justify-between">
+                    <span className="text-xs font-medium text-foreground">Total</span>
+                    <span className="text-xs font-semibold text-foreground tabular-nums">
+                      {content.usage.topClients.reduce((sum, c) => sum + c.sessions, 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Daily Sessions Chart */}
+                <div className="bg-card/50 border border-border rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-foreground">Daily Sessions</h4>
+                  </div>
+                  <div className="h-44">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={content.usage.dailySessions}>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="hsl(var(--border))"
+                          vertical={false}
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                          axisLine={{ stroke: 'hsl(var(--border))' }}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={35}
+                        />
+                        <Tooltip content={<ChartTooltip suffix="" />} />
+                        <Bar
+                          dataKey="sessions"
+                          fill="#f97316"
+                          radius={[3, 3, 0, 0]}
+                          maxBarSize={32}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Requirements & Permissions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

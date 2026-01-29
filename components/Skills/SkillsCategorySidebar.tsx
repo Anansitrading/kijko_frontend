@@ -17,6 +17,8 @@ interface SkillsCategorySidebarProps {
   onCreateNew?: () => void;
   // Category filter state (controlled by parent)
   selectedCategories?: SkillCategory[];
+  // Search filter (controlled by parent)
+  search?: string;
 }
 
 interface SkillItemProps {
@@ -61,11 +63,12 @@ export function SkillsCategorySidebar({
   onSelectDraft,
   onCreateNew,
   selectedCategories = [],
+  search = '',
 }: SkillsCategorySidebarProps) {
   // Note: onRunSkill kept in props for API compatibility but not used in sidebar
   void _onRunSkill;
 
-  const hasActiveFilters = selectedCategories.length > 0;
+  const hasActiveFilters = selectedCategories.length > 0 || search.trim().length > 0;
 
   // Filter and sort skills
   const filteredSkills = useMemo(() => {
@@ -76,9 +79,19 @@ export function SkillsCategorySidebar({
       result = result.filter((skill) => selectedCategories.includes(skill.category));
     }
 
+    // Filter by search term
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      result = result.filter(
+        (skill) =>
+          skill.name.toLowerCase().includes(searchLower) ||
+          skill.description?.toLowerCase().includes(searchLower)
+      );
+    }
+
     // Sort by star count (most starred first)
     return [...result].sort((a, b) => (b.starCount ?? 0) - (a.starCount ?? 0));
-  }, [skills, selectedCategories]);
+  }, [skills, selectedCategories, search]);
 
   // Loading state
   if (loading) {
@@ -161,7 +174,7 @@ export function SkillsCategorySidebar({
           ))}
           {filteredSkills.length === 0 && hasActiveFilters && (
             <p className="text-sm text-muted-foreground text-center py-4">
-              No skills match filter
+              No skills match {search.trim() ? `"${search}"` : 'filter'}
             </p>
           )}
         </div>

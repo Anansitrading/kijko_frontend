@@ -85,17 +85,21 @@ function computeLayout(worktrees: WorktreeWithBranches[]): LayoutResult {
   const connectors: { x: number; y1: number; y2: number }[] = [];
   let maxRightX = 0;
   let maxBottomY = 0;
+  let nextWtY = T_MARGIN; // Dynamic Y position for next worktree
 
   for (let i = 0; i < worktrees.length; i++) {
     const wt = worktrees[i];
     const wtX = L_MARGIN;
-    const wtY = T_MARGIN + i * (WT_H + WT_GAP);
+    const wtY = nextWtY;
     const wtCenterY = wtY + WT_H / 2;
 
     const branchCount = wt.branches.length;
-    const totalBranchHeight = (branchCount - 1) * BR_GAP;
-    const branchStartY = wtCenterY - totalBranchHeight / 2 - BR_H / 2;
+    // Add 1 to branch count for ghost branch space
+    const totalBranchHeight = branchCount * BR_GAP;
+    const branchStartY = wtCenterY - totalBranchHeight / 2 - BR_H / 2 + BR_GAP / 2;
     const branchX = wtX + WT_W + H_GAP;
+
+    let lastBranchBottomY = wtY + WT_H;
 
     const branches: LayoutBranch[] = wt.branches.map((br, j) => {
       const brY = branchStartY + j * BR_GAP;
@@ -108,6 +112,7 @@ function computeLayout(worktrees: WorktreeWithBranches[]): LayoutResult {
       const cpX = startX + (endX - startX) / 2;
       const connectorPath = `M${startX},${startY} C${cpX},${startY} ${cpX},${endY} ${endX},${endY}`;
 
+      lastBranchBottomY = Math.max(lastBranchBottomY, brY + BR_H);
       maxBottomY = Math.max(maxBottomY, brY + BR_H);
 
       return { ...br, x: branchX, y: brY, connectorPath };
@@ -118,8 +123,11 @@ function computeLayout(worktrees: WorktreeWithBranches[]): LayoutResult {
 
     worktreeNodes.push({ id: wt.id, name: wt.name, x: wtX, y: wtY, branches });
 
+    // Calculate next worktree Y based on where branches end + space for ghost branch
+    const ghostBranchSpace = BR_H + BR_GAP / 2;
+    nextWtY = Math.max(wtY + WT_H, lastBranchBottomY + ghostBranchSpace) + WT_GAP / 2;
+
     if (i < worktrees.length - 1) {
-      const nextWtY = T_MARGIN + (i + 1) * (WT_H + WT_GAP);
       connectors.push({
         x: wtX + WT_W / 2,
         y1: wtY + WT_H,
@@ -155,13 +163,14 @@ interface RepoMindmapProps {
   onAddWorktree?: () => void;
   onDeleteWorktree?: (worktreeId: string) => void;
   onBranchHover?: (worktreeId: string, branchName: string) => void;
+  onRenameProject?: (newName: string) => void;
 }
 
 export function RepoMindmap({
   project, worktrees, onBranchClick,
   onDuplicateWorktree, onRenameWorktree, onWorktreeNewIngestion,
   onBranchOpen, onBranchNewIngestion, onRenameBranch, onAddBranch, onForkBranch, onAddWorktree, onDeleteWorktree,
-  onBranchHover,
+  onBranchHover, onRenameProject,
 }: RepoMindmapProps) {
   const layout = useMemo(() => computeLayout(worktrees), [worktrees]);
   const [hoveredBranch, setHoveredBranch] = useState<string | null>(null);
@@ -173,7 +182,10 @@ export function RepoMindmap({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [renamingBranch, setRenamingBranch] = useState<{ worktreeId: string; branchName: string } | null>(null);
+  const [isRenamingProject, setIsRenamingProject] = useState(false);
+  const [projectNameValue, setProjectNameValue] = useState(project.name);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const projectNameInputRef = useRef<HTMLInputElement>(null);
   const branchRenameInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -186,6 +198,22 @@ export function RepoMindmap({
   useEffect(() => {
     if (renamingBranch) branchRenameInputRef.current?.focus();
   }, [renamingBranch]);
+
+  useEffect(() => {
+    if (isRenamingProject) projectNameInputRef.current?.focus();
+  }, [isRenamingProject]);
+
+  // Keep projectNameValue in sync with project.name
+  useEffect(() => {
+    setProjectNameValue(project.name);
+  }, [project.name]);
+
+  const commitProjectRename = useCallback(() => {
+    if (projectNameValue.trim() && projectNameValue.trim() !== project.name) {
+      onRenameProject?.(projectNameValue.trim());
+    }
+    setIsRenamingProject(false);
+  }, [projectNameValue, project.name, onRenameProject]);
 
   const commitRename = useCallback(() => {
     if (renamingId && renameValue.trim()) {
@@ -329,7 +357,33 @@ export function RepoMindmap({
         >
           {iconContent}
         </span>
-        <h2 className="text-lg font-semibold text-foreground">{project.name}</h2>
+        {isRenamingProject ? (
+          <input
+            ref={projectNameInputRef}
+            value={projectNameValue}
+            onChange={(e) => setProjectNameValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitProjectRename();
+              if (e.key === 'Escape') {
+                setProjectNameValue(project.name);
+                setIsRenamingProject(false);
+              }
+            }}
+            onBlur={commitProjectRename}
+            className="text-lg font-semibold text-foreground bg-muted/50 border border-primary/50 rounded px-2 py-0.5 outline-none focus:border-primary"
+          />
+        ) : (
+          <div className="flex items-center gap-2 group">
+            <h2 className="text-lg font-semibold text-foreground">{project.name}</h2>
+            <button
+              onClick={() => setIsRenamingProject(true)}
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+              title="Rename project"
+            >
+              <Pencil size={14} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* SVG Canvas – fixed frame with pan & zoom */}
@@ -732,28 +786,16 @@ export function RepoMindmap({
             const lastBranch = wt.branches[wt.branches.length - 1];
             if (!lastBranch) return null;
 
-            // Check if placing below would overlap with next worktree
-            const nextWt = layout.worktrees[wtIdx + 1];
-            const belowY = lastBranch.y + BR_H + BR_GAP / 2;
-            const wouldOverlap = nextWt && (belowY + BR_H > nextWt.y - 10);
-
-            // Position: below if no overlap, to the right if overlap
-            const ghostX = wouldOverlap ? lastBranch.x + BR_W + 24 : lastBranch.x;
-            const ghostY = wouldOverlap ? lastBranch.y : belowY;
+            // Position ghost branch below the last branch
+            const ghostX = lastBranch.x;
+            const ghostY = lastBranch.y + BR_H + BR_GAP / 2;
             const ghostCenterY = ghostY + BR_H / 2;
 
-            // Connector path depends on position
+            // Bezier curve from worktree to ghost branch
             const startX = wt.x + WT_W;
             const startY = wt.y + WT_H / 2;
-            let connectorPath: string;
-            if (wouldOverlap) {
-              // Horizontal line from last branch to ghost
-              connectorPath = `M${lastBranch.x + BR_W},${ghostCenterY} L${ghostX},${ghostCenterY}`;
-            } else {
-              // Bezier curve from worktree
-              const cpX = startX + (ghostX - startX) / 2;
-              connectorPath = `M${startX},${startY} C${cpX},${startY} ${cpX},${ghostCenterY} ${ghostX},${ghostCenterY}`;
-            }
+            const cpX = startX + (ghostX - startX) / 2;
+            const connectorPath = `M${startX},${startY} C${cpX},${startY} ${cpX},${ghostCenterY} ${ghostX},${ghostCenterY}`;
 
             return (
               <g
