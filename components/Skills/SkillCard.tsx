@@ -3,7 +3,7 @@
 // Task 2_4: Skill Detail & Edit - Added onView for detail modal
 
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pencil, Trash2, MoreVertical, Zap, Eye, Star } from 'lucide-react';
+import { Play, Pencil, Trash2, MoreVertical, Eye, Star } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { CATEGORY_COLORS } from '../../hooks/useSkills';
 import type { Skill } from '../../types/skills';
@@ -67,10 +67,6 @@ export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = fa
         )}
       >
         <div className="flex items-center gap-4">
-          {/* Icon */}
-          <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg shrink-0">
-            <Zap size={20} className="text-primary" />
-          </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
@@ -198,10 +194,6 @@ export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = fa
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          {/* Icon/Emoji */}
-          <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg">
-            <Zap size={20} className="text-primary" />
-          </div>
 
           {/* Name and Status */}
           <div>

@@ -5,6 +5,7 @@ import {
   List,
   ChevronDown,
   FolderOpen,
+  Search,
 } from 'lucide-react';
 import { UserAvatar } from '../Dashboard/UserAvatar';
 import { useProjects } from '../../contexts/ProjectsContext';
@@ -29,11 +30,6 @@ interface ProjectsDashboardProps {
   embedded?: boolean;
 }
 
-const FILTER_TABS: { id: ProjectFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'mine', label: 'My projects' },
-  { id: 'shared', label: 'Shared with me' },
-];
 
 const SORT_OPTIONS: { id: ProjectSort; label: string }[] = [
   { id: 'recent', label: 'Most recent' },
@@ -55,6 +51,8 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
     setViewMode,
     setSearchQuery,
     createProject,
+    updateProject,
+    deleteProject,
     selectedProject,
     selectProject,
   } = useProjects();
@@ -82,7 +80,7 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
     [projects]
   );
 
-  const activeFilterCount = (sidebarFilters.quickFilter ? 1 : 0) + sidebarFilters.selectedTags.length;
+  const activeFilterCount = (filter !== 'all' ? 1 : 0) + (sidebarFilters.quickFilter ? 1 : 0) + sidebarFilters.selectedTags.length;
 
   // Filter projects based on sidebar filters (tags and status)
   // When no filter is set, show all projects
@@ -260,33 +258,25 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
         </header>
       )}
 
-      {/* Filter Tabs and View Controls */}
+      {/* Header with title and View Controls */}
       <div className="shrink-0 border-b border-border bg-card/30 backdrop-blur-xl">
         <div className="flex items-center justify-between px-6 py-4">
-          {/* Filter Tabs */}
-          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-            {FILTER_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setFilter(tab.id);
-                  // Reset filters when switching tabs
-                  setSidebarFilters(DEFAULT_PROJECT_SIDEBAR_FILTERS);
-                }}
-                className={cn(
-                  'px-4 py-1.5 text-sm font-medium rounded-md transition-all',
-                  filter === tab.id
-                    ? 'bg-card text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {/* Title */}
+          <h1 className="text-lg font-semibold text-foreground">All Projects</h1>
 
-          {/* View Controls */}
+          {/* Search and View Controls */}
           <div className="flex items-center gap-3">
+            {/* Search Input */}
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search projects..."
+                className="w-64 pl-9 pr-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+              />
+            </div>
             {/* View Toggle */}
             <div className="flex items-center bg-muted/50 border border-border rounded-lg p-1">
               <button
@@ -375,9 +365,15 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
             onFiltersChange={setSidebarFilters}
             activeFilterCount={activeFilterCount}
             onProjectClick={selectProject}
+            onProjectOpen={(project) => navigate(`/project/${project.id}`)}
+            onProjectShare={(project) => setUserManagementProject(project)}
+            onProjectToggleStarred={(project) => updateProject(project.id, { starred: !project.starred })}
+            onProjectArchive={(project) => updateProject(project.id, { archived: true })}
+            onProjectUnarchive={(project) => updateProject(project.id, { archived: false })}
+            onProjectDelete={(project) => deleteProject(project.id)}
             onCreateNew={() => setIsNewProjectModalOpen(true)}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
+            ownershipFilter={filter}
+            onOwnershipFilterChange={setFilter}
           />
 
           {/* Repo Mindmap or Empty State */}

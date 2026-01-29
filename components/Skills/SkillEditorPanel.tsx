@@ -3,7 +3,7 @@
 // Used for both viewing/editing existing skills and creating new ones
 
 import { useEffect, useCallback, useState, useMemo } from 'react';
-import { Zap, Save, Loader2, Play, RotateCcw, Code, Workflow, X, FileEdit, Star, ChevronLeft } from 'lucide-react';
+import { Save, Loader2, Play, RotateCcw, Code, Workflow, X, FileEdit, Star, ChevronLeft } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useSkillBuilder } from '../../hooks/useSkillBuilder';
 import { useSkills } from '../../hooks/useSkills';
@@ -388,16 +388,14 @@ export function SkillEditorPanel({
           >
             <ChevronLeft size={24} />
           </button>
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Zap size={20} className="text-primary" />
-          </div>
-          <div>
+          <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-foreground">
               {skill.name}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {skill.isActive ? 'Active' : 'Inactive'}
-            </p>
+            <div
+              className={`w-2.5 h-2.5 rounded-full ${skill.isActive ? 'bg-emerald-500' : 'bg-red-500'}`}
+              title={skill.isActive ? 'Active - Skill is enabled and ready to use' : 'Inactive - Skill is disabled'}
+            />
           </div>
 
           {/* Scope Selector */}

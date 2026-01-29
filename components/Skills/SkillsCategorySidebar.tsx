@@ -3,7 +3,7 @@
 
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Zap, FileEdit, Plus, Filter, Check, X } from 'lucide-react';
+import { FileEdit, Plus, Filter, Check, X } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import type { Skill, SkillCategory } from '../../types/skills';
 
@@ -54,7 +54,6 @@ function SkillItem({ skill, isSelected, onSelect }: SkillItemProps) {
       )}
       onClick={() => onSelect(skill)}
     >
-      <Zap size={14} className={cn('shrink-0', isSelected ? 'text-primary' : 'text-muted-foreground')} />
       <span className="flex-1 text-sm truncate">{skill.name}</span>
     </div>
   );
