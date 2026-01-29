@@ -1,7 +1,3 @@
-import {
-  Plus,
-  ArrowRight,
-} from 'lucide-react';
 
 interface ProjectsOnboardingCTAProps {
   onCreateProject: () => void;
@@ -12,47 +8,55 @@ export function ProjectsOnboardingCTA({ onCreateProject }: ProjectsOnboardingCTA
     <div className="flex-1 flex flex-col items-center justify-center px-8 py-8 relative overflow-auto">
       {/* Hero Section */}
       <div className="text-center mb-10 max-w-2xl">
-        <h1 className="text-2xl font-bold text-foreground mb-3">
+        <h1 className="text-2xl font-bold mb-3 bg-gradient-to-r from-white via-emerald-400 to-amber-400 bg-clip-text text-transparent">
           One sign-up to rule them all
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
-          One CLI or MCP connection gives you access to all your context, integrations and skills in any IDE.
-          Never reconfigure when switching tools — everything follows you.
+          <span className="text-foreground font-medium">Kijko</span> gives you access to <span className="text-foreground font-medium">all</span> your <span className="text-foreground font-medium">context</span>, <span className="text-foreground font-medium">integrations</span> and <span className="text-foreground font-medium">skills</span> in any IDE.
+          Never reconfigure when switching tools, everything <span className="text-foreground font-medium">follows</span> you or just use our AI-Powered Editor.
         </p>
       </div>
 
       {/* Flow Diagram */}
       <div className="flex flex-col items-center w-full max-w-4xl">
-        {/* Top Row: Ingest + Skills + Integrations */}
-        <div className="flex gap-4 w-full items-stretch">
-          {/* Ingest your codebase - Takes more space */}
-          <div className="flex-1 p-5 bg-card border border-border rounded-xl">
-            <h3 className="text-sm font-semibold text-foreground mb-1">
-              Ingest your codebase
-            </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Give your agent full oversight of your codebase and documentation with a Hypervisa ingestion. Build an episodic memory system with a knowledge graph that learns and evolves and save tokens.
-            </p>
-          </div>
+        {/* Top Container: All features in one box */}
+        <div className="w-full p-6 bg-card border border-border rounded-xl">
+          <div className="flex gap-6 items-start">
+            {/* Hypervisa - Takes more space */}
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-foreground mb-1">
+                Hypervisa
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Give your agent full oversight of your codebase and documentation with a <span className="text-foreground font-medium">Hypervisa ingestion</span>. Build an <span className="text-foreground font-medium">episodic memory</span> system with a knowledge graph that learns and evolves and <span className="text-foreground font-medium">save tokens</span>.
+              </p>
+            </div>
 
-          {/* Integrations */}
-          <div className="w-52 p-5 bg-card border border-border rounded-xl">
-            <h3 className="text-sm font-semibold text-foreground mb-1">
-              Integrations
-            </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Connect to your favorite tools and services.
-            </p>
-          </div>
+            {/* Divider */}
+            <div className="w-px h-16 bg-border shrink-0" />
 
-          {/* Skills */}
-          <div className="w-52 p-5 bg-card border border-border rounded-xl">
-            <h3 className="text-sm font-semibold text-foreground mb-1">
-              Skills
-            </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Search, create and install your favorite skills quickly in our skills library.
-            </p>
+            {/* Integrations */}
+            <div className="w-44">
+              <h3 className="text-sm font-semibold text-foreground mb-1">
+                Integrations
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Discover, Create and Connect to your favorite tools and services in our Integration library.
+              </p>
+            </div>
+
+            {/* Divider */}
+            <div className="w-px h-16 bg-border shrink-0" />
+
+            {/* Skills */}
+            <div className="w-44">
+              <h3 className="text-sm font-semibold text-foreground mb-1">
+                Skills
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Search, create and install your favorite skills quickly in our skills library.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -60,33 +64,51 @@ export function ProjectsOnboardingCTA({ onCreateProject }: ProjectsOnboardingCTA
         <div className="w-0.5 h-6 bg-border" />
 
         {/* Branch label */}
-        <div className="text-xs text-muted-foreground mb-4">Choose how you want to work</div>
+        <div className="text-xs text-muted-foreground mb-2">Choose how you want to work</div>
+
+        {/* Branching Lines SVG */}
+        <svg width="560" height="40" className="shrink-0" viewBox="0 0 560 40">
+          {/* Left branch (green) */}
+          <path
+            d="M 280 0 L 280 10 Q 280 20 270 20 L 150 20 Q 140 20 140 30 L 140 40"
+            fill="none"
+            stroke="rgb(34 197 94 / 0.5)"
+            strokeWidth="2"
+          />
+          {/* Right branch (orange) */}
+          <path
+            d="M 280 0 L 280 10 Q 280 20 290 20 L 410 20 Q 420 20 420 30 L 420 40"
+            fill="none"
+            stroke="rgb(249 115 22 / 0.5)"
+            strokeWidth="2"
+          />
+        </svg>
 
         {/* Two Options Row */}
-        <div className="flex gap-6 w-full justify-center">
+        <div className="flex gap-6 w-full justify-center items-stretch">
           {/* Option 1: Work in your own IDE */}
-          <div className="w-64 p-5 bg-card border-2 border-green-500/40 rounded-xl hover:border-green-500/70 transition-colors">
+          <div className="w-64 p-5 bg-card border-2 border-green-500/40 rounded-xl hover:border-green-500/70 transition-colors flex flex-col">
             <h3 className="text-sm font-semibold text-foreground mb-1">
               Work anywhere
             </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-              One connection to VS Code, Cursor, IntelliJ, or Windsurf — your full setup moves with you.
+            <p className="text-xs text-muted-foreground leading-relaxed flex-1">
+              One connection to any Integrated Development Environment your Kijko setup moves with you.
             </p>
-            <span className="text-xs text-green-400 font-semibold">
-              Switch IDEs, keep everything
+            <span className="text-xs text-green-400 font-semibold mt-2">
+              Use your favorite IDE
             </span>
           </div>
 
           {/* Option 2: Kijko Editor */}
-          <div className="w-64 p-5 bg-card border-2 border-orange-500/40 rounded-xl hover:border-orange-500/70 transition-colors">
+          <div className="w-64 p-5 bg-card border-2 border-orange-500/40 rounded-xl hover:border-orange-500/70 transition-colors flex flex-col">
             <h3 className="text-sm font-semibold text-foreground mb-1">
               AI-Powered Editor
             </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-              Work directly in Kijko's intelligent editor with full context awareness.
+            <p className="text-xs text-muted-foreground leading-relaxed flex-1">
+              Work directly in Kijko with full context, integration and skill awareness.
             </p>
-            <span className="text-xs text-orange-400 font-semibold">
-              Stay in Kijko
+            <span className="text-xs text-orange-400 font-semibold mt-2">
+              Use Kijko's AI-Powered Editor
             </span>
           </div>
         </div>
@@ -94,14 +116,14 @@ export function ProjectsOnboardingCTA({ onCreateProject }: ProjectsOnboardingCTA
         {/* Spacer */}
         <div className="h-8" />
 
-        {/* CTA Button */}
+        {/* CTA Button with shimmer animation */}
         <button
           onClick={onCreateProject}
-          className="group inline-flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+          className="relative px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all overflow-hidden"
         >
-          <Plus size={20} />
-          Create your first project
-          <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          <span className="relative z-10">Create your first project</span>
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/25 to-transparent" />
         </button>
       </div>
 

@@ -220,7 +220,7 @@ export function SkillsTab() {
               <div className="relative">
                 <button
                   onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                  className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <span>{currentSortLabel}</span>
                   <ChevronDown
@@ -238,7 +238,7 @@ export function SkillsTab() {
                       className="fixed inset-0 z-40"
                       onClick={() => setIsSortDropdownOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1">
+                    <div className="absolute right-0 mt-2 w-48 bg-[#1a1f2e] border border-border rounded-lg shadow-xl z-50 py-1">
                       {SORT_OPTIONS.map((option) => (
                         <button
                           key={option.id}

@@ -390,3 +390,17 @@ body {
 .confetti-violet { background-color: #8b5cf6; }
 .confetti-pink { background-color: #ec4899; }
 .confetti-cyan { background-color: #06b6d4; }
+
+/* Shimmer animation for CTA buttons */
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.animate-shimmer {
+    animation: shimmer 2s infinite;
+}
