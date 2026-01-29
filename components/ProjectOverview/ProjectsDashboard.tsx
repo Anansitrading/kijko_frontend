@@ -22,6 +22,7 @@ import { getWorktreesForProject } from './repoMindmapData';
 import { IngestionModal } from '../../pages/ContextDetailInspectorPage/components/IngestionModal';
 import { useIngestion } from '../../contexts/IngestionContext';
 import { BranchDetailsPanel } from './BranchDetailsPanel';
+import { ProjectsOnboardingCTA } from './ProjectsOnboardingCTA';
 
 interface ProjectsDashboardProps {
   onProjectSelect: (project: Project) => void;
@@ -258,128 +259,134 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
         </header>
       )}
 
-      {/* Header with title and View Controls */}
-      <div className="shrink-0 border-b border-border bg-card/30 backdrop-blur-xl">
-        <div className="flex items-center justify-between px-6 py-4">
-          {/* Title */}
-          <h1 className="text-lg font-semibold text-foreground">All Projects</h1>
+      {/* Header with title and View Controls - Only show controls when projects exist */}
+      {projects.length > 0 && (
+        <div className="shrink-0 border-b border-border bg-card/30 backdrop-blur-xl">
+          <div className="flex items-center justify-between px-6 py-4">
+            {/* Title */}
+            <h1 className="text-lg font-semibold text-foreground">All Projects</h1>
 
-          {/* Search and View Controls */}
-          <div className="flex items-center gap-3">
-            {/* Search Input */}
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search projects..."
-                className="w-64 pl-9 pr-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
-              />
-            </div>
-            {/* View Toggle */}
-            <div className="flex items-center bg-muted/50 border border-border rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={cn(
-                  'p-1.5 rounded-md transition-all',
-                  viewMode === 'grid'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-                title="Grid view"
-              >
-                <LayoutGrid size={18} />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  'p-1.5 rounded-md transition-all',
-                  viewMode === 'list'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-                title="List view"
-              >
-                <List size={18} />
-              </button>
-            </div>
-
-            {/* Sort Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <span>{currentSortLabel}</span>
-                <ChevronDown
-                  size={16}
-                  className={cn(
-                    'transition-transform',
-                    isSortDropdownOpen && 'rotate-180'
-                  )}
+            {/* Search and View Controls */}
+            <div className="flex items-center gap-3">
+              {/* Search Input */}
+              <div className="relative flex items-center">
+                <Search size={16} className="absolute left-3 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search projects..."
+                  className="w-64 pl-9 pr-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
                 />
-              </button>
+              </div>
+              {/* View Toggle */}
+              <div className="flex items-center bg-muted/50 border border-border rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    'p-1.5 rounded-md transition-all',
+                    viewMode === 'grid'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  title="Grid view"
+                >
+                  <LayoutGrid size={18} />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    'p-1.5 rounded-md transition-all',
+                    viewMode === 'list'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  title="List view"
+                >
+                  <List size={18} />
+                </button>
+              </div>
 
-              {isSortDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setIsSortDropdownOpen(false)}
+              {/* Sort Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span>{currentSortLabel}</span>
+                  <ChevronDown
+                    size={16}
+                    className={cn(
+                      'transition-transform',
+                      isSortDropdownOpen && 'rotate-180'
+                    )}
                   />
-                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1">
-                    {SORT_OPTIONS.map((option) => (
-                      <button
-                        key={option.id}
-                        onClick={() => {
-                          setSort(option.id);
-                          setIsSortDropdownOpen(false);
-                        }}
-                        className={cn(
-                          'w-full px-4 py-2 text-sm text-left transition-colors',
-                          sort === option.id
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+                </button>
 
-                      </div>
+                {isSortDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsSortDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1">
+                      {SORT_OPTIONS.map((option) => (
+                        <button
+                          key={option.id}
+                          onClick={() => {
+                            setSort(option.id);
+                            setIsSortDropdownOpen(false);
+                          }}
+                          className={cn(
+                            'w-full px-4 py-2 text-sm text-left transition-colors',
+                            sort === option.id
+                              ? 'bg-primary/10 text-primary'
+                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Content */}
       <main className="flex-1 min-h-0 overflow-hidden p-6">
         <div className="flex gap-6 h-full">
-          {/* Filter Sidebar */}
-          <ProjectsFilterSidebar
-            projects={displayedProjects}
-            allTags={allTags}
-            filters={sidebarFilters}
-            onFiltersChange={setSidebarFilters}
-            activeFilterCount={activeFilterCount}
-            onProjectClick={selectProject}
-            onProjectOpen={(project) => navigate(`/project/${project.id}`)}
-            onProjectShare={(project) => setUserManagementProject(project)}
-            onProjectToggleStarred={(project) => updateProject(project.id, { starred: !project.starred })}
-            onProjectArchive={(project) => updateProject(project.id, { archived: true })}
-            onProjectUnarchive={(project) => updateProject(project.id, { archived: false })}
-            onProjectDelete={(project) => deleteProject(project.id)}
-            onCreateNew={() => setIsNewProjectModalOpen(true)}
-            ownershipFilter={filter}
-            onOwnershipFilterChange={setFilter}
-          />
+          {/* Filter Sidebar - Hide when no projects for cleaner onboarding */}
+          {projects.length > 0 && (
+            <ProjectsFilterSidebar
+              projects={displayedProjects}
+              allTags={allTags}
+              filters={sidebarFilters}
+              onFiltersChange={setSidebarFilters}
+              activeFilterCount={activeFilterCount}
+              onProjectClick={selectProject}
+              onProjectOpen={(project) => selectProject(project)}
+              onProjectShare={(project) => setUserManagementProject(project)}
+              onProjectToggleStarred={(project) => updateProject(project.id, { starred: !project.starred })}
+              onProjectArchive={(project) => updateProject(project.id, { archived: true })}
+              onProjectUnarchive={(project) => updateProject(project.id, { archived: false })}
+              onProjectDelete={(project) => deleteProject(project.id)}
+              onCreateNew={() => setIsNewProjectModalOpen(true)}
+              ownershipFilter={filter}
+              onOwnershipFilterChange={setFilter}
+            />
+          )}
 
           {/* Repo Mindmap or Empty State */}
           <div className="flex-1 min-w-0 flex gap-0">
             <div className="flex-1 min-w-0">
-            {selectedProject ? (
+            {projects.length === 0 ? (
+              /* Onboarding CTA when no projects exist */
+              <ProjectsOnboardingCTA onCreateProject={() => setIsNewProjectModalOpen(true)} />
+            ) : selectedProject ? (
               viewMode === 'grid' ? (
                 <RepoMindmap
                   project={selectedProject}
@@ -460,8 +467,8 @@ export function ProjectsDashboard({ onOpenSettings, embedded = false }: Projects
             )}
             </div>
 
-            {/* Branch Details Panel - always visible when project selected */}
-            {selectedProject && displayedBranch && (
+            {/* Branch Details Panel - only visible when project selected AND projects exist */}
+            {projects.length > 0 && selectedProject && displayedBranch && (
               <BranchDetailsPanel
                 branchName={displayedBranch.branchName}
                 worktreeId={displayedBranch.worktreeId}

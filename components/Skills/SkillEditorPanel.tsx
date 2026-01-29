@@ -13,7 +13,7 @@ import { MarkdownPreview } from './ConversationalSkillBuilder/MarkdownPreview';
 import { SkillFlowDiagram } from './ConversationalSkillBuilder/SkillFlowDiagram';
 import { ScopeSelectorDropdown } from './ScopeSelectorDropdown';
 import { SkillsGrid } from './SkillsGrid';
-import type { Skill } from '../../types/skills';
+import type { Skill, SkillCategory } from '../../types/skills';
 import type { SkillDraft, SkillScopeSelection } from '../../types/skillDraft';
 import { defaultScopeSelection } from '../../types/skillDraft';
 
@@ -36,6 +36,8 @@ interface SkillEditorPanelProps {
   browseSearch?: string;
   browseViewMode?: SkillViewMode;
   browseSortBy?: SkillSortBy;
+  // Category filter (shared with sidebar)
+  selectedCategories?: SkillCategory[];
   className?: string;
 }
 
@@ -68,6 +70,7 @@ export function SkillEditorPanel({
   browseSearch = '',
   browseViewMode = 'grid',
   browseSortBy = 'popular',
+  selectedCategories = [],
   className,
 }: SkillEditorPanelProps) {
   const [activeTab, setActiveTab] = useState<PreviewTab>('code');
@@ -88,6 +91,11 @@ export function SkillEditorPanel({
   // Filter and sort skills for browse view
   const filteredBrowseSkills = useMemo(() => {
     let result = [...allSkills];
+
+    // Filter by selected categories (shared with sidebar)
+    if (selectedCategories.length > 0) {
+      result = result.filter((s) => selectedCategories.includes(s.category));
+    }
 
     // Filter by search
     if (browseSearch.trim()) {
@@ -124,7 +132,7 @@ export function SkillEditorPanel({
     }
 
     return result;
-  }, [allSkills, browseSearch, browseSortBy]);
+  }, [allSkills, browseSearch, browseSortBy, selectedCategories]);
 
   // Load skill into editor when skill changes or when entering create mode
   useEffect(() => {

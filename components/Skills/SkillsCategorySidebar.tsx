@@ -34,6 +34,9 @@ interface SkillsCategorySidebarProps {
   isCreatingDraft?: boolean;
   onSelectDraft?: () => void;
   onCreateNew?: () => void;
+  // Controlled category filter state (lifted to parent)
+  selectedCategories?: SkillCategory[];
+  onSelectedCategoriesChange?: (categories: SkillCategory[]) => void;
 }
 
 interface SkillItemProps {
@@ -77,13 +80,19 @@ export function SkillsCategorySidebar({
   isCreatingDraft = false,
   onSelectDraft,
   onCreateNew,
+  selectedCategories: controlledCategories,
+  onSelectedCategoriesChange,
 }: SkillsCategorySidebarProps) {
   // Note: onRunSkill kept in props for API compatibility but not used in sidebar
   void _onRunSkill;
 
-  // Filter state
+  // Filter state - use controlled state if provided, otherwise local state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<SkillCategory[]>([]);
+  const [localSelectedCategories, setLocalSelectedCategories] = useState<SkillCategory[]>([]);
+
+  // Use controlled or local state
+  const selectedCategories = controlledCategories ?? localSelectedCategories;
+  const setSelectedCategories = onSelectedCategoriesChange ?? setLocalSelectedCategories;
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -130,11 +139,10 @@ export function SkillsCategorySidebar({
   }, [skills, selectedCategories]);
 
   const toggleCategory = (category: SkillCategory) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
+    const newCategories = selectedCategories.includes(category)
+      ? selectedCategories.filter((c) => c !== category)
+      : [...selectedCategories, category];
+    setSelectedCategories(newCategories);
   };
 
   const clearFilters = () => {

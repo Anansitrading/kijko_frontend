@@ -11,7 +11,7 @@ import { SkillsCategorySidebar } from '../Skills/SkillsCategorySidebar';
 import { SkillEditorPanel } from '../Skills/SkillEditorPanel';
 import { ExecuteSkillModal } from '../Skills/ExecuteSkillModal';
 import { useSkills } from '../../hooks/useSkills';
-import type { Skill } from '../../types/skills';
+import type { Skill, SkillCategory } from '../../types/skills';
 
 type SkillSortBy = 'popular' | 'name' | 'recent' | 'newest';
 
@@ -35,6 +35,10 @@ export function SkillsTab() {
   const [browseSearch, setBrowseSearch] = useState('');
   const [browseViewMode, setBrowseViewMode] = useState<'grid' | 'list'>('grid');
   const [browseSortBy, setBrowseSortBy] = useState<SkillSortBy>('popular');
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+
+  // Category filter state - shared between sidebar and main panel
+  const [selectedCategories, setSelectedCategories] = useState<SkillCategory[]>([]);
 
   // Resizable sidebar
   const [sidebarWidth, setSidebarWidth] = useState(288); // 72 * 4 = 288px (w-72)
@@ -141,6 +145,9 @@ export function SkillsTab() {
     setIsCreatingNew(false);
   }, []);
 
+  // Current sort label
+  const currentSortLabel = SORT_OPTIONS.find((o) => o.id === browseSortBy)?.label || 'Sort';
+
   // Show header controls only when browsing (no skill selected and not creating)
   const showBrowseHeader = !selectedSkill && !isCreatingNew;
 
@@ -209,23 +216,49 @@ export function SkillsTab() {
                 </button>
               </div>
 
-              {/* Sort Dropdown - Native select for reliable behavior */}
+              {/* Sort Dropdown */}
               <div className="relative">
-                <select
-                  value={browseSortBy}
-                  onChange={(e) => setBrowseSortBy(e.target.value as SkillSortBy)}
-                  className="appearance-none px-4 py-2 pr-9 bg-card border border-border rounded-lg text-sm font-medium text-foreground cursor-pointer focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+                <button
+                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {SORT_OPTIONS.map((option) => (
-                    <option key={option.id} value={option.id} className="bg-card text-foreground">
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-                />
+                  <span>{currentSortLabel}</span>
+                  <ChevronDown
+                    size={16}
+                    className={cn(
+                      'transition-transform',
+                      isSortDropdownOpen && 'rotate-180'
+                    )}
+                  />
+                </button>
+
+                {isSortDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsSortDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1">
+                      {SORT_OPTIONS.map((option) => (
+                        <button
+                          key={option.id}
+                          onClick={() => {
+                            setBrowseSortBy(option.id);
+                            setIsSortDropdownOpen(false);
+                          }}
+                          className={cn(
+                            'w-full px-4 py-2 text-sm text-left transition-colors',
+                            browseSortBy === option.id
+                              ? 'bg-primary/10 text-primary'
+                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -257,6 +290,8 @@ export function SkillsTab() {
                 isCreatingDraft={isCreatingNew}
                 onSelectDraft={() => setIsCreatingNew(true)}
                 onCreateNew={handleCreateSkill}
+                selectedCategories={selectedCategories}
+                onSelectedCategoriesChange={setSelectedCategories}
               />
             </div>
           </div>
@@ -277,6 +312,7 @@ export function SkillsTab() {
               browseSearch={browseSearch}
               browseViewMode={browseViewMode}
               browseSortBy={browseSortBy}
+              selectedCategories={selectedCategories}
               className="h-full"
             />
           </div>
