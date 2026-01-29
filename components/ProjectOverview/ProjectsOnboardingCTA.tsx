@@ -8,7 +8,7 @@ export function ProjectsOnboardingCTA({ onCreateProject }: ProjectsOnboardingCTA
     <div className="flex-1 flex flex-col items-center justify-center px-8 py-8 relative overflow-auto">
       {/* Hero Section */}
       <div className="text-center mb-10 max-w-2xl">
-        <h1 className="text-2xl font-bold mb-3 bg-gradient-to-r from-white via-emerald-400 to-amber-400 bg-clip-text text-transparent">
+        <h1 className="font-bold text-foreground mb-3" style={{ fontSize: '1.725rem' }}>
           One sign-up to rule them all
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
