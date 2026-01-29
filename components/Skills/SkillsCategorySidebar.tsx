@@ -1,10 +1,14 @@
 // SkillsCategorySidebar Component - Sidebar with skills list
 // Shows flat list of skills with "+ New" button
 
-import { useMemo } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { FileEdit, Plus } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import type { Skill, SkillCategory } from '../../types/skills';
+
+const SIDEBAR_MIN_WIDTH = 200;
+const SIDEBAR_MAX_WIDTH = 400;
+const SIDEBAR_DEFAULT_WIDTH = 240;
 
 interface SkillsCategorySidebarProps {
   skills: Skill[];
@@ -68,6 +72,49 @@ export function SkillsCategorySidebar({
   // Note: onRunSkill kept in props for API compatibility but not used in sidebar
   void _onRunSkill;
 
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
+  const isResizing = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(0);
+
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      isResizing.current = true;
+      startX.current = e.clientX;
+      startWidth.current = sidebarWidth;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    },
+    [sidebarWidth]
+  );
+
+  useEffect(() => {
+    const handleResizeMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      const delta = e.clientX - startX.current;
+      const newWidth = Math.min(
+        SIDEBAR_MAX_WIDTH,
+        Math.max(SIDEBAR_MIN_WIDTH, startWidth.current + delta)
+      );
+      setSidebarWidth(newWidth);
+    };
+
+    const handleResizeEnd = () => {
+      if (!isResizing.current) return;
+      isResizing.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('mousemove', handleResizeMove);
+    document.addEventListener('mouseup', handleResizeEnd);
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove);
+      document.removeEventListener('mouseup', handleResizeEnd);
+    };
+  }, []);
+
   const hasActiveFilters = selectedCategories.length > 0 || search.trim().length > 0;
 
   // Filter and sort skills
@@ -96,13 +143,19 @@ export function SkillsCategorySidebar({
   // Loading state
   if (loading) {
     return (
-      <aside className="w-64 shrink-0 overflow-y-auto">
-        <div className="py-2">
-          <div className="px-2 py-1.5 mb-2">
-            <div className="h-5 w-24 bg-muted rounded animate-pulse" />
+      <aside className="shrink-0 relative" style={{ width: sidebarWidth }}>
+        {/* Resize handle */}
+        <div
+          onMouseDown={handleResizeStart}
+          className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10"
+        />
+        <div className="pr-4 h-full overflow-y-auto flex flex-col">
+          <div className="mb-4">
+            <div className="h-10 bg-muted rounded-lg animate-pulse" />
           </div>
+          <div className="h-4 w-24 bg-muted rounded animate-pulse mb-2" />
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="px-2 mb-1">
+            <div key={i} className="mb-1">
               <SkillItemSkeleton />
             </div>
           ))}
@@ -114,9 +167,26 @@ export function SkillsCategorySidebar({
   // Empty state (no skills at all)
   if (skills.length === 0) {
     return (
-      <aside className="w-64 shrink-0">
-        <div className="py-4 px-2">
-          <p className="text-sm text-muted-foreground text-center">
+      <aside className="shrink-0 relative" style={{ width: sidebarWidth }}>
+        {/* Resize handle */}
+        <div
+          onMouseDown={handleResizeStart}
+          className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10"
+        />
+        <div className="pr-4 h-full overflow-y-auto flex flex-col">
+          <div className="mb-4">
+            <button
+              onClick={onCreateNew}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+            >
+              <Plus size={16} />
+              <span>New</span>
+            </button>
+          </div>
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            My Skills (0)
+          </div>
+          <p className="text-sm text-muted-foreground text-center py-4">
             No skills yet
           </p>
         </div>
@@ -125,10 +195,15 @@ export function SkillsCategorySidebar({
   }
 
   return (
-    <aside className="w-64 shrink-0 h-full overflow-y-auto pr-4">
-      <div className="py-2">
+    <aside className="shrink-0 relative" style={{ width: sidebarWidth }}>
+      {/* Resize handle */}
+      <div
+        onMouseDown={handleResizeStart}
+        className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10"
+      />
+      <div className="pr-4 h-full overflow-y-auto flex flex-col">
         {/* + New button */}
-        <div className="px-2 mb-4">
+        <div className="mb-4">
           <button
             onClick={onCreateNew}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
@@ -140,7 +215,7 @@ export function SkillsCategorySidebar({
 
         {/* Draft/Concept item when creating new skill */}
         {isCreatingDraft && (
-          <div className="px-2 mb-3">
+          <div className="mb-3">
             <div
               onClick={onSelectDraft}
               className={cn(
@@ -155,28 +230,26 @@ export function SkillsCategorySidebar({
           </div>
         )}
 
-        {/* Skills count header */}
-        <div className="px-2 py-1.5 mb-2">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        {/* Skills list */}
+        <div className="flex-1 min-h-0">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
             My Skills ({filteredSkills.length}{hasActiveFilters ? ` of ${skills.length}` : ''})
           </div>
-        </div>
-
-        {/* Flat skills list */}
-        <div className="space-y-0.5 px-2">
-          {filteredSkills.map((skill) => (
-            <SkillItem
-              key={skill.id}
-              skill={skill}
-              isSelected={!isCreatingDraft && selectedSkillId === skill.id}
-              onSelect={onSelectSkill}
-            />
-          ))}
-          {filteredSkills.length === 0 && hasActiveFilters && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No skills match {search.trim() ? `"${search}"` : 'filter'}
-            </p>
-          )}
+          <div className="flex flex-col gap-0.5">
+            {filteredSkills.map((skill) => (
+              <SkillItem
+                key={skill.id}
+                skill={skill}
+                isSelected={!isCreatingDraft && selectedSkillId === skill.id}
+                onSelect={onSelectSkill}
+              />
+            ))}
+            {filteredSkills.length === 0 && hasActiveFilters && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No skills match {search.trim() ? `"${search}"` : 'filter'}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </aside>

@@ -168,14 +168,6 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-// Format token count
-function formatTokens(tokens: number): string {
-  if (tokens >= 1000) {
-    return `${(tokens / 1000).toFixed(1)}k`;
-  }
-  return tokens.toString();
-}
-
 // Hypervisa ingestion list view
 function HypervisaListView({ items }: { items: IngestionItem[] }) {
   return (
@@ -189,30 +181,7 @@ function HypervisaListView({ items }: { items: IngestionItem[] }) {
           <span className="flex-1 text-[13px] text-slate-300 truncate min-w-0">
             {item.name}
           </span>
-          <div className="flex items-center gap-2 shrink-0">
-            <CompressionIcon item={item} />
-            {item.tokens && (
-              <span className="text-[10px] text-slate-500 tabular-nums">
-                {item.compressed && item.compressedTokens != null ? (
-                  <>
-                    <span className="line-through text-slate-600">{formatTokens(item.tokens)}</span>
-                    {' '}
-                    <span className="text-blue-400">{formatTokens(item.compressedTokens)}</span>
-                  </>
-                ) : (
-                  formatTokens(item.tokens)
-                )}
-              </span>
-            )}
-            <div
-              className={cn(
-                'w-2 h-2 rounded-full shrink-0',
-                item.status === 'cached' && 'bg-emerald-500',
-                item.status === 'expired' && 'bg-amber-500',
-                item.status === 'pending' && 'bg-blue-500 animate-pulse'
-              )}
-            />
-          </div>
+          <CompressionIcon item={item} />
         </div>
       ))}
     </div>
