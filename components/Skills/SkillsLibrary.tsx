@@ -10,7 +10,6 @@ import { useSkillsSubNavigation } from '../../hooks/useSkillsSubNavigation';
 import { MySkillsView } from './MySkillsView';
 import { AllSkillsView } from './AllSkillsView';
 import { CommunitySkillsView } from './CommunitySkillsView';
-import { ExecuteSkillModal } from './ExecuteSkillModal';
 import { SkillDetailModal } from './SkillDetailModal';
 import type { Skill } from '../../types/skills';
 import type { SkillsSidebarFilters } from './SkillsFilterSidebar';
@@ -21,7 +20,6 @@ type ViewMode = 'grid' | 'list';
 interface SkillsLibraryProps {
   onCreateSkill?: () => void;
   onEditSkill?: (skill: Skill) => void;
-  onRunSkill?: (skill: Skill) => void;
   search?: string;
   sortBy?: SortOption;
   viewMode?: ViewMode;
@@ -31,7 +29,6 @@ interface SkillsLibraryProps {
 export function SkillsLibrary({
   onCreateSkill,
   onEditSkill,
-  onRunSkill,
   search = '',
   sortBy = 'most-used',
   viewMode = 'grid',
@@ -41,7 +38,6 @@ export function SkillsLibrary({
   const { activeSubTab, setActiveSubTab } = useSkillsSubNavigation();
 
   const [isDeleting, setIsDeleting] = useState(false);
-  const [executeModalSkill, setExecuteModalSkill] = useState<Skill | null>(null);
   const [detailModalSkill, setDetailModalSkill] = useState<Skill | null>(null);
 
   const handleCreateClick = useCallback(() => {
@@ -63,22 +59,6 @@ export function SkillsLibrary({
       setDetailModalSkill(skill);
     }
   }, [onEditSkill]);
-
-  const handleRunSkill = useCallback((skill: Skill) => {
-    if (onRunSkill) {
-      onRunSkill(skill);
-    } else {
-      setExecuteModalSkill(skill);
-    }
-  }, [onRunSkill]);
-
-  const handleCloseExecuteModal = useCallback(() => {
-    setExecuteModalSkill(null);
-  }, []);
-
-  const handleExecutionComplete = useCallback(() => {
-    refetch();
-  }, [refetch]);
 
   const handleCloseDetailModal = useCallback(() => {
     setDetailModalSkill(null);
@@ -125,7 +105,6 @@ export function SkillsLibrary({
         return (
           <MySkillsView
             onCreateSkill={handleCreateClick}
-            onRunSkill={handleRunSkill}
             onEditSkill={handleEditSkill}
             onDeleteSkill={handleDeleteSkill}
             onViewSkill={handleViewSkill}
@@ -139,7 +118,6 @@ export function SkillsLibrary({
         return (
           <AllSkillsView
             onCreateSkill={handleCreateClick}
-            onRunSkill={handleRunSkill}
             onEditSkill={handleEditSkill}
             onDeleteSkill={handleDeleteSkill}
             onViewSkill={handleViewSkill}
@@ -172,16 +150,6 @@ export function SkillsLibrary({
         {renderActiveView()}
       </div>
 
-      {/* Execute Skill Modal */}
-      {executeModalSkill && (
-        <ExecuteSkillModal
-          skill={executeModalSkill}
-          isOpen={true}
-          onClose={handleCloseExecuteModal}
-          onExecutionComplete={handleExecutionComplete}
-        />
-      )}
-
       {/* Skill Detail Modal */}
       {detailModalSkill && (
         <SkillDetailModal
@@ -190,7 +158,6 @@ export function SkillsLibrary({
           onClose={handleCloseDetailModal}
           onUpdated={handleSkillUpdated}
           onDeleted={handleSkillDeleted}
-          onRun={handleRunSkill}
         />
       )}
     </>

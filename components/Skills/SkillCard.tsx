@@ -3,21 +3,20 @@
 // Task 2_4: Skill Detail & Edit - Added onView for detail modal
 
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pencil, Trash2, MoreVertical, Eye, Star } from 'lucide-react';
+import { Pencil, Trash2, MoreVertical, Eye, Star, Play } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { CATEGORY_COLORS } from '../../hooks/useSkills';
 import type { Skill } from '../../types/skills';
 
 interface SkillCardProps {
   skill: Skill;
-  onRun: (skill: Skill) => void;
   onEdit: (skill: Skill) => void;
   onDelete: (skill: Skill) => void;
   onView?: (skill: Skill) => void;
   compact?: boolean;
 }
 
-export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = false }: SkillCardProps) {
+export function SkillCard({ skill, onEdit, onDelete, onView, compact = false }: SkillCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -108,16 +107,6 @@ export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = fa
 
           {/* Actions */}
           <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onRun(skill);
-              }}
-              className="p-2 rounded-md text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
-              title="Run skill"
-            >
-              <Play size={16} />
-            </button>
             <div ref={menuRef} className="relative">
               <button
                 onClick={(e) => {
@@ -236,16 +225,6 @@ export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = fa
               )}
               <button
                 onClick={() => {
-                  onRun(skill);
-                  setIsMenuOpen(false);
-                }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
-                <Play size={14} />
-                Run
-              </button>
-              <button
-                onClick={() => {
                   onEdit(skill);
                   setIsMenuOpen(false);
                 }}
@@ -306,21 +285,6 @@ export function SkillCard({ skill, onRun, onEdit, onDelete, onView, compact = fa
         </div>
       </div>
 
-      {/* Quick Run Button - Shows on hover */}
-      <button
-        onClick={() => onRun(skill)}
-        className={cn(
-          'absolute inset-x-4 bottom-4 py-2',
-          'flex items-center justify-center gap-2',
-          'bg-primary text-primary-foreground text-sm font-medium rounded-lg',
-          'opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0',
-          'transition-all duration-200',
-          'shadow-lg shadow-primary/20'
-        )}
-      >
-        <Play size={14} />
-        Run Skill
-      </button>
     </div>
   );
 }

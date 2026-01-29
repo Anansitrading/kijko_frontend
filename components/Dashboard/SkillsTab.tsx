@@ -10,7 +10,6 @@ import { Search, LayoutGrid, List, ChevronDown, X, Filter, Check } from 'lucide-
 import { cn } from '../../utils/cn';
 import { SkillsCategorySidebar } from '../Skills/SkillsCategorySidebar';
 import { SkillEditorPanel } from '../Skills/SkillEditorPanel';
-import { ExecuteSkillModal } from '../Skills/ExecuteSkillModal';
 import { useSkills } from '../../hooks/useSkills';
 import type { Skill, SkillCategory } from '../../types/skills';
 
@@ -48,7 +47,6 @@ export function SkillsTab() {
   // Selected skill and modal states
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const [executeModalSkill, setExecuteModalSkill] = useState<Skill | null>(null);
 
   // Browse view state (lifted from SkillEditorPanel)
   const [browseSearch, setBrowseSearch] = useState('');
@@ -66,37 +64,6 @@ export function SkillsTab() {
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Resizable sidebar
-  const [sidebarWidth, setSidebarWidth] = useState(288); // 72 * 4 = 288px (w-72)
-  const isResizing = useRef(false);
-
-  const handleMouseDown = useCallback(() => {
-    isResizing.current = true;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  }, []);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing.current) return;
-      const newWidth = Math.min(Math.max(200, e.clientX), 500);
-      setSidebarWidth(newWidth);
-    };
-
-    const handleMouseUp = () => {
-      isResizing.current = false;
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, []);
 
   // Sort dropdown handlers
   const openSort = useCallback(() => {
@@ -204,21 +171,9 @@ export function SkillsTab() {
     setIsCreatingNew(false);
   }, []);
 
-  const handleRunSkill = useCallback((skill: Skill) => {
-    setExecuteModalSkill(skill);
-  }, []);
-
   const handleSaveSkill = useCallback((skill: Skill) => {
     // TODO: Call API to save skill
     console.log('Saving skill:', skill);
-    refetch();
-  }, [refetch]);
-
-  const handleCloseExecuteModal = useCallback(() => {
-    setExecuteModalSkill(null);
-  }, []);
-
-  const handleExecutionComplete = useCallback(() => {
     refetch();
   }, [refetch]);
 
@@ -421,40 +376,24 @@ export function SkillsTab() {
       {/* Main Content Area */}
       <main className="flex-1 overflow-hidden">
         <div className="flex h-full">
-          {/* Sidebar with skills grouped by category */}
-          <div
-            className="shrink-0 flex flex-col border-r border-border bg-card/30 relative"
-            style={{ width: sidebarWidth }}
-          >
-            {/* Resize Handle */}
-            <div
-              onMouseDown={handleMouseDown}
-              className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10"
-            />
-
-            {/* Skills List */}
-            <div className="flex-1 overflow-y-auto p-2">
-              <SkillsCategorySidebar
-                skills={filteredSkills}
-                selectedSkillId={selectedSkill?.id ?? null}
-                onSelectSkill={handleSelectSkill}
-                onRunSkill={handleRunSkill}
-                loading={loading}
-                isCreatingDraft={isCreatingNew}
-                onSelectDraft={() => setIsCreatingNew(true)}
-                onCreateNew={handleCreateSkill}
-                selectedCategories={selectedCategories}
-                search={browseSearch}
-              />
-            </div>
-          </div>
+          {/* Filter Sidebar */}
+          <SkillsCategorySidebar
+            skills={filteredSkills}
+            selectedSkillId={selectedSkill?.id ?? null}
+            onSelectSkill={handleSelectSkill}
+            loading={loading}
+            isCreatingDraft={isCreatingNew}
+            onSelectDraft={() => setIsCreatingNew(true)}
+            onCreateNew={handleCreateSkill}
+            selectedCategories={selectedCategories}
+            search={browseSearch}
+          />
 
           {/* Main content - Skill Editor Panel */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden p-6">
             <SkillEditorPanel
               skill={selectedSkill}
               onSave={handleSaveSkill}
-              onRun={handleRunSkill}
               onCreated={handleSkillCreated}
               onCancelCreate={handleCancelCreate}
               onCreateNew={handleCreateSkill}
@@ -471,17 +410,6 @@ export function SkillsTab() {
           </div>
         </div>
       </main>
-
-      {/* Execute Skill Modal */}
-      {executeModalSkill && (
-        <ExecuteSkillModal
-          skill={executeModalSkill}
-          isOpen={true}
-          onClose={handleCloseExecuteModal}
-          onExecutionComplete={handleExecutionComplete}
-        />
-      )}
-
     </div>
   );
 }

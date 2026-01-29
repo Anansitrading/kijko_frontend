@@ -10,7 +10,6 @@ type ViewMode = 'grid' | 'list';
 
 interface AllSkillsViewProps {
   onCreateSkill: () => void;
-  onRunSkill: (skill: Skill) => void;
   onEditSkill: (skill: Skill) => void;
   onDeleteSkill: (skill: Skill) => void;
   onViewSkill: (skill: Skill) => void;
@@ -23,7 +22,6 @@ interface AllSkillsViewProps {
 
 export function AllSkillsView({
   onCreateSkill,
-  onRunSkill,
   onEditSkill,
   onDeleteSkill,
   onViewSkill,
@@ -122,7 +120,6 @@ export function AllSkillsView({
           loading={loading}
           error={error}
           onRetry={refetch}
-          onRunSkill={onRunSkill}
           onEditSkill={onEditSkill}
           onDeleteSkill={onDeleteSkill}
           onViewSkill={onViewSkill}

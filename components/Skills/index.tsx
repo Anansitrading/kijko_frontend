@@ -58,8 +58,7 @@ export { SkillHabitsTab } from './SkillHabitsTab';
 export { SkillReflexesTab } from './SkillReflexesTab';
 export { DeleteSkillDialog } from './DeleteSkillDialog';
 
-// Task 2_5: Skill Execution Components
-export { ExecuteSkillModal } from './ExecuteSkillModal';
+// Task 2_5: Skill Execution Components (UI only - Run functionality removed)
 export { DynamicInputForm } from './DynamicInputForm';
 export { ExecutionResult } from './ExecutionResult';
 export { MarkdownRenderer } from './MarkdownRenderer';

@@ -3,7 +3,7 @@
 // Task 3_5: Analytics & Polish - Added Stats tab
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Play, Pencil, Trash2, Clock, Zap, History, FileText, BarChart2 } from 'lucide-react';
+import { X, Pencil, Trash2, Clock, Zap, History, FileText, BarChart2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { SkillForm } from './SkillForm';
 import { SkillOverviewTab } from './SkillOverviewTab';
@@ -37,7 +37,6 @@ interface SkillDetailModalProps {
   onClose: () => void;
   onUpdated: (skill: Skill) => void;
   onDeleted: () => void;
-  onRun: (skill: Skill) => void;
 }
 
 export function SkillDetailModal({
@@ -46,7 +45,6 @@ export function SkillDetailModal({
   onClose,
   onUpdated,
   onDeleted,
-  onRun,
 }: SkillDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
@@ -236,14 +234,6 @@ export function SkillDetailModal({
               {!isEditMode && (
                 <>
                   <button
-                    onClick={() => onRun(skill)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-md transition-colors"
-                    title="Run skill"
-                  >
-                    <Play size={14} />
-                    <span className="hidden sm:inline">Run</span>
-                  </button>
-                  <button
                     onClick={() => setIsEditMode(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
                     title="Edit skill"
@@ -325,7 +315,7 @@ export function SkillDetailModal({
               {/* Tab Content */}
               <div className="flex-1 overflow-y-auto p-6">
                 {activeTab === 'overview' && (
-                  <SkillOverviewTab skill={skill} onRun={() => onRun(skill)} />
+                  <SkillOverviewTab skill={skill} />
                 )}
                 {activeTab === 'stats' && <SkillStats skillId={skill.id} />}
                 {activeTab === 'habits' && <SkillHabitsTab skillId={skill.id} />}

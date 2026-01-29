@@ -8,10 +8,9 @@ import type { Skill } from '../../types/skills';
 
 interface SkillOverviewTabProps {
   skill: Skill;
-  onRun: () => void;
 }
 
-export function SkillOverviewTab({ skill, onRun }: SkillOverviewTabProps) {
+export function SkillOverviewTab({ skill }: SkillOverviewTabProps) {
   const categoryColors = CATEGORY_COLORS[skill.category];
 
   const formatDate = (date: Date | undefined) => {
@@ -27,20 +26,8 @@ export function SkillOverviewTab({ skill, onRun }: SkillOverviewTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Quick Actions */}
+      {/* Category & Status */}
       <div className="flex items-center gap-3">
-        <button
-          onClick={onRun}
-          className={cn(
-            'flex items-center gap-2 px-4 py-2',
-            'bg-primary hover:bg-primary/90 text-primary-foreground',
-            'text-sm font-medium rounded-lg',
-            'shadow-lg shadow-primary/20 transition-all'
-          )}
-        >
-          <Play size={16} />
-          Run Skill
-        </button>
         <span
           className={cn(
             'px-3 py-1.5 text-sm font-medium rounded-lg capitalize',

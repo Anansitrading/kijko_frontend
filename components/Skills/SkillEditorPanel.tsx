@@ -3,7 +3,7 @@
 // Used for both viewing/editing existing skills and creating new ones
 
 import { useEffect, useCallback, useState, useMemo } from 'react';
-import { Save, Loader2, Play, RotateCcw, Code, Workflow, X, FileEdit, Star, ChevronLeft } from 'lucide-react';
+import { Save, Loader2, RotateCcw, Code, Workflow, X, FileEdit, Star, ChevronLeft } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useSkillBuilder } from '../../hooks/useSkillBuilder';
 import { useSkills } from '../../hooks/useSkills';
@@ -24,7 +24,6 @@ type SkillViewMode = 'grid' | 'list';
 interface SkillEditorPanelProps {
   skill: Skill | null;
   onSave?: (skill: Skill) => void;
-  onRun?: (skill: Skill) => void;
   onCreated?: (skill: Skill) => void;
   onCancelCreate?: () => void;
   onCreateNew?: () => void;
@@ -59,7 +58,6 @@ function skillToDraft(skill: Skill): Partial<SkillDraft> {
 export function SkillEditorPanel({
   skill,
   onSave,
-  onRun,
   onCreated,
   onCancelCreate,
   onCreateNew,
@@ -204,13 +202,6 @@ export function SkillEditorPanel({
     onCreated?.(newSkill);
   }, [createSkill, canCreateSkill, onCreated]);
 
-  // Handle run
-  const handleRun = useCallback(() => {
-    if (skill) {
-      onRun?.(skill);
-    }
-  }, [skill, onRun]);
-
   // Handle reset
   const handleReset = useCallback(() => {
     if (skill) {
@@ -239,7 +230,6 @@ export function SkillEditorPanel({
             loading={skillsLoading}
             error={skillsError}
             onRetry={refetchSkills}
-            onRunSkill={onRun || (() => {})}
             onEditSkill={handleBrowseSkillSelect}
             onDeleteSkill={handleBrowseDelete}
             onViewSkill={handleBrowseSkillSelect}
@@ -482,15 +472,6 @@ export function SkillEditorPanel({
             title="Reset changes"
           >
             <RotateCcw size={16} />
-          </button>
-
-          {/* Run Button */}
-          <button
-            onClick={handleRun}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-          >
-            <Play size={16} />
-            Run
           </button>
 
           {/* Save Button */}

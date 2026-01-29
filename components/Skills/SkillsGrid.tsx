@@ -14,7 +14,6 @@ interface SkillsGridProps {
   loading: boolean;
   error: string | null;
   onRetry: () => void;
-  onRunSkill: (skill: Skill) => void;
   onEditSkill: (skill: Skill) => void;
   onDeleteSkill: (skill: Skill) => void;
   onViewSkill?: (skill: Skill) => void;
@@ -98,7 +97,6 @@ export function SkillsGrid({
   loading,
   error,
   onRetry,
-  onRunSkill,
   onEditSkill,
   onDeleteSkill,
   onViewSkill,
@@ -146,7 +144,6 @@ export function SkillsGrid({
         <SkillCard
           key={skill.id}
           skill={skill}
-          onRun={onRunSkill}
           onEdit={onEditSkill}
           onDelete={onDeleteSkill}
           onView={onViewSkill}

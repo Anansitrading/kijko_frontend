@@ -14,7 +14,6 @@ interface SkillsCategorySidebarProps {
   skills: Skill[];
   selectedSkillId: string | null;
   onSelectSkill: (skill: Skill) => void;
-  onRunSkill: (skill: Skill) => void;
   loading?: boolean;
   isCreatingDraft?: boolean;
   onSelectDraft?: () => void;
@@ -61,7 +60,6 @@ export function SkillsCategorySidebar({
   skills,
   selectedSkillId,
   onSelectSkill,
-  onRunSkill: _onRunSkill,
   loading = false,
   isCreatingDraft = false,
   onSelectDraft,
@@ -69,8 +67,6 @@ export function SkillsCategorySidebar({
   selectedCategories = [],
   search = '',
 }: SkillsCategorySidebarProps) {
-  // Note: onRunSkill kept in props for API compatibility but not used in sidebar
-  void _onRunSkill;
 
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
   const isResizing = useRef(false);
@@ -149,7 +145,7 @@ export function SkillsCategorySidebar({
           onMouseDown={handleResizeStart}
           className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10"
         />
-        <div className="pr-4 h-full overflow-y-auto flex flex-col">
+        <div className="p-4 border-r border-border h-full overflow-y-auto flex flex-col">
           <div className="mb-4">
             <div className="h-10 bg-muted rounded-lg animate-pulse" />
           </div>
@@ -173,7 +169,7 @@ export function SkillsCategorySidebar({
           onMouseDown={handleResizeStart}
           className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10"
         />
-        <div className="pr-4 h-full overflow-y-auto flex flex-col">
+        <div className="p-4 border-r border-border h-full overflow-y-auto flex flex-col">
           <div className="mb-4">
             <button
               onClick={onCreateNew}
@@ -201,7 +197,7 @@ export function SkillsCategorySidebar({
         onMouseDown={handleResizeStart}
         className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10"
       />
-      <div className="pr-4 h-full overflow-y-auto flex flex-col">
+      <div className="p-4 border-r border-border h-full overflow-y-auto flex flex-col">
         {/* + New button */}
         <div className="mb-4">
           <button
