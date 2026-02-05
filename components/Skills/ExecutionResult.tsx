@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import {
   CheckCircle,
   XCircle,
@@ -259,7 +260,7 @@ function OutputContent({ content, format, showRaw }: OutputContentProps) {
           <div className="p-4 bg-card">
             <div
               className="prose prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: displayContent }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(displayContent) }}
             />
           </div>
         );
