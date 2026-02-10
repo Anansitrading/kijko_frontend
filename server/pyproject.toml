@@ -1,0 +1,22 @@
+[project]
+name = "kijko-backend"
+version = "1.0.0"
+description = "Production API for Kijko AI Developer Tools platform"
+requires-python = ">=3.11"
+license = {text = "Proprietary"}
+
+[project.scripts]
+start = "uvicorn server.app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
