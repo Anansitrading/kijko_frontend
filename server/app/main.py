@@ -9,11 +9,13 @@ from server.app.config import settings
 from server.app.routers.auth import router as auth_router
 from server.app.routers.billing import router as billing_router
 from server.app.routers.executions import router as executions_router
+from server.app.routers.gdpr import router as gdpr_router
 from server.app.routers.habits import router as habits_router
 from server.app.routers.projects import router as projects_router
 from server.app.routers.reflexes import router as reflexes_router
 from server.app.routers.skills import router as skills_router
 from server.app.routers.webhooks import router as webhooks_router
+from server.app.routers.ws import router as ws_router
 
 
 @asynccontextmanager
@@ -57,7 +59,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# --- CORS Middleware ---
+# --- Middleware ---
+from server.app.middleware.observability import ObservabilityMiddleware
+
+app.add_middleware(ObservabilityMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -86,6 +91,8 @@ app.include_router(reflexes_router, prefix=settings.API_PREFIX)
 app.include_router(executions_router, prefix=settings.API_PREFIX)
 app.include_router(billing_router, prefix=settings.API_PREFIX)
 app.include_router(webhooks_router, prefix=settings.API_PREFIX)
+app.include_router(gdpr_router, prefix=settings.API_PREFIX)
+app.include_router(ws_router)
 
 
 @app.get("/", tags=["system"])
