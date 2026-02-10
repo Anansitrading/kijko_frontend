@@ -10,15 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 ## Current Phase
 
 **Phase 1: Foundation & Auth**
-- Status: Not started
-- Plans: Not yet created
+- Status: Planned, ready for execution
+- Plans: 4 plans in 4 waves (SEQUENTIAL)
+  - 01-01: FastAPI scaffold, config, DI, health endpoint
+  - 01-02: Deploy SQL migrations, create Pydantic models
+  - 01-03: RLS policies, SECURITY DEFINER helpers, isolation tests
+  - 01-04: Keycloak auth middleware, auth endpoints, JWT validation
 - Blockers: None
 
 ## Progress
 
 | Phase | Status | Plans | Progress |
 |-------|--------|-------|----------|
-| 1     | ○      | 0/4   | 0%       |
+| 1     | ◐      | 4/4   | 0%       |
 | 2     | ○      | 0/6   | 0%       |
 | 3     | ○      | 0/3   | 0%       |
 | 4     | ○      | 0/3   | 0%       |

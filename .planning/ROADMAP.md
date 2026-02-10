@@ -31,7 +31,13 @@
 
 **Dependencies:** None (this is the foundation)
 **Wave Type:** SEQUENTIAL — everything depends on this completing first
-**Estimated Plans:** 4 (scaffold, database, RLS, auth middleware)
+**Plans:** 4 plans in 4 waves (SEQUENTIAL)
+
+Plans:
+- [ ] 01-01-PLAN.md — FastAPI scaffold, config, DI, health endpoint
+- [ ] 01-02-PLAN.md — Deploy SQL migrations, create Pydantic models
+- [ ] 01-03-PLAN.md — RLS policies, SECURITY DEFINER helpers, isolation tests
+- [ ] 01-04-PLAN.md — Keycloak auth middleware, auth endpoints, JWT validation
 
 **Linear Tickets:** KIJ-237, KIJ-262, KIJ-265, KIJ-313, KIJ-323, KIJ-245, KIJ-236
 
