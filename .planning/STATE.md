@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 ## Current Phase
 
 **Phase 1: Foundation & Auth**
-- Status: In progress (Wave 2 of 4 complete)
+- Status: In progress (Wave 3 of 4 complete)
 - Plans: 4 plans in 4 waves (SEQUENTIAL)
   - 01-01: ✅ FastAPI scaffold, config, DI, health endpoint
-  - 01-02: ✅ Pydantic models (1,130 lines, 9 files). SQL deploy deferred (no Supabase creds)
-  - 01-03: 🔄 RLS policies, SECURITY DEFINER helpers, isolation tests
-  - 01-04: ○ Keycloak auth middleware, auth endpoints, JWT validation
+  - 01-02: ✅ Pydantic models (1,130 lines, 9 files). SQL deploy deferred
+  - 01-03: ✅ RLS policies (31 policies, 5 SECURITY DEFINER funcs, 13 tests)
+  - 01-04: 🔄 Keycloak auth middleware, auth endpoints, JWT validation
 - Blockers: Supabase credentials unavailable (NotebookLM auth expired)
 
 ## Progress
 
 | Phase | Status | Plans | Progress |
 |-------|--------|-------|----------|
-| 1     | ◐      | 4/4   | 50%      |
+| 1     | ◐      | 4/4   | 75%      |
 | 2     | ○      | 0/6   | 0%       |
 | 3     | ○      | 0/3   | 0%       |
 | 4     | ○      | 0/3   | 0%       |
