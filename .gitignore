@@ -22,3 +22,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+env/
+venv/
+*.egg-info/
+.eggs/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Hivemind pending (synced separately)
+.hivemind-pending/

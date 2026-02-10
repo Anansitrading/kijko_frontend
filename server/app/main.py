@@ -61,8 +61,10 @@ app = FastAPI(
 
 # --- Middleware ---
 from server.app.middleware.observability import ObservabilityMiddleware
+from server.app.middleware.rate_limit import RateLimitMiddleware
 
 app.add_middleware(ObservabilityMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -72,14 +74,23 @@ app.add_middleware(
 )
 
 
-# --- Health Endpoint ---
+# --- Health Endpoints ---
 @app.get("/health", tags=["system"])
 async def health_check():
-    """Health check endpoint — returns server status."""
+    """Basic health check — liveness probe."""
     return {
         "status": "healthy",
         "version": settings.APP_VERSION,
     }
+
+
+@app.get("/health/ready", tags=["system"])
+async def readiness_check():
+    """Detailed health check — readiness probe with dependency status."""
+    from server.app.services.health import check_health
+    result = await check_health()
+    result["version"] = settings.APP_VERSION
+    return result
 
 
 # --- Routers ---

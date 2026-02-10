@@ -1,0 +1,112 @@
+# Kijko Backend — Docker Compose for local development
+#
+# Usage:
+#   docker compose up -d              # Start all services
+#   docker compose up api             # Start API only
+#   docker compose logs -f api        # Follow API logs
+#   docker compose down               # Stop all services
+#
+# Services:
+#   api       — FastAPI backend (port 8000)
+#   redis     — Cache and message broker (port 6379)
+#   worker    — Celery worker for background tasks
+#   beat      — Celery beat scheduler
+#
+
+version: "3.9"
+
+services:
+  # -------------------------------------------------------------------------
+  # API Server
+  # -------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - KEYCLOAK_URL=${KEYCLOAK_URL:-https://auth.kijko.nl}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM:-kijko}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-kijko-backend}
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - CORS_ORIGINS=["http://localhost:3000","https://app.kijko.nl"]
+      - DEBUG=${DEBUG:-false}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    volumes:
+      - ./app:/app/server/app  # Hot reload in dev
+
+  # -------------------------------------------------------------------------
+  # Redis — Cache, session store, Celery broker
+  # -------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  # -------------------------------------------------------------------------
+  # Celery Worker — Background task processing
+  # -------------------------------------------------------------------------
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A server.app.workers.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------------
+  # Celery Beat — Periodic task scheduler
+  # -------------------------------------------------------------------------
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A server.app.workers.celery_app beat --loglevel=info
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redis-data:
