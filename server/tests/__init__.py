@@ -1,1 +1,1 @@
-# Test suite
+# Tests for Kijko backend
