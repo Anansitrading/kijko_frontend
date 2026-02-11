@@ -25,13 +25,13 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 # =============================================================================
 
 PLAN_PRICES: dict[tuple[str, str], str] = {
-    (PlanTier.FREE, BillingInterval.MONTHLY): "price_free_monthly",
-    (PlanTier.PRO, BillingInterval.MONTHLY): "price_pro_monthly",
-    (PlanTier.PRO, BillingInterval.ANNUALLY): "price_pro_annual",
-    (PlanTier.TEAMS, BillingInterval.MONTHLY): "price_teams_monthly",
-    (PlanTier.TEAMS, BillingInterval.ANNUALLY): "price_teams_annual",
-    (PlanTier.ENTERPRISE, BillingInterval.MONTHLY): "price_enterprise_monthly",
-    (PlanTier.ENTERPRISE, BillingInterval.ANNUALLY): "price_enterprise_annual",
+    # Free tier has no Stripe price — handled client-side
+    (PlanTier.PRO, BillingInterval.MONTHLY): "price_1Sze3XAYpEM42NVCxKalZFTr",
+    (PlanTier.PRO, BillingInterval.ANNUALLY): "price_1Sze3XAYpEM42NVCHmV9zC4y",
+    (PlanTier.TEAMS, BillingInterval.MONTHLY): "price_1Sze3YAYpEM42NVC0G7psMiV",
+    (PlanTier.TEAMS, BillingInterval.ANNUALLY): "price_1Sze3YAYpEM42NVCfLVhxFEq",
+    (PlanTier.ENTERPRISE, BillingInterval.MONTHLY): "price_1Sze3ZAYpEM42NVC0xqFfzrX",
+    (PlanTier.ENTERPRISE, BillingInterval.ANNUALLY): "price_1Sze3ZAYpEM42NVCsywQoxZp",
 }
 
 # Static plan definitions (used by GET /billing/plans)
@@ -162,12 +162,12 @@ def create_checkout_session(
     session = stripe.checkout.Session.create(
         customer=customer_id,
         mode="subscription",
-        payment_method_types=["card", "ideal"],
+        payment_method_types=["card"],
         line_items=[{"price": price_id, "quantity": 1}],
         success_url=success_url + "?session_id={CHECKOUT_SESSION_ID}",
         cancel_url=cancel_url,
         metadata={"plan": plan, "billing_interval": billing_interval},
-        locale="nl",  # Dutch locale for iDEAL
+        locale="nl",
         allow_promotion_codes=True,
     )
     return session

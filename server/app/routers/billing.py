@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from supabase import Client as SupabaseClient
 
-from server.app.dependencies import get_supabase
+from server.app.dependencies import get_user_db
 from server.app.middleware.auth import require_auth
 from server.app.models.billing import (
     BillingDetails,
@@ -28,8 +28,8 @@ router = APIRouter(prefix="/billing", tags=["billing"])
 # =============================================================================
 
 @router.get("/plans")
-async def list_plans(user: dict = Depends(require_auth)):
-    """List all available subscription plans with pricing and limits."""
+async def list_plans():
+    """List all available subscription plans with pricing and limits (public)."""
     return stripe_service.PLANS
 
 
@@ -218,7 +218,7 @@ async def list_invoices(
 @router.get("/details")
 async def get_billing_details(
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get billing details for the organization."""
     result = (
@@ -242,7 +242,7 @@ async def get_billing_details(
 async def update_billing_details(
     body: BillingDetailsUpdate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Update billing details (company name, BTW, KVK, address)."""
     update_data = body.model_dump(exclude_unset=True)
@@ -297,7 +297,7 @@ async def create_portal_session(
 @router.get("/usage")
 async def get_usage(
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get current usage overview for the organization."""
     from server.app.services.usage import get_usage_overview

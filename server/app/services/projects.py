@@ -74,12 +74,16 @@ async def get_project_with_relations(
     project_id: str | UUID,
 ) -> dict | None:
     """Get a project with repositories, members, and ingestion progress."""
-    result = client.table("projects") \
-        .select("*, project_repositories(*), project_members(*), ingestion_progress(*)") \
-        .eq("id", str(project_id)) \
-        .single() \
-        .execute()
-    return result.data
+    try:
+        result = client.table("projects") \
+            .select("*, project_repositories(*), project_members(*), ingestion_progress(*)") \
+            .eq("id", str(project_id)) \
+            .single() \
+            .execute()
+        return result.data
+    except Exception:
+        # .single() raises when RLS filters produce 0 rows
+        return None
 
 
 async def create_project(

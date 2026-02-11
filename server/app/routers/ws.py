@@ -39,9 +39,9 @@ async def websocket_endpoint(
         return
 
     try:
-        from server.app.services.keycloak import get_keycloak
-        keycloak = get_keycloak()
-        user_claims = await keycloak.validate_token(token)
+        from server.app.services.supabase_auth import get_supabase_auth
+        auth = get_supabase_auth()
+        user_claims = auth.validate_token(token)
     except Exception as e:
         await websocket.close(code=4001, reason="Invalid token")
         return

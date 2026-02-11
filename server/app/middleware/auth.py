@@ -1,6 +1,7 @@
 """Authentication middleware for FastAPI.
 
 Provides dependency functions for JWT validation and RLS context injection.
+Uses Supabase Auth (HS256 JWT) for token validation.
 
 Usage in route handlers:
     @router.get("/protected")
@@ -17,12 +18,9 @@ Usage in route handlers:
 
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from supabase import Client as SupabaseClient
 
-from server.app.dependencies import get_supabase
 from server.app.models.user import UserProfile
-from server.app.services.database import set_rls_context
-from server.app.services.keycloak import KeycloakService, get_keycloak
+from server.app.services.supabase_auth import SupabaseAuthService, get_supabase_auth
 
 # HTTP Bearer security scheme — appears in Swagger docs
 security = HTTPBearer(auto_error=True)
@@ -31,7 +29,7 @@ optional_security = HTTPBearer(auto_error=False)
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Security(security),
-    keycloak: KeycloakService = Depends(get_keycloak),
+    auth: SupabaseAuthService = Depends(get_supabase_auth),
 ) -> dict:
     """Validate JWT and return user claims.
 
@@ -45,12 +43,12 @@ async def get_current_user(
         HTTPException(401) if token is missing, invalid, or expired
     """
     token = credentials.credentials
-    return await keycloak.validate_token(token)
+    return auth.validate_token(token)
 
 
 async def get_optional_user(
     credentials: HTTPAuthorizationCredentials | None = Security(optional_security),
-    keycloak: KeycloakService = Depends(get_keycloak),
+    auth: SupabaseAuthService = Depends(get_supabase_auth),
 ) -> dict | None:
     """Optionally validate JWT — returns None if no token provided.
 
@@ -61,24 +59,18 @@ async def get_optional_user(
         return None
 
     try:
-        return await keycloak.validate_token(credentials.credentials)
+        return auth.validate_token(credentials.credentials)
     except HTTPException:
         return None
 
 
 async def require_auth(
     user: dict = Depends(get_current_user),
-    db: SupabaseClient = Depends(get_supabase),
 ) -> dict:
-    """Validate JWT AND set RLS context for database queries.
+    """Validate JWT and return user claims.
 
-    This is the primary auth dependency for data endpoints. It:
-    1. Validates the JWT (via get_current_user)
-    2. Sets PostgreSQL session variables for RLS policies
-    3. Returns the user claims dict
-
-    After this dependency runs, all Supabase queries through the same
-    client will be scoped by RLS policies.
+    RLS is enforced by PostgREST via the user's JWT (passed by
+    get_user_db dependency). No need for manual context setting.
 
     Returns:
         Dict with user claims
@@ -95,7 +87,6 @@ async def require_auth(
             detail="User has no organization assigned. Contact support.",
         )
 
-    await set_rls_context(db, user["sub"], org_id)
     return user
 
 

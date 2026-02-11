@@ -4,6 +4,7 @@ from functools import lru_cache
 from typing import AsyncGenerator
 
 import stripe
+from fastapi import Depends, Request
 from supabase import create_client, Client as SupabaseClient
 
 from server.app.config import settings
@@ -13,8 +14,8 @@ from server.app.config import settings
 def get_supabase() -> SupabaseClient:
     """Get cached Supabase client using service_role key.
 
-    Uses service_role for server-side operations. RLS context
-    is set per-request via middleware.
+    Uses service_role for admin/system operations (bypasses RLS).
+    For user-facing queries, use get_user_db() instead.
     """
     return create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
 
@@ -22,6 +23,21 @@ def get_supabase() -> SupabaseClient:
 def get_supabase_anon() -> SupabaseClient:
     """Get Supabase client with anon key for public operations."""
     return create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
+
+
+def get_user_db(request: Request) -> SupabaseClient:
+    """Get a Supabase client authenticated as the requesting user.
+
+    Creates a client with the anon key and sets the user's JWT
+    as the auth header. This makes PostgREST enforce RLS policies
+    based on the JWT claims.
+    """
+    auth_header = request.headers.get("authorization", "")
+    token = auth_header.removeprefix("Bearer ").removeprefix("bearer ")
+
+    client = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
+    client.postgrest.auth(token)
+    return client
 
 
 _redis_pool = None

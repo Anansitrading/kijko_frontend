@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client as SupabaseClient
 
-from server.app.dependencies import get_supabase
+from server.app.dependencies import get_user_db
 from server.app.middleware.auth import require_auth
 from server.app.models.base import MessageResponse, PaginatedResponse
 from server.app.models.project import (
@@ -41,7 +41,7 @@ async def list_projects(
     type_filter: str | None = Query(None, alias="type"),
     search: str | None = None,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """List projects for the current organization."""
     return await project_service.list_projects(
@@ -54,7 +54,7 @@ async def list_projects(
 async def create_project(
     body: ProjectCreate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Create a new project."""
     return await project_service.create_project(
@@ -66,12 +66,19 @@ async def create_project(
 async def get_project(
     project_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get a project with all related data."""
     result = await project_service.get_project_with_relations(db, project_id)
     if not result:
         raise HTTPException(status_code=404, detail="Project not found")
+    # Normalize nested relations: PostgREST returns [] for empty one-to-many
+    if isinstance(result.get("ingestion_progress"), list):
+        result["ingestion_progress"] = result["ingestion_progress"][0] if result["ingestion_progress"] else None
+    if "project_repositories" in result and "repositories" not in result:
+        result["repositories"] = result.pop("project_repositories", [])
+    if "project_members" in result and "members" not in result:
+        result["members"] = result.pop("project_members", [])
     return result
 
 
@@ -80,7 +87,7 @@ async def update_project(
     project_id: UUID,
     body: ProjectUpdate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Update a project."""
     result = await project_service.update_project(
@@ -95,7 +102,7 @@ async def update_project(
 async def delete_project(
     project_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Delete a project and all related data."""
     deleted = await project_service.delete_project(db, project_id)
@@ -108,7 +115,7 @@ async def delete_project(
 async def validate_name(
     body: dict,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Validate project name uniqueness within the organization."""
     return await project_service.validate_project_name(
@@ -133,7 +140,7 @@ async def validate_repository(
 async def list_repositories(
     project_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """List repositories for a project."""
     return await project_service.list_repositories(db, project_id)
@@ -148,7 +155,7 @@ async def add_repository(
     project_id: UUID,
     body: RepositoryCreate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Add a repository to a project."""
     return await project_service.add_repository(
@@ -161,7 +168,7 @@ async def remove_repository(
     project_id: UUID,
     repo_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Remove a repository from a project."""
     deleted = await project_service.remove_repository(db, project_id, repo_id)
@@ -178,7 +185,7 @@ async def remove_repository(
 async def list_members(
     project_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """List members of a project."""
     return await project_service.list_members(db, project_id)
@@ -193,7 +200,7 @@ async def add_member(
     project_id: UUID,
     body: MemberCreate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Add a member to a project."""
     return await project_service.add_member(
@@ -207,7 +214,7 @@ async def update_member(
     member_id: UUID,
     body: MemberUpdate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Update a member's role or notification settings."""
     result = await project_service.update_member(
@@ -223,7 +230,7 @@ async def remove_member(
     project_id: UUID,
     member_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Remove a member from a project."""
     deleted = await project_service.remove_member(db, project_id, member_id)
@@ -237,7 +244,7 @@ async def bulk_invite(
     project_id: UUID,
     body: BulkInviteRequest,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Bulk invite members to a project."""
     return await project_service.bulk_invite_members(
@@ -254,7 +261,7 @@ async def bulk_invite(
 async def get_ingestion_progress(
     project_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get current ingestion progress for a project."""
     result = await project_service.get_ingestion_progress(db, project_id)
@@ -269,7 +276,7 @@ async def list_files(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """List files for a project."""
     return await project_service.list_project_files(

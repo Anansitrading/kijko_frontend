@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client as SupabaseClient
 
-from server.app.dependencies import get_supabase
+from server.app.dependencies import get_user_db
 from server.app.middleware.auth import require_auth
 from server.app.models.base import MessageResponse, PaginatedResponse
 from server.app.models.habit import (
@@ -29,7 +29,7 @@ async def list_habits(
     skill_id: str | None = None,
     is_active: bool | None = None,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """List habits for the current user."""
     return await habit_service.list_habits(
@@ -42,7 +42,7 @@ async def list_habits(
 async def create_habit(
     body: HabitCreate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Create a new habit (scheduled skill execution)."""
     return await habit_service.create_habit(db, data=body.model_dump(), user_id=user["sub"])
@@ -51,7 +51,7 @@ async def create_habit(
 @router.get("/stats", response_model=HabitStats)
 async def get_global_stats(
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get global habit statistics for the current user."""
     result = await habit_service.list_habits(db, page=1, page_size=1000, is_active=None)
@@ -82,7 +82,7 @@ async def validate_cron(
 async def get_habit(
     habit_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get a habit with related skill info."""
     result = await habit_service.get_habit(db, habit_id)
@@ -96,7 +96,7 @@ async def update_habit(
     habit_id: UUID,
     body: HabitUpdate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Update a habit's schedule or configuration."""
     result = await habit_service.update_habit(db, habit_id, data=body.model_dump(exclude_unset=True))
@@ -109,7 +109,7 @@ async def update_habit(
 async def delete_habit(
     habit_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Delete a habit."""
     deleted = await habit_service.delete_habit(db, habit_id)
@@ -122,7 +122,7 @@ async def delete_habit(
 async def toggle_habit(
     habit_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Toggle a habit's active/inactive state."""
     result = await habit_service.toggle_habit(db, habit_id)
@@ -135,7 +135,7 @@ async def toggle_habit(
 async def get_habit_stats(
     habit_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get execution stats for a specific habit."""
     result = await habit_service.get_habit_stats(db, habit_id)

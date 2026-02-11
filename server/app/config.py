@@ -18,7 +18,10 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_KEY: str = ""
     SUPABASE_ANON_KEY: str = ""
 
-    # --- Keycloak ---
+    # --- Supabase Auth ---
+    SUPABASE_JWT_SECRET: str = ""
+
+    # --- Keycloak (reserved for future use) ---
     KEYCLOAK_URL: str = "https://auth.kijko.nl"
     KEYCLOAK_REALM: str = "kijko"
     KEYCLOAK_CLIENT_ID: str = "kijko-backend"

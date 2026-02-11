@@ -21,7 +21,6 @@ import DOMPurify from 'dompurify';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import type { SkillOutputFormat, ExecutionStatus } from '../../types/skills';
 import { cn } from '../../utils/cn';
-import DOMPurify from 'dompurify';
 
 interface ExecutionResultProps {
   status: ExecutionStatus;

@@ -38,13 +38,13 @@ async def lifespan(app: FastAPI):
     # Startup
     print(f"Starting {settings.APP_TITLE} v{settings.APP_VERSION}")
 
-    # Initialize Keycloak OIDC discovery (non-blocking, best-effort)
+    # Verify Supabase Auth connection (non-blocking, best-effort)
     try:
-        from server.app.services.keycloak import get_keycloak
-        keycloak = get_keycloak()
-        await keycloak.discover_oidc()
+        from server.app.services.supabase_auth import get_supabase_auth
+        auth = get_supabase_auth()
+        print("Supabase Auth service initialized")
     except Exception as e:
-        print(f"Warning: OIDC discovery failed (will retry on first auth): {e}")
+        print(f"Warning: Supabase Auth init failed (will retry on first auth): {e}")
 
     yield
 
@@ -52,14 +52,6 @@ async def lifespan(app: FastAPI):
     from server.app.dependencies import _redis_pool
     if _redis_pool is not None:
         await _redis_pool.close()
-
-    # Close Keycloak HTTP client
-    try:
-        from server.app.services.keycloak import get_keycloak
-        keycloak = get_keycloak()
-        await keycloak.close()
-    except Exception:
-        pass
 
     print("Shutdown complete")
 

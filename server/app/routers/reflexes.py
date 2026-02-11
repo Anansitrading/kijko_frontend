@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client as SupabaseClient
 
-from server.app.dependencies import get_supabase
+from server.app.dependencies import get_user_db
 from server.app.middleware.auth import require_auth
 from server.app.models.base import MessageResponse, PaginatedResponse
 from server.app.models.reflex import (
@@ -30,7 +30,7 @@ async def list_reflexes(
     trigger_type: str | None = None,
     is_active: bool | None = None,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """List reflexes for the current user."""
     return await reflex_service.list_reflexes(
@@ -43,7 +43,7 @@ async def list_reflexes(
 async def create_reflex(
     body: ReflexCreate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Create a new reflex (event-triggered skill execution)."""
     return await reflex_service.create_reflex(db, data=body.model_dump(), user_id=user["sub"])
@@ -52,7 +52,7 @@ async def create_reflex(
 @router.get("/stats", response_model=ReflexStats)
 async def get_reflex_stats(
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get aggregated reflex statistics for the current user."""
     return await reflex_service.get_reflex_stats(db)
@@ -62,7 +62,7 @@ async def get_reflex_stats(
 async def get_reflex(
     reflex_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get a reflex with related skill info."""
     result = await reflex_service.get_reflex(db, reflex_id)
@@ -76,7 +76,7 @@ async def update_reflex(
     reflex_id: UUID,
     body: ReflexUpdate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Update a reflex's trigger configuration or conditions."""
     result = await reflex_service.update_reflex(db, reflex_id, data=body.model_dump(exclude_unset=True))
@@ -89,7 +89,7 @@ async def update_reflex(
 async def delete_reflex(
     reflex_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Delete a reflex."""
     deleted = await reflex_service.delete_reflex(db, reflex_id)
@@ -102,7 +102,7 @@ async def delete_reflex(
 async def toggle_reflex(
     reflex_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Toggle a reflex's active/inactive state."""
     result = await reflex_service.toggle_reflex(db, reflex_id)
@@ -116,7 +116,7 @@ async def test_reflex(
     reflex_id: UUID,
     body: ReflexTestRequest,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Test a reflex with mock event data (dry run)."""
     result = await reflex_service.test_reflex(db, reflex_id, event_data=body.event_data)
@@ -127,7 +127,7 @@ async def test_reflex(
 async def get_webhook_info(
     reflex_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get webhook endpoint information for a webhook-type reflex."""
     result = await reflex_service.get_webhook_info(db, reflex_id)

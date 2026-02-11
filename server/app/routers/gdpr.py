@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client as SupabaseClient
 
-from server.app.dependencies import get_supabase
+from server.app.dependencies import get_user_db
 from server.app.middleware.auth import require_auth
 from server.app.services import gdpr as gdpr_service
 
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/gdpr", tags=["gdpr"])
 @router.get("/categories")
 async def get_data_categories(
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """List stored data categories for the current user.
 
@@ -25,7 +25,7 @@ async def get_data_categories(
 @router.post("/export")
 async def export_data(
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Export all user data as a JSON archive.
 
@@ -39,7 +39,7 @@ async def export_data(
 async def delete_data(
     body: dict,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Request deletion of all user data.
 

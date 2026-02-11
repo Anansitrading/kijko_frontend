@@ -1,6 +1,6 @@
 """Health check service — dependency status for readiness/liveness probes.
 
-Checks: Redis, Supabase (DB), Keycloak, Stripe.
+Checks: Redis, Supabase (DB), Supabase Auth, Stripe.
 Returns structured status for monitoring.
 """
 
@@ -31,11 +31,11 @@ async def check_health() -> dict[str, Any]:
     if checks["database"]["status"] != "healthy":
         overall_healthy = False
 
-    # 3. Keycloak
-    checks["keycloak"] = await _check_keycloak()
-    # Keycloak being down is degraded, not unhealthy (cached JWKS works)
-    if checks["keycloak"]["status"] == "error":
-        checks["keycloak"]["status"] = "degraded"
+    # 3. Supabase Auth
+    checks["auth"] = await _check_supabase_auth()
+    # Auth being degraded is acceptable (cached tokens still work)
+    if checks["auth"]["status"] == "error":
+        checks["auth"]["status"] = "degraded"
 
     # 4. Stripe
     checks["stripe"] = _check_stripe()
@@ -94,21 +94,25 @@ async def _check_database() -> dict[str, Any]:
         }
 
 
-async def _check_keycloak() -> dict[str, Any]:
-    """Check Keycloak OIDC endpoint."""
+async def _check_supabase_auth() -> dict[str, Any]:
+    """Check Supabase Auth service."""
     try:
-        from server.app.services.keycloak import get_keycloak
+        from server.app.config import settings
 
-        keycloak = get_keycloak()
-        start = time.monotonic()
-        # Check if JWKS is cached (doesn't need network call)
-        has_keys = bool(keycloak._jwks)
-        latency_ms = int((time.monotonic() - start) * 1000)
+        has_secret = bool(settings.SUPABASE_JWT_SECRET)
+        has_service_key = bool(settings.SUPABASE_SERVICE_KEY)
+
+        if not has_secret or not has_service_key:
+            return {
+                "status": "degraded",
+                "jwt_secret_configured": has_secret,
+                "service_key_configured": has_service_key,
+            }
 
         return {
-            "status": "healthy" if has_keys else "degraded",
-            "jwks_cached": has_keys,
-            "latency_ms": latency_ms,
+            "status": "healthy",
+            "jwt_secret_configured": has_secret,
+            "service_key_configured": has_service_key,
         }
     except Exception as e:
         return {

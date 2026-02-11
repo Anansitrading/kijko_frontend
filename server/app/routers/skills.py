@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from supabase import Client as SupabaseClient
 
-from server.app.dependencies import get_supabase
+from server.app.dependencies import get_user_db
 from server.app.middleware.auth import require_auth
 from server.app.models.base import MessageResponse, PaginatedResponse
 from server.app.models.skill import (
@@ -31,7 +31,7 @@ async def list_skills(
     is_active: bool | None = None,
     search: str | None = None,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     return await skill_service.list_skills(
         db, page=page, page_size=page_size,
@@ -43,7 +43,7 @@ async def list_skills(
 async def create_skill(
     body: SkillCreate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     return await skill_service.create_skill(db, data=body.model_dump(), user_id=user["sub"])
 
@@ -52,7 +52,7 @@ async def create_skill(
 async def get_skill(
     skill_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     result = await skill_service.get_skill_with_relations(db, skill_id)
     if not result:
@@ -65,7 +65,7 @@ async def update_skill(
     skill_id: UUID,
     body: SkillUpdate,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     result = await skill_service.update_skill(db, skill_id, data=body.model_dump(exclude_unset=True))
     if not result:
@@ -77,7 +77,7 @@ async def update_skill(
 async def delete_skill(
     skill_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     deleted = await skill_service.delete_skill(db, skill_id)
     if not deleted:
@@ -90,7 +90,7 @@ async def execute_skill(
     skill_id: UUID,
     body: SkillExecuteRequest,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Execute a skill (queues to Celery for async processing)."""
     skill = await skill_service.get_skill(db, skill_id)
@@ -123,7 +123,7 @@ async def test_skill(
 async def bulk_action(
     body: SkillBulkAction,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     return await skill_service.bulk_action(
         db, skill_ids=[str(s) for s in body.skill_ids], action=body.action,
@@ -134,7 +134,7 @@ async def bulk_action(
 async def export_skill(
     skill_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     result = await skill_service.export_skill(db, skill_id)
     if not result:
@@ -146,7 +146,7 @@ async def export_skill(
 async def import_skill(
     body: SkillExportResponse,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Import a skill from an exported configuration."""
     return await skill_service.create_skill(db, data=body.model_dump(), user_id=user["sub"])

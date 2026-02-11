@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from supabase import Client as SupabaseClient
 
-from server.app.dependencies import get_supabase
+from server.app.dependencies import get_user_db
 from server.app.middleware.auth import require_auth
 from server.app.models.base import PaginatedResponse
 from server.app.models.execution import (
@@ -29,7 +29,7 @@ async def list_executions(
     date_from: str | None = None,
     date_to: str | None = None,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """List skill executions with optional filters."""
     return await execution_service.list_executions(
@@ -44,7 +44,7 @@ async def list_executions(
 async def get_execution_stats(
     days: int = Query(30, ge=1, le=365),
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get aggregated execution statistics for the last N days."""
     return await execution_service.get_execution_stats(db, days=days)
@@ -54,7 +54,7 @@ async def get_execution_stats(
 async def get_stats_by_skill(
     limit: int = Query(20, ge=1, le=100),
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get execution statistics grouped by skill."""
     return await execution_service.get_stats_by_skill(db, limit=limit)
@@ -65,7 +65,7 @@ async def get_stats_by_period(
     days: int = Query(30, ge=1, le=365),
     granularity: str = Query("day", pattern="^(day|week|month)$"),
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get execution statistics grouped by time period."""
     return await execution_service.get_stats_by_period(
@@ -77,7 +77,7 @@ async def get_stats_by_period(
 async def get_execution(
     execution_id: UUID,
     user: dict = Depends(require_auth),
-    db: SupabaseClient = Depends(get_supabase),
+    db: SupabaseClient = Depends(get_user_db),
 ):
     """Get a single execution with details."""
     result = await execution_service.get_execution(db, execution_id)
