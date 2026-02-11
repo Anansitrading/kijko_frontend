@@ -10,6 +10,14 @@ import os
 import pytest
 from uuid import UUID
 
+# Set test-safe defaults for required service keys (supabase 2.28+ validates non-empty)
+os.environ.setdefault("SUPABASE_SERVICE_KEY", "test-service-key-not-for-production")
+os.environ.setdefault("SUPABASE_ANON_KEY", "test-anon-key-not-for-production")
+os.environ.setdefault(
+    "CORS_ORIGINS",
+    '["http://localhost:1420","http://localhost:5173","https://app.kijko.nl"]',
+)
+
 # Test org/user UUIDs — deterministic for test isolation
 ORG_A_ID = UUID("00000000-0000-0000-0000-000000000001")
 ORG_B_ID = UUID("00000000-0000-0000-0000-000000000002")

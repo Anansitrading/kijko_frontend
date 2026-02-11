@@ -69,3 +69,6 @@ from server.app.models.billing import (
     CheckoutSessionResponse,
 )
 from server.app.models.user import UserProfile, UserSearchResult
+
+# Resolve forward references now that all models are imported
+SkillWithRelations.model_rebuild()

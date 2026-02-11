@@ -159,7 +159,7 @@ class TestCORS:
         resp = client.options(
             "/health",
             headers={
-                "Origin": "http://localhost:3000",
+                "Origin": "http://localhost:1420",
                 "Access-Control-Request-Method": "GET",
             },
         )
@@ -167,13 +167,13 @@ class TestCORS:
         assert "access-control-allow-origin" in resp.headers
 
     def test_cors_allows_localhost(self, client):
-        """Test CORS allows localhost:3000."""
+        """Test CORS allows configured origins."""
         resp = client.get(
             "/health",
-            headers={"Origin": "http://localhost:3000"},
+            headers={"Origin": "http://localhost:1420"},
         )
         assert resp.headers.get("access-control-allow-origin") in (
-            "http://localhost:3000", "*",
+            "http://localhost:1420", "*",
         )
 
 

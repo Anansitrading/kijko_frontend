@@ -17,7 +17,7 @@ import { Project, ProjectFilter, ProjectSort, WorktreeWithBranches } from '../..
 import { cn } from '../../utils/cn';
 import { ProjectCreationModal } from './ProjectCreationModal';
 import type { SimpleProjectCreationForm } from './ProjectCreationModal';
-import { UserManagementModal } from './UserManagementModal';
+import { UserManagementModal } from './UserManagement';
 import { ProjectsFilterSidebar, DEFAULT_PROJECT_SIDEBAR_FILTERS } from './ProjectsFilterSidebar';
 import type { ProjectSidebarFilters } from './ProjectsFilterSidebar';
 import { RepoMindmap } from './RepoMindmap';

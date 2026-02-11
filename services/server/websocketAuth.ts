@@ -89,10 +89,10 @@ export interface WebSocketAuthConfig {
 }
 
 const DEFAULT_CONFIG: Required<WebSocketAuthConfig> = {
-  jwtSecret: 'development-secret-do-not-use-in-production',
+  jwtSecret: process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET || '',
   tokenRefreshThreshold: 5 * 60 * 1000, // 5 minutes
   enableAccessLogging: true,
-  mockMode: true,
+  mockMode: process.env.NODE_ENV !== 'production',
 };
 
 // =============================================================================

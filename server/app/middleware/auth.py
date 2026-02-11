@@ -99,7 +99,7 @@ async def require_auth(
     return user
 
 
-async def require_role(required_roles: list[str]):
+def require_role(required_roles: list[str]):
     """Create a dependency that requires specific roles.
 
     Usage:

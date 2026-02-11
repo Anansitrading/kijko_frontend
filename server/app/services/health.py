@@ -102,7 +102,7 @@ async def _check_keycloak() -> dict[str, Any]:
         keycloak = get_keycloak()
         start = time.monotonic()
         # Check if JWKS is cached (doesn't need network call)
-        has_keys = bool(keycloak._jwks_cache)
+        has_keys = bool(keycloak._jwks)
         latency_ms = int((time.monotonic() - start) * 1000)
 
         return {

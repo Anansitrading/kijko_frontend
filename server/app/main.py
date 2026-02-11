@@ -6,6 +6,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from server.app.config import settings
+
+# --- Sentry SDK (initialized before app creation) ---
+if settings.SENTRY_DSN:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.SENTRY_ENVIRONMENT,
+        release=settings.APP_VERSION,
+        traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
+        profiles_sample_rate=settings.SENTRY_PROFILES_SAMPLE_RATE,
+        enable_tracing=True,
+        send_default_pii=False,
+    )
 from server.app.routers.auth import router as auth_router
 from server.app.routers.billing import router as billing_router
 from server.app.routers.executions import router as executions_router
@@ -16,6 +29,7 @@ from server.app.routers.reflexes import router as reflexes_router
 from server.app.routers.skills import router as skills_router
 from server.app.routers.webhooks import router as webhooks_router
 from server.app.routers.ws import router as ws_router
+from server.app.routers.admin import router as admin_router
 
 
 @asynccontextmanager
@@ -103,6 +117,7 @@ app.include_router(executions_router, prefix=settings.API_PREFIX)
 app.include_router(billing_router, prefix=settings.API_PREFIX)
 app.include_router(webhooks_router, prefix=settings.API_PREFIX)
 app.include_router(gdpr_router, prefix=settings.API_PREFIX)
+app.include_router(admin_router, prefix=settings.API_PREFIX)
 app.include_router(ws_router)
 
 

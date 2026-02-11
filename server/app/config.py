@@ -13,10 +13,10 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # --- Supabase ---
-    SUPABASE_URL: str = "https://placeholder.supabase.co"
-    SUPABASE_SERVICE_KEY: str = "placeholder-service-key"
-    SUPABASE_ANON_KEY: str = "placeholder-anon-key"
+    # --- Supabase (self-hosted) ---
+    SUPABASE_URL: str = "http://localhost:54321"
+    SUPABASE_SERVICE_KEY: str = ""
+    SUPABASE_ANON_KEY: str = ""
 
     # --- Keycloak ---
     KEYCLOAK_URL: str = "https://auth.kijko.nl"
@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api/v1"
     APP_VERSION: str = "1.0.0"
     APP_TITLE: str = "Kijko API"
+
+    # --- Sentry ---
+    SENTRY_DSN: str = ""
+    SENTRY_ENVIRONMENT: str = "development"
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1
+    SENTRY_PROFILES_SAMPLE_RATE: float = 0.1
 
     # --- Celery ---
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacybeleid — Kijko</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1a1a1a; }
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.3rem; margin-top: 2rem; }
+    h3 { font-size: 1.1rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+    th { background: #f5f5f5; }
+    .updated { color: #666; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<h1>Privacybeleid</h1>
+<p class="updated">Laatst bijgewerkt: 11 februari 2026</p>
+
+<p>Kijko B.V. ("Kijko", "wij", "ons") respecteert uw privacy en verwerkt persoonsgegevens in overeenstemming met de Algemene Verordening Gegevensbescherming (AVG/GDPR) en de Nederlandse Uitvoeringswet AVG (UAVG).</p>
+
+<h2>1. Verwerkingsverantwoordelijke</h2>
+<p>Kijko B.V.<br>
+KvK: [nummer]<br>
+E-mail: privacy@kijko.nl<br>
+Website: https://kijko.nl</p>
+
+<h2>2. Welke gegevens verzamelen wij</h2>
+
+<table>
+  <tr><th>Categorie</th><th>Gegevens</th><th>Grondslag</th><th>Bewaartermijn</th></tr>
+  <tr><td>Accountgegevens</td><td>Naam, e-mail, wachtwoord (gehashed)</td><td>Uitvoering overeenkomst</td><td>Tot verwijdering account + 30 dagen</td></tr>
+  <tr><td>Projectgegevens</td><td>Projectnamen, bronbestanden, ingestion data</td><td>Uitvoering overeenkomst</td><td>Tot verwijdering project</td></tr>
+  <tr><td>Chatgeschiedenis</td><td>AI-prompts en -antwoorden</td><td>Uitvoering overeenkomst</td><td>90 dagen of tot verwijdering</td></tr>
+  <tr><td>Gebruiksgegevens</td><td>Token-gebruik, kosten, uitvoeringslog</td><td>Gerechtvaardigd belang</td><td>30 dagen (geanonimiseerd bewaard)</td></tr>
+  <tr><td>Betalingsgegevens</td><td>Factuuradres, BTW-nummer (via Stripe)</td><td>Wettelijke verplichting</td><td>7 jaar (fiscale bewaarplicht)</td></tr>
+  <tr><td>Analytische gegevens</td><td>Paginaweergaven (Cloudflare Analytics, geen cookies)</td><td>Gerechtvaardigd belang</td><td>30 dagen</td></tr>
+</table>
+
+<h2>3. Doel van de verwerking</h2>
+<ul>
+  <li>Het leveren van de Kijko AI-dienst (projectbeheer, skills, workflows)</li>
+  <li>Facturering en abonnementsbeheer via Stripe</li>
+  <li>Beveiliging en fraudepreventie</li>
+  <li>Verbetering van de dienstverlening (geaggregeerde analyses)</li>
+  <li>Naleving van wettelijke verplichtingen</li>
+</ul>
+
+<h2>4. Verwerkers en derde partijen</h2>
+<table>
+  <tr><th>Partij</th><th>Doel</th><th>Locatie</th></tr>
+  <tr><td>Stripe Inc.</td><td>Betalingsverwerking (iDEAL, creditcard)</td><td>VS (EU-VS Data Privacy Framework)</td></tr>
+  <tr><td>Anthropic</td><td>AI-modelverwerking (Claude)</td><td>VS (verwerkersovereenkomst)</td></tr>
+  <tr><td>Google Cloud</td><td>AI-modelverwerking (Gemini)</td><td>EU (Belgisch datacenter)</td></tr>
+  <tr><td>Cloudflare</td><td>CDN, DDoS-bescherming, analytics</td><td>EU-edge</td></tr>
+  <tr><td>Hetzner</td><td>Server hosting</td><td>Duitsland</td></tr>
+</table>
+
+<h2>5. Uw rechten (AVG Art. 15-22)</h2>
+<p>U heeft het recht op:</p>
+<ul>
+  <li><strong>Inzage</strong> (Art. 15): Bekijk uw gegevens via <em>Instellingen &gt; Gegevens exporteren</em></li>
+  <li><strong>Rectificatie</strong> (Art. 16): Wijzig uw profiel in de accountinstellingen</li>
+  <li><strong>Verwijdering</strong> (Art. 17): Verwijder uw account via <em>Instellingen &gt; Account verwijderen</em></li>
+  <li><strong>Beperking</strong> (Art. 18): Neem contact op via privacy@kijko.nl</li>
+  <li><strong>Overdraagbaarheid</strong> (Art. 20): Exporteer uw gegevens als JSON via de API</li>
+  <li><strong>Bezwaar</strong> (Art. 21): Neem contact op via privacy@kijko.nl</li>
+</ul>
+<p>Wij reageren binnen 30 dagen op uw verzoek. U kunt ook een klacht indienen bij de Autoriteit Persoonsgegevens (autoriteitpersoonsgegevens.nl).</p>
+
+<h2>6. Beveiliging</h2>
+<ul>
+  <li>TLS 1.3 voor alle verbindingen</li>
+  <li>Versleutelde opslag (AES-256 at rest)</li>
+  <li>Row-Level Security (RLS) in de database</li>
+  <li>JWT-authenticatie via Keycloak OIDC</li>
+  <li>Geen persoonsgegevens in logbestanden (PII-exclusie)</li>
+</ul>
+
+<h2>7. Cookies</h2>
+<p>Kijko gebruikt <strong>geen tracking cookies</strong>. Wij gebruiken Cloudflare Web Analytics, dat privacyvriendelijk is en geen cookies plaatst. Functionele sessiecookies worden alleen gebruikt voor authenticatie.</p>
+
+<h2>8. Wijzigingen</h2>
+<p>Wij kunnen dit privacybeleid wijzigen. Bij wezenlijke wijzigingen informeren wij u per e-mail of via een in-app melding.</p>
+
+<h2>9. Contact</h2>
+<p>Vragen over dit privacybeleid? Neem contact op:<br>
+E-mail: privacy@kijko.nl</p>
+
+</body>
+</html>

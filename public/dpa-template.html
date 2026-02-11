@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verwerkersovereenkomst — Kijko</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1a1a1a; }
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.3rem; margin-top: 2rem; }
+    .clause { margin-left: 1rem; }
+    .updated { color: #666; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<h1>Verwerkersovereenkomst (DPA)</h1>
+<p class="updated">Versie 1.0 — 11 februari 2026</p>
+
+<p>Deze Verwerkersovereenkomst ("Overeenkomst") is opgesteld in overeenstemming met artikel 28 van de Algemene Verordening Gegevensbescherming (AVG/GDPR) en vormt een integraal onderdeel van de serviceovereenkomst tussen:</p>
+
+<p><strong>Verwerkingsverantwoordelijke:</strong> De klant ("Opdrachtgever")<br>
+<strong>Verwerker:</strong> Kijko B.V., KvK [nummer] ("Verwerker")</p>
+
+<h2>Artikel 1 — Definities</h2>
+<div class="clause">
+  <p>1.1 <strong>Persoonsgegevens:</strong> Alle gegevens die direct of indirect herleidbaar zijn tot een natuurlijk persoon.<br>
+  1.2 <strong>Verwerking:</strong> Elke bewerking van persoonsgegevens, inclusief opslag, wijziging, raadpleging en verwijdering.<br>
+  1.3 <strong>Subverwerker:</strong> Een derde partij die namens de Verwerker persoonsgegevens verwerkt.</p>
+</div>
+
+<h2>Artikel 2 — Onderwerp en duur</h2>
+<div class="clause">
+  <p>2.1 De Verwerker verwerkt persoonsgegevens uitsluitend ten behoeve van het leveren van de Kijko-dienst.<br>
+  2.2 De verwerking vindt plaats gedurende de looptijd van de serviceovereenkomst.<br>
+  2.3 Na beëindiging worden alle persoonsgegevens binnen 30 dagen verwijderd, tenzij wettelijke bewaarplichten gelden.</p>
+</div>
+
+<h2>Artikel 3 — Verplichtingen van de Verwerker</h2>
+<div class="clause">
+  <p>3.1 Persoonsgegevens worden uitsluitend verwerkt op basis van schriftelijke instructies van de Opdrachtgever.<br>
+  3.2 De Verwerker waarborgt dat medewerkers geheimhoudingsplicht hebben.<br>
+  3.3 De Verwerker treft passende technische en organisatorische maatregelen (Art. 32 AVG):<br></p>
+  <ul>
+    <li>TLS 1.3 voor datatransport</li>
+    <li>AES-256 encryptie voor data at rest</li>
+    <li>Row-Level Security in database</li>
+    <li>Toegangscontrole via Keycloak OIDC</li>
+    <li>Logboekregistratie van verwerkingsactiviteiten</li>
+  </ul>
+</div>
+
+<h2>Artikel 4 — Subverwerkers</h2>
+<div class="clause">
+  <p>4.1 De Opdrachtgever geeft hierbij algemene toestemming voor het inschakelen van subverwerkers.<br>
+  4.2 Huidige subverwerkers: Stripe (betalingen), Anthropic (AI), Google Cloud (AI), Cloudflare (CDN), Hetzner (hosting).<br>
+  4.3 De Verwerker informeert de Opdrachtgever minimaal 14 dagen vooraf bij wijziging van subverwerkers.</p>
+</div>
+
+<h2>Artikel 5 — Doorgifte buiten de EER</h2>
+<div class="clause">
+  <p>5.1 Doorgifte naar derde landen vindt uitsluitend plaats op basis van een adequaatheidsbesluit of Standard Contractual Clauses (SCC's).<br>
+  5.2 Stripe en Anthropic zijn gecertificeerd onder het EU-VS Data Privacy Framework.</p>
+</div>
+
+<h2>Artikel 6 — Datalekken</h2>
+<div class="clause">
+  <p>6.1 De Verwerker meldt datalekken zonder onredelijke vertraging en uiterlijk binnen 24 uur na ontdekking.<br>
+  6.2 De melding bevat: aard van het lek, betrokken gegevens, geschatte omvang, genomen maatregelen.<br>
+  6.3 De Opdrachtgever is verantwoordelijk voor melding aan de Autoriteit Persoonsgegevens (binnen 72 uur, Art. 33 AVG).</p>
+</div>
+
+<h2>Artikel 7 — Rechten van betrokkenen</h2>
+<div class="clause">
+  <p>7.1 De Verwerker ondersteunt de Opdrachtgever bij het afhandelen van verzoeken van betrokkenen (Art. 15-22 AVG).<br>
+  7.2 De Kijko API biedt geautomatiseerde export (/gdpr/export) en verwijdering (/gdpr/delete) endpoints.</p>
+</div>
+
+<h2>Artikel 8 — Audit</h2>
+<div class="clause">
+  <p>8.1 De Opdrachtgever heeft recht op audit, maximaal eenmaal per jaar, met minimaal 30 dagen voorafgaande kennisgeving.<br>
+  8.2 Kosten van de audit zijn voor rekening van de Opdrachtgever.</p>
+</div>
+
+<h2>Artikel 9 — Toepasselijk recht</h2>
+<div class="clause">
+  <p>Op deze overeenkomst is Nederlands recht van toepassing. Geschillen worden voorgelegd aan de bevoegde rechter te Amsterdam.</p>
+</div>
+
+<p style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+  <strong>Ondertekening</strong><br><br>
+  Namens Opdrachtgever: _________________________ Datum: _________<br><br>
+  Namens Kijko B.V.: _________________________ Datum: _________
+</p>
+
+</body>
+</html>
