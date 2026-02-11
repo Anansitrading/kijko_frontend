@@ -13,6 +13,8 @@ import { ChatHistoryProvider } from "./contexts/ChatHistoryContext";
 import { ProjectsProvider } from "./contexts/ProjectsContext";
 import { SourceFilesProvider } from "./contexts/SourceFilesContext";
 import { IngestionProvider } from "./contexts/IngestionContext";
+import { ContextInspectorProvider } from "./contexts/ContextInspectorContext";
+import { TeamProvider } from "./contexts/TeamContext";
 import { SupportChat } from "./components/SupportChat";
 import { Project } from "./types";
 import { Menu, ArrowLeft } from "lucide-react";
@@ -133,34 +135,38 @@ function App() {
     <SettingsProvider>
       <NotificationProvider>
         <ProjectsProvider>
-          <Routes>
-            {/* Main workspace route */}
-            <Route path="/" element={<WorkspaceView />} />
+          <ContextInspectorProvider>
+            <TeamProvider>
+              <Routes>
+                {/* Main workspace route */}
+                <Route path="/" element={<WorkspaceView />} />
 
-            {/* Integration Detail Page */}
-            <Route
-              path="/integration/:integrationId"
-              element={<IntegrationDetailPage />}
-            />
+                {/* Integration Detail Page */}
+                <Route
+                  path="/integration/:integrationId"
+                  element={<IntegrationDetailPage />}
+                />
 
-            {/* Context Detail Inspector full-page route */}
-            <Route
-              path="/project/:projectId"
-              element={
-                <SourceFilesProvider>
-                  <IngestionProvider>
-                    <ChatHistoryProvider>
-                      <RealtimeProvider>
-                        <ProjectDetailPage />
-                      </RealtimeProvider>
-                    </ChatHistoryProvider>
-                  </IngestionProvider>
-                </SourceFilesProvider>
-              }
-            />
-          </Routes>
-          {/* Support Chat Widget - Available on all pages */}
-          <SupportChat />
+                {/* Context Detail Inspector full-page route */}
+                <Route
+                  path="/project/:projectId"
+                  element={
+                    <SourceFilesProvider>
+                      <IngestionProvider>
+                        <ChatHistoryProvider>
+                          <RealtimeProvider>
+                            <ProjectDetailPage />
+                          </RealtimeProvider>
+                        </ChatHistoryProvider>
+                      </IngestionProvider>
+                    </SourceFilesProvider>
+                  }
+                />
+              </Routes>
+              {/* Support Chat Widget - Available on all pages */}
+              <SupportChat />
+            </TeamProvider>
+          </ContextInspectorProvider>
         </ProjectsProvider>
       </NotificationProvider>
     </SettingsProvider>
