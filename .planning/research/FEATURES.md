@@ -32,7 +32,7 @@
 | Code ingestion pipeline | Repository analysis | HIGH | Git clone, AST parse, knowledge graph |
 | Knowledge graph visualization | Visual code understanding | HIGH | Graphiti/FalkorDB integration |
 | Persona-based UX (Alex/Maya/Sam) | Adaptive onboarding | LOW | Backend analytics for persona scoring |
-| HyperVisa video context | Novel context compression | MEDIUM | Existing API at :8042 |
+| HyperVisa AI context | Novel context compression | MEDIUM | Existing API at :8042 |
 | Usage metering + quotas | Fair usage enforcement | MEDIUM | OpenMeter + Redis sliding window |
 | Multi-tenant RLS isolation | Enterprise security | HIGH | Database-level tenant isolation |
 

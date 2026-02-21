@@ -102,7 +102,7 @@ The main dashboard presents four tabs:
 1. **Projects** -- Browse and select projects. Selecting a project opens the HyperVisa workspace view with a sidebar, chat interface, and source file viewer.
 2. **Integrations** -- Marketplace for discovering and connecting MCP servers and API integrations. Includes filtering, grid/list views, custom connector creation, and detail panels.
 3. **Skills** -- A library of reusable AI skills (analysis, generation, transformation, communication, automation, custom). Includes a skill builder wizard, habits/reflexes configuration, and execution history.
-4. **HyperVisa** -- Session management dashboard for the HyperVisa video-mediated AI engine. Create sessions from URLs, local paths, or YouTube videos. Query sessions with Gemini. Manages persistent sessions with adaptive swarm support.
+4. **HyperVisa** -- Session management dashboard for the HyperVisa AI engine. Create sessions from URLs, local paths, or YouTube videos. Query sessions with Gemini. Manages persistent sessions with adaptive swarm support.
 
 ## Routes
 
@@ -178,7 +178,7 @@ The nginx config (`nginx.conf`) serves the app at `app.kijko.nl`:
 
 | Service | Endpoint | Purpose |
 |---------|----------|---------|
-| HyperVisa API | `localhost:8042` (dev) / `172.17.0.1:8042` (prod) | Video-mediated AI session management |
+| HyperVisa API | `localhost:8042` (dev) / `172.17.0.1:8042` (prod) | AI session management |
 | Gemini API | Google AI | Multimodal AI queries over HyperVisa sessions |
 | Claude API | Anthropic | AI-powered chat and support |
 | Supabase | Configured in services | Database and auth backend |
