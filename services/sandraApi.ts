@@ -117,5 +117,6 @@ export async function forkFromSnapshot(snapshotId: string, count: number = 1): P
 export async function getTimeline(sessionId: string): Promise<ChronosSnapshot[]> {
   const res = await apiFetch(`/scrubber/${sessionId}/timeline`);
   if (!res.ok) return [];
-  return res.json();
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.snapshots ?? []);
 }
