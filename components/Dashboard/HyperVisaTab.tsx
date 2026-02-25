@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Eye, Video, Upload, Youtube, Trash2, Search,
   MessageSquare, Cpu, HardDrive, RefreshCw, Send, X, ChevronDown,
-  Zap, Globe, FolderOpen, Clock,
+  Zap, Globe, FolderOpen, Clock, GitBranch,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -52,10 +52,12 @@ export function HyperVisaTab() {
   const [error, setError] = useState<string | null>(null);
 
   // Create form state
-  const [createMode, setCreateMode] = useState<'dir' | 'youtube'>('youtube');
+  const [createMode, setCreateMode] = useState<'github' | 'dir' | 'youtube'>('github');
   const [createName, setCreateName] = useState('');
   const [createDir, setCreateDir] = useState('');
   const [createUrls, setCreateUrls] = useState('');
+  const [createRepoUrl, setCreateRepoUrl] = useState('');
+  const [createBranch, setCreateBranch] = useState('');
   const [creating, setCreating] = useState(false);
 
   const queryInputRef = useRef<HTMLTextAreaElement>(null);
@@ -133,6 +135,17 @@ export function HyperVisaTab() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ urls, name: createName || undefined }),
         });
+      } else if (createMode === 'github') {
+        if (!createRepoUrl.trim()) throw new Error('GitHub repository URL required');
+        res = await fetch(`${API_BASE}/sessions/ingest-repo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            repo_url: createRepoUrl.trim(),
+            name: createName || undefined,
+            branch: createBranch.trim() || undefined,
+          }),
+        });
       } else {
         if (!createDir.trim()) throw new Error('Directory path required');
         res = await fetch(`${API_BASE}/sessions/ingest`, {
@@ -150,6 +163,8 @@ export function HyperVisaTab() {
       setCreateName('');
       setCreateDir('');
       setCreateUrls('');
+      setCreateRepoUrl('');
+      setCreateBranch('');
       setView('list');
       fetchSessions();
     } catch (e: any) {
@@ -257,11 +272,15 @@ export function HyperVisaTab() {
                     "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
                     session.source_type === 'youtube'
                       ? "bg-red-500/10 border border-red-500/20"
-                      : "bg-cyan-500/10 border border-cyan-500/20"
+                      : session.source_type === 'repo'
+                        ? "bg-purple-500/10 border border-purple-500/20"
+                        : "bg-cyan-500/10 border border-cyan-500/20"
                   )}>
                     {session.source_type === 'youtube'
                       ? <Youtube size={18} className="text-red-400" />
-                      : <FolderOpen size={18} className="text-cyan-400" />
+                      : session.source_type === 'repo'
+                        ? <GitBranch size={18} className="text-purple-400" />
+                        : <FolderOpen size={18} className="text-cyan-400" />
                     }
                   </div>
 
@@ -391,6 +410,18 @@ export function HyperVisaTab() {
           {/* Mode toggle */}
           <div className="flex gap-2">
             <button
+              onClick={() => setCreateMode('github')}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-colors text-sm",
+                createMode === 'github'
+                  ? "bg-purple-500/10 border-purple-500/30 text-purple-300"
+                  : "bg-card/30 border-border text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <GitBranch size={16} />
+              GitHub
+            </button>
+            <button
               onClick={() => setCreateMode('youtube')}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-colors text-sm",
@@ -426,7 +457,24 @@ export function HyperVisaTab() {
           />
 
           {/* Mode-specific input */}
-          {createMode === 'youtube' ? (
+          {createMode === 'github' ? (
+            <div className="flex flex-col gap-3">
+              <input
+                type="text"
+                value={createRepoUrl}
+                onChange={(e) => setCreateRepoUrl(e.target.value)}
+                placeholder="https://github.com/user/repo"
+                className="px-4 py-2.5 bg-card/50 border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-purple-500/50"
+              />
+              <input
+                type="text"
+                value={createBranch}
+                onChange={(e) => setCreateBranch(e.target.value)}
+                placeholder="Branch (optional, defaults to main)"
+                className="px-4 py-2.5 bg-card/50 border border-border rounded-xl text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-purple-500/50"
+              />
+            </div>
+          ) : createMode === 'youtube' ? (
             <textarea
               value={createUrls}
               onChange={(e) => setCreateUrls(e.target.value)}

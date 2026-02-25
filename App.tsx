@@ -1,5 +1,5 @@
 import { type ComponentType, type PropsWithChildren, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar";
 import { HypervisaView } from "./components/Hypervisa/HypervisaView";
 import { Dashboard } from "./components/Dashboard";
@@ -15,6 +15,8 @@ import { SourceFilesProvider } from "./contexts/SourceFilesContext";
 import { IngestionProvider } from "./contexts/IngestionContext";
 import { ContextInspectorProvider } from "./contexts/ContextInspectorContext";
 import { TeamProvider } from "./contexts/TeamContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { LoginPage } from "./pages/LoginPage";
 import { SupportChat } from "./components/SupportChat";
 import { Project } from "./types";
 import { Menu, ArrowLeft } from "lucide-react";
@@ -41,6 +43,28 @@ const WorkspaceProviders = composeProviders(
   RealtimeProvider,
   SourceFilesProvider,
 );
+
+/** Route guard — redirects to /login if not authenticated. */
+function RequireAuth({ children }: PropsWithChildren) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary/20 rounded-lg" />
+          <span className="text-muted-foreground text-sm">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 // Main workspace component (existing functionality)
 function WorkspaceView() {
@@ -151,38 +175,43 @@ function WorkspaceView() {
 // Root App component with routing
 function App() {
   return (
-    <SettingsProvider>
-      <NotificationProvider>
-        <ProjectsProvider>
-          <ContextInspectorProvider>
-            <TeamProvider>
-              <Routes>
-                {/* Main workspace route */}
-                <Route path="/" element={<WorkspaceView />} />
+    <AuthProvider>
+      <SettingsProvider>
+        <NotificationProvider>
+          <ProjectsProvider>
+            <ContextInspectorProvider>
+              <TeamProvider>
+                <Routes>
+                  {/* Login page (public) */}
+                  <Route path="/login" element={<LoginPage />} />
 
-                {/* Integration Detail Page */}
-                <Route
-                  path="/integration/:integrationId"
-                  element={<IntegrationDetailPage />}
-                />
-
-                {/* Context Detail Inspector full-page route */}
-                <Route
-                  path="/project/:projectId"
-                  element={
-                    <ProjectPageProviders>
-                      <ProjectDetailPage />
-                    </ProjectPageProviders>
-                  }
-                />
-              </Routes>
-              {/* Support Chat Widget - Available on all pages */}
-              <SupportChat />
-            </TeamProvider>
-          </ContextInspectorProvider>
-        </ProjectsProvider>
-      </NotificationProvider>
-    </SettingsProvider>
+                  {/* Protected routes */}
+                  <Route path="/" element={
+                    <RequireAuth>
+                      <WorkspaceView />
+                    </RequireAuth>
+                  } />
+                  <Route path="/integration/:integrationId" element={
+                    <RequireAuth>
+                      <IntegrationDetailPage />
+                    </RequireAuth>
+                  } />
+                  <Route path="/project/:projectId" element={
+                    <RequireAuth>
+                      <ProjectPageProviders>
+                        <ProjectDetailPage />
+                      </ProjectPageProviders>
+                    </RequireAuth>
+                  } />
+                </Routes>
+                {/* Support Chat Widget - Available on all pages */}
+                <SupportChat />
+              </TeamProvider>
+            </ContextInspectorProvider>
+          </ProjectsProvider>
+        </NotificationProvider>
+      </SettingsProvider>
+    </AuthProvider>
   );
 }
 

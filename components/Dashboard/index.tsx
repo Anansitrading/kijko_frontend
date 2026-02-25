@@ -5,6 +5,7 @@ import { ProjectsTab } from './ProjectsTab';
 import { IntegrationsTab } from './IntegrationsTab';
 import { SkillsTab } from './SkillsTab';
 import { HyperVisaTab } from './HyperVisaTab';
+import { SandboxesTab } from '../Sandbox/SandboxesTab';
 import { UserAvatar } from './UserAvatar';
 import { UserDropdown } from './UserDropdown';
 import { SettingsModal } from '../SettingsModal';
@@ -12,6 +13,7 @@ import { NotificationBell } from '../Notifications/NotificationBell';
 import { NotificationPanel } from '../Notifications/NotificationPanel';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useProjects } from '../../contexts/ProjectsContext';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Project } from '../../types';
 import type { Notification, SettingsSection } from '../../types/settings';
 
@@ -48,9 +50,9 @@ export function Dashboard({ onProjectSelect }: DashboardProps) {
     togglePanel(false);
   };
 
-  const handleLogout = () => {
-    // TODO: Implement actual logout logic
-    console.log('Logout clicked');
+  const { logout } = useAuth();
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -127,6 +129,7 @@ export function Dashboard({ onProjectSelect }: DashboardProps) {
         {activeTab === 'projects' && (
           <ProjectsTab onProjectSelect={onProjectSelect} />
         )}
+        {activeTab === 'sandboxes' && <SandboxesTab />}
         {activeTab === 'integrations' && <IntegrationsTab />}
         {activeTab === 'skills' && <SkillsTab />}
         {activeTab === 'hypervisa' && <HyperVisaTab />}
